@@ -58,6 +58,8 @@ namespace RockbarForEDCB
             this.allServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.allServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.addSelectedServiceButton = new System.Windows.Forms.Button();
+            this.addNewServiceButton = new System.Windows.Forms.Button();
+            this.editServiceButton = new System.Windows.Forms.Button();
             this.removeSelectedServiceButton = new System.Windows.Forms.Button();
             this.moveDownSelectedServiceButton = new System.Windows.Forms.Button();
             this.moveUpSelectedServiceButton = new System.Windows.Forms.Button();
@@ -67,6 +69,7 @@ namespace RockbarForEDCB
             this.selectedServiceNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.selectedServiceTvtestOptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.settingTabControl = new System.Windows.Forms.TabControl();
             this.edcbLinkageTabPage = new System.Windows.Forms.TabPage();
             this.portNumberNoteLabel = new System.Windows.Forms.Label();
@@ -104,6 +107,7 @@ namespace RockbarForEDCB
             this.selectedService2NameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedService2TsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedService2SidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.selectedService2TvtestOptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.moveUpFavoriteServiceButton = new System.Windows.Forms.Button();
             this.moveDownFavoriteServiceButton = new System.Windows.Forms.Button();
             this.removeFavoriteServiceButton = new System.Windows.Forms.Button();
@@ -113,6 +117,7 @@ namespace RockbarForEDCB
             this.favoriteServiceNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.favoriteServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.favoriteServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.favoriteServiceTvtestOptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.addFavoriteServiceButton = new System.Windows.Forms.Button();
             this.tvtestLinkageTabPage = new System.Windows.Forms.TabPage();
             this.tvtestDttvOptionExampleLabel = new System.Windows.Forms.Label();
@@ -338,6 +343,26 @@ namespace RockbarForEDCB
             this.moveUpSelectedServiceButton.UseVisualStyleBackColor = true;
             this.moveUpSelectedServiceButton.Click += new System.EventHandler(this.moveUpSelectedServiceButton_Click);
             // 
+            // addNewServiceButton
+            // 
+            this.addNewServiceButton.Location = new System.Drawing.Point(744, 240);
+            this.addNewServiceButton.Name = "addNewServiceButton";
+            this.addNewServiceButton.Size = new System.Drawing.Size(40, 23);
+            this.addNewServiceButton.TabIndex = 6;
+            this.addNewServiceButton.Text = "追加";
+            this.addNewServiceButton.UseVisualStyleBackColor = true;
+            this.addNewServiceButton.Click += new System.EventHandler(this.addNewServiceButton_Click);
+            // 
+            // editServiceButton
+            // 
+            this.editServiceButton.Location = new System.Drawing.Point(744, 269);
+            this.editServiceButton.Name = "editServiceButton";
+            this.editServiceButton.Size = new System.Drawing.Size(40, 23);
+            this.editServiceButton.TabIndex = 7;
+            this.editServiceButton.Text = "編集";
+            this.editServiceButton.UseVisualStyleBackColor = true;
+            this.editServiceButton.Click += new System.EventHandler(this.editServiceButton_Click);
+            // 
             // selectedServiceListView
             // 
             this.selectedServiceListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -345,7 +370,8 @@ namespace RockbarForEDCB
             this.selectedServiceTypeColumnHeader,
             this.selectedServiceNameColumnHeader,
             this.selectedServiceTsidColumnHeader,
-            this.selectedServiceSidColumnHeader});
+            this.selectedServiceSidColumnHeader,
+            this.selectedServiceTvtestOptionColumnHeader});
             this.selectedServiceListView.FullRowSelect = true;
             this.selectedServiceListView.HideSelection = false;
             this.selectedServiceListView.Location = new System.Drawing.Point(405, 26);
@@ -355,6 +381,7 @@ namespace RockbarForEDCB
             this.selectedServiceListView.UseCompatibleStateImageBehavior = false;
             this.selectedServiceListView.View = System.Windows.Forms.View.Details;
             this.selectedServiceListView.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.selectedServiceListView_ColumnClick);
+            this.selectedServiceListView.DoubleClick += new System.EventHandler(this.selectedServiceListView_DoubleClick);
             // 
             // selectedServiceMarkColumnHeader
             // 
@@ -374,10 +401,17 @@ namespace RockbarForEDCB
             // selectedServiceTsidColumnHeader
             // 
             this.selectedServiceTsidColumnHeader.Text = "TSID";
+            this.selectedServiceTsidColumnHeader.Width = 50;
             // 
             // selectedServiceSidColumnHeader
             // 
             this.selectedServiceSidColumnHeader.Text = "SID";
+            this.selectedServiceSidColumnHeader.Width = 50;
+            // 
+            // selectedServiceTvtestOptionColumnHeader
+            // 
+            this.selectedServiceTvtestOptionColumnHeader.Text = "TVTestオプション";
+            this.selectedServiceTvtestOptionColumnHeader.Width = 180;
             // 
             // settingTabControl
             // 
@@ -645,6 +679,8 @@ namespace RockbarForEDCB
             this.allServiceTabPage.Controls.Add(this.removeSelectedServiceButton);
             this.allServiceTabPage.Controls.Add(this.selectedServiceListView);
             this.allServiceTabPage.Controls.Add(this.addSelectedServiceButton);
+            this.allServiceTabPage.Controls.Add(this.addNewServiceButton);
+            this.allServiceTabPage.Controls.Add(this.editServiceButton);
             this.allServiceTabPage.Location = new System.Drawing.Point(4, 22);
             this.allServiceTabPage.Name = "allServiceTabPage";
             this.allServiceTabPage.Padding = new System.Windows.Forms.Padding(3);
@@ -714,7 +750,8 @@ namespace RockbarForEDCB
             this.selectedService2TypeColumnHeader,
             this.selectedService2NameColumnHeader,
             this.selectedService2TsidColumnHeader,
-            this.selectedService2SidColumnHeader});
+            this.selectedService2SidColumnHeader,
+            this.selectedService2TvtestOptionColumnHeader});
             this.selectedServiceListView2.FullRowSelect = true;
             this.selectedServiceListView2.HideSelection = false;
             this.selectedServiceListView2.Location = new System.Drawing.Point(8, 26);
@@ -747,6 +784,12 @@ namespace RockbarForEDCB
             // selectedService2SidColumnHeader
             // 
             this.selectedService2SidColumnHeader.Text = "SID";
+            //
+            // selectedService2TvtestOptionColumnHeader
+            // 
+            this.selectedService2TvtestOptionColumnHeader.Text = "TVTestオプション";
+            this.selectedService2TvtestOptionColumnHeader.Width = 0;
+
             // 
             // moveUpFavoriteServiceButton
             // 
@@ -785,7 +828,8 @@ namespace RockbarForEDCB
             this.favoriteServiceTypeColumnHeader,
             this.favoriteServiceNameColumnHeader,
             this.favoriteServiceTsidColumnHeader,
-            this.favoriteServiceSidColumnHeader});
+            this.favoriteServiceSidColumnHeader,
+            this.favoriteServiceTvtestOptionColumnHeader});
             this.favoriteServiceListView.FullRowSelect = true;
             this.favoriteServiceListView.HideSelection = false;
             this.favoriteServiceListView.Location = new System.Drawing.Point(405, 26);
@@ -814,10 +858,17 @@ namespace RockbarForEDCB
             // favoriteServiceTsidColumnHeader
             // 
             this.favoriteServiceTsidColumnHeader.Text = "TSID";
+            this.favoriteServiceTsidColumnHeader.Width = 50;
             // 
             // favoriteServiceSidColumnHeader
             // 
             this.favoriteServiceSidColumnHeader.Text = "SID";
+            this.favoriteServiceSidColumnHeader.Width = 50;
+            // 
+            // favoriteServiceTvtestOptionColumnHeader
+            // 
+            this.favoriteServiceTvtestOptionColumnHeader.Text = "TVTestオプション";
+            this.favoriteServiceTvtestOptionColumnHeader.Width = 180;
             // 
             // addFavoriteServiceButton
             // 
@@ -1969,6 +2020,8 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Button applyButton;
         private System.Windows.Forms.ListView allServiceListView;
         private System.Windows.Forms.Button addSelectedServiceButton;
+        private System.Windows.Forms.Button addNewServiceButton;
+        private System.Windows.Forms.Button editServiceButton;
         private System.Windows.Forms.Button removeSelectedServiceButton;
         private System.Windows.Forms.Button moveDownSelectedServiceButton;
         private System.Windows.Forms.Button moveUpSelectedServiceButton;
@@ -1983,6 +2036,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.ColumnHeader selectedServiceNameColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceTsidColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceSidColumnHeader;
+        private System.Windows.Forms.ColumnHeader selectedServiceTvtestOptionColumnHeader;
         private System.Windows.Forms.TabControl settingTabControl;
         private System.Windows.Forms.TabPage allServiceTabPage;
         private System.Windows.Forms.TabPage edcbLinkageTabPage;
@@ -2000,6 +2054,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.ColumnHeader selectedService2NameColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedService2TsidColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedService2SidColumnHeader;
+        private System.Windows.Forms.ColumnHeader selectedService2TvtestOptionColumnHeader;
         private System.Windows.Forms.Button moveUpFavoriteServiceButton;
         private System.Windows.Forms.Button moveDownFavoriteServiceButton;
         private System.Windows.Forms.Button removeFavoriteServiceButton;
@@ -2009,6 +2064,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.ColumnHeader favoriteServiceNameColumnHeader;
         private System.Windows.Forms.ColumnHeader favoriteServiceTsidColumnHeader;
         private System.Windows.Forms.ColumnHeader favoriteServiceSidColumnHeader;
+        private System.Windows.Forms.ColumnHeader favoriteServiceTvtestOptionColumnHeader;
         private System.Windows.Forms.Button addFavoriteServiceButton;
         private System.Windows.Forms.TabPage tvtestLinkageTabPage;
         private System.Windows.Forms.Label portNumberLabel;
