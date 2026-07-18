@@ -580,7 +580,7 @@ namespace RockbarForEDCB
                 }
             }
 
-            // チューナー一覧の追加済みアイテムに対して、現在録画中の番組情報を付与する
+            // チューナー一覧の追加済みアイテムに対して、直近で終了する予約の番組情報を付与する
             foreach (var tuner in tunerReserveInfos)
             {
                 // チューナーのListViewItemを拾う
@@ -591,12 +591,30 @@ namespace RockbarForEDCB
 
                 List<ReserveData> reserves = reserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID));
 
-                var currentReserve = reserves.Find(x => x.StartTime <= DateTime.Now && x.StartTime.AddSeconds(x.DurationSecond) >= DateTime.Now);
+                var nearestReserve = reserves
+                    .OrderBy(x => x.StartTime.AddSeconds(x.DurationSecond)) // 終了時刻が近い順
+                    .FirstOrDefault();
 
-                if (currentReserve != null)
+                bool isRecording = false;
+
+                if (nearestReserve != null)
                 {
-                    item.SubItems[1].Text = currentReserve.Title;
-                    item.ToolTipText = currentReserve.Title; ;
+                    // 録画中かチェック
+                    isRecording =
+                        nearestReserve.StartTime <= DateTime.Now &&
+                        nearestReserve.StartTime.AddSeconds(nearestReserve.DurationSecond) >= DateTime.Now;
+
+                    DateTime start = nearestReserve.StartTime;
+                    DateTime end = start.AddSeconds(nearestReserve.DurationSecond);
+
+                    string date = start.ToString("MM/dd");
+                    string week = start.ToString("(ddd)");
+                    string time = $"{start:HH:mm}-{end:HH:mm}";
+                    string channel = nearestReserve.StationName;
+                    string title = nearestReserve.Title;
+
+                    item.SubItems[1].Text = $"{date}{week} {time} {channel} {title}";
+                    item.ToolTipText = title;
                 }
                 else
                 {
@@ -614,6 +632,11 @@ namespace RockbarForEDCB
                 {
                     // TU不足に1件でも予約が入っている場合、赤背景色で警告
                     item.BackColor = this.ngReserveListBackColor;
+                }
+                else if (isRecording)
+                {
+                    // 録画中の場合、正常予約背景
+                    item.BackColor = this.okReserveListBackColor;
                 }
                 else
                 {
