@@ -88,6 +88,10 @@ namespace RockbarForEDCB
         {
             InitializeComponent();
 
+            // フォーカスが外れたときの強調表示反転防止
+            tunerListView.HideSelection = true;
+            serviceListView.HideSelection = true;
+
             try
             {
                 rockbarSetting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
