@@ -614,7 +614,7 @@ namespace RockbarForEDCB
                     string title = nearestReserve.Title;
 
                     item.SubItems[1].Text = $"{date}{week} {time} {channel} {title}";
-                    item.ToolTipText = title;
+                    item.ToolTipText = $"{date}{week} {time} {channel} {title}";
                 }
                 else
                 {
