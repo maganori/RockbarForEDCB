@@ -409,38 +409,45 @@ namespace RockbarForEDCB
                     {
                         string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
 
-                        if (! serviceMap.ContainsKey(key))
+                        EpgServiceEventInfo matchedService = null;
+                        serviceMap.TryGetValue(key, out matchedService);
+
+                        // CSVのチャンネル一覧で設定されているサービスタイプを最優先で使用する
+                        // サービスタイプ設定が無い場合はEDCBからのデータをもとに自動判別
+                        ServiceType serviceType = matchedService != null
+                            ? RockbarUtility.GetServiceType(service.Type, matchedService.serviceInfo.ONID)
+                            : RockbarUtility.GetServiceType(service.Type, null);
+
+                        if (serviceTabControl.SelectedTab == dttvTabPage && serviceType != ServiceType.DTTV)
                         {
-                            // 定義したチャンネルがEDCBからのデータにない場合はスキップ(ユーザには設定画面でわかるようにする)
+                            continue;
+                        }
+                        else if (serviceTabControl.SelectedTab == bsTabPage && serviceType != ServiceType.BS)
+                        {
+                            continue;
+                        }
+                        else if (serviceTabControl.SelectedTab == csTabPage && serviceType != ServiceType.CS)
+                        {
                             continue;
                         }
 
-                        var matchedService = serviceMap[key];
-
-                        if (serviceTabControl.SelectedTab == dttvTabPage && RockbarUtility.GetServiceType(matchedService.serviceInfo.ONID) != ServiceType.DTTV)
-                        {
-                            continue;
-                        }
-                        else if (serviceTabControl.SelectedTab == bsTabPage && RockbarUtility.GetServiceType(matchedService.serviceInfo.ONID) != ServiceType.BS)
-                        {
-                            continue;
-                        }
-                        else if (serviceTabControl.SelectedTab == csTabPage && RockbarUtility.GetServiceType(matchedService.serviceInfo.ONID) != ServiceType.CS)
-                        {
-                            continue;
-                        }
+                        // CSVのチャンネル一覧で設定されているチャンネル名を最優先で使用する
+                        // チャンネル名設定がない場合はEDCBからのデータを使用し、それもなければTsid_Sid
+                        string serviceName = !string.IsNullOrWhiteSpace(service.Name)
+                            ? service.Name
+                            : matchedService != null ? matchedService.serviceInfo.service_name : key;
 
                         // 1回キーとチャンネル名だけで追加
                         String[] data = {
-                            matchedService.serviceInfo.service_name,
+                            serviceName,
                             "",
                             "",
-                            ""
+                            "EPG未取得"
                         };
 
                         ListViewItem item = new ListViewItem(data);
                         item.Name = key;
-
+                        item.Tag = service;
                         serviceListView.Items.Add(item);
                     }
                 }
@@ -1384,6 +1391,41 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// TVTest起動処理
+        /// TSID, SIDを指定してTVTestを起動する。地デジ・BS/CSで異なるオプションを使用する。
+        /// </summary>
+        /// <param name="isDttv">地デジ？</param>
+        /// <param name="tsid">TSID</param>
+        /// <param name="sid">SID</param>
+        /// <param name="tvtestOption">TVTest起動オプション（オプション）</param>
+        /// <returns>TVTestプロセス</returns>
+        private System.Diagnostics.Process startTvTest(bool isDttv, uint tsid, uint sid, string tvtestOption = null)
+        {
+            System.Diagnostics.Process result = null;
+
+            try
+            {
+                if (tvtestOption != null)
+                {
+                    result = System.Diagnostics.Process.Start(rockbarSetting.TvtestPath, $"{tvtestOption} /tsid {tsid} /sid {sid}");
+                }
+                else if (isDttv)
+                {
+                    result = System.Diagnostics.Process.Start(rockbarSetting.TvtestPath, $"{rockbarSetting.TvtestDttvOption} /tsid {tsid} /sid {sid}");
+                }
+                else
+                {
+                    result = System.Diagnostics.Process.Start(rockbarSetting.TvtestPath, $"{rockbarSetting.TvtestBscsOption} /tsid {tsid} /sid {sid}");
+                }
+            }
+            catch
+            {
+                MessageBox.Show("TVTestの起動に失敗しました。TVTestの設定を見直してください。", "TVTest起動エラー");
+            }
+            return result;
+        }
+
+        /// <summary>
         /// TvtPlayプラグインを有効化してTVTest起動処理
         /// ファイルパスとTvtPlayの起動オプションを指定してTVTestを起動する。
         /// </summary>
@@ -1433,7 +1475,14 @@ namespace RockbarForEDCB
 
                 listContextMenuStrip.Items.Clear();
 
-                EpgServiceEventInfo sv = serviceMap[selected.Name];
+                EpgServiceEventInfo sv = null;
+                serviceMap.TryGetValue(selected.Name, out sv);
+
+                // EPG未取得チャンネルは処理を抜ける
+                if (sv == null)
+                {
+                    return;
+                }
 
                 var afterEventList = sv.eventList.FindAll(x => x.start_time.AddSeconds(x.durationSec) >= DateTime.Now).OrderBy(a => a.start_time);
 
@@ -1511,16 +1560,30 @@ namespace RockbarForEDCB
                 // クリックした箇所が自動選択されるので拾う
                 var selected = serviceListView.SelectedItems[0];
 
-                EpgServiceEventInfo sv = serviceMap[selected.Name];
+                Service service = selected.Tag as Service;
+                EpgServiceEventInfo sv = null;
+                serviceMap.TryGetValue(selected.Name, out sv);
 
-                if (RockbarUtility.GetServiceType(sv.serviceInfo.ONID) == ServiceType.DTTV) {
+                if (service == null)
+                {
+                    return;
+                }
+
+                uint tsid = uint.Parse(service.Tsid);
+                uint sid = uint.Parse(service.Sid);
+
+                ServiceType serviceType = sv != null
+                    ? RockbarUtility.GetServiceType(service.Type, sv.serviceInfo.ONID)
+                    : RockbarUtility.GetServiceType(service.Type, null);
+
+                if (serviceType == ServiceType.DTTV) {
                     // 地上波
-                    startTvTest(true, sv.serviceInfo.TSID, sv.serviceInfo.SID);
+                    startTvTest(true, tsid, sid, service.TvtestOption);
                 }
                 else
                 {
                     // BS, CS
-                    startTvTest(false, sv.serviceInfo.TSID, sv.serviceInfo.SID);
+                    startTvTest(false, tsid, sid, service.TvtestOption);
                 }
             }
         }
@@ -2014,7 +2077,8 @@ namespace RockbarForEDCB
                         // 地上波
                         if (RockbarUtility.GetServiceType(reserve.OriginalNetworkID) == ServiceType.DTTV && rockbarSetting.IsAutoOpenTvtestDttv)
                         {
-                            var p = startTvTest(true, reserve.TransportStreamID, reserve.ServiceID);
+                            Service service = allServiceList.FirstOrDefault(x => RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID) == key);
+                            var p = startTvTest(true, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
                             tvtestProcesses.Add(key, p);
                         }
 
@@ -2024,7 +2088,8 @@ namespace RockbarForEDCB
                             RockbarUtility.GetServiceType(reserve.OriginalNetworkID) == ServiceType.CS && rockbarSetting.IsAutoOpenTvtestCs
                         )
                         {
-                            var p = startTvTest(false, reserve.TransportStreamID, reserve.ServiceID);
+                            Service service = allServiceList.FirstOrDefault(x => RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID) == key);
+                            var p = startTvTest(false, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
                             tvtestProcesses.Add(key, p);
                         }
                     }

@@ -53,6 +53,8 @@ namespace RockbarForEDCB
         public string Tsid { get; set; }
         public string Sid { get; set; }
         public string Name { get; set; }
+        public string Type { get; set; }
+        public string TvtestOption { get; set; }
     }
 
     /// <summary>
@@ -286,6 +288,42 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// Type指定を優先し、未指定時のみONIDからサービスタイプを返す
+        /// </summary>
+        /// <param name="typeText">Type文字列</param>
+        /// <param name="originalNetworkId">ONID</param>
+        /// <returns>サービスタイプ</returns>
+        public static ServiceType GetServiceType(string typeText, int? originalNetworkId)
+        {
+            if (!string.IsNullOrWhiteSpace(typeText))
+            {
+                string normalizedType = typeText.Trim().ToUpperInvariant();
+
+                if (normalizedType == "BS")
+                {
+                    return ServiceType.BS;
+                }
+
+                else if (normalizedType == "CS")
+                {
+                    return ServiceType.CS;
+                }
+
+                else if (normalizedType == "地")
+                {
+                    return ServiceType.DTTV;
+                }
+            }
+
+            if (originalNetworkId.HasValue)
+            {
+                return GetServiceType(originalNetworkId.Value);
+            }
+
+            return ServiceType.DTTV;
+        }
+
+        /// <summary>
         /// サービスタイプからサービス種類文字列(短)を返す
         /// </summary>
         /// <param name="serviceType">サービスタイプ</param>
@@ -383,28 +421,42 @@ namespace RockbarForEDCB
         /// <returns>サービスリスト</returns>
         private static List<Service> GetServicesFromSetting(string filename)
         {
-            // タブ区切り・ヘッダ文字列大文字
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                Delimiter = "\t",
-                PrepareHeaderForMatch = args => args.Header.ToUpper(),
-            };
-
             List<Service> result = new List<Service>();
 
             try
             {
-                using (var reader = new StreamReader(filename))
-                using (var tsv = new CsvHelper.CsvReader(reader, config))
+                foreach (string line in File.ReadAllLines(filename))
                 {
-                    // Mapping処理
-                    var records = tsv.GetRecords<Service>();
-                    result.AddRange(records);
+                    string[] fields = line.Split('\t');
+                    if (fields.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    // 前後の空白除去 + BOM 除去
+                    string first = fields[0]?.Trim().TrimStart('\uFEFF');
+
+                    // 形式: Tsid, Sid, Name, Type?, TvtestOption?
+                    if (fields.Length >= 2 &&
+                        ushort.TryParse(fields[0], out _) &&
+                        ushort.TryParse(fields[1], out _))
+                    {
+                        Service service = new Service
+                        {
+                            Tsid = fields[0].Trim(),
+                            Sid = fields[1].Trim(),
+                            Name = fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null,
+                            Type = fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]) ? fields[3].Trim() : null,
+                            TvtestOption = fields.Length > 4 && !string.IsNullOrWhiteSpace(fields[4]) ? fields[4].Trim() : null
+                        };
+
+                        result.Add(service);
+                    }
                 }
             }
             catch
             {
-                // CSVファイルがない場合フォーマットエラーの場合、空リストを返す
+                // TSVファイルがない場合フォーマットエラーの場合、空リストを返す
             }
 
             return result;
@@ -435,19 +487,29 @@ namespace RockbarForEDCB
         /// <param name="filename">ファイル名</param>
         private static void SaveServicesToSetting(List<Service> services, string filename)
         {
-            // タブ区切り・ヘッダ文字列大文字
-            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
-            {
-                Delimiter = "\t",
-                PrepareHeaderForMatch = args => args.Header.ToUpper(),
-            };
-
-            List<Service> result = new List<Service>();
-
             using (var writer = new StreamWriter(filename))
-            using (var tsv = new CsvHelper.CsvWriter(writer, config))
             {
-                tsv.WriteRecords(services);
+                writer.WriteLine("Tsid\tSid\tName\tType\tTVTestOption");
+
+                foreach (Service service in services)
+                {
+                    List<string> fields = new List<string>
+                    {
+                        service.Tsid ?? "",
+                        service.Sid ?? "",
+                        service.Name ?? "",
+                        service.Type ?? "",
+                        service.TvtestOption ?? ""
+                    };
+
+                    int lastIndex = fields.Count - 1;
+                    while (lastIndex >= 2 && string.IsNullOrEmpty(fields[lastIndex]))
+                    {
+                        lastIndex--;
+                    }
+
+                    writer.WriteLine(string.Join("\t", fields.Take(lastIndex + 1)));
+                }
             }
         }
 
