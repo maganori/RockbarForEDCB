@@ -11,7 +11,7 @@ EDCBでは録画だけを管理し、本アプリケーションで視聴面を�
 
 ## 動作環境
 - Windows10 64bit
-- .NET Framework 4.7.2以上
+- .NET Framework 4.8以上
 
 ※バイナリは64bit版のみ配布とします。TVTestやEDCBと32bit/64bitを揃える必要はありません。
 
