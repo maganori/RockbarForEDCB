@@ -118,7 +118,7 @@ namespace RockbarForEDCB
             favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
 
             if (rockbarSetting.UseTcpIp) {
-                // Pipe通信にする
+                // TCP/IP通信にする
                 ctrlCmdUtil.SetSendMode(true);
                 ctrlCmdUtil.SetNWSetting(rockbarSetting.IpAddress, rockbarSetting.PortNumber);
             }
