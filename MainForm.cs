@@ -320,332 +320,114 @@ namespace RockbarForEDCB
             // EpgTimerSrvと通信する
             if (isTrasnmission && canConnect)
             {
-                // 予約一覧取得
-                reserveDatas.Clear();
-                ctrlCmdUtil.SendEnumReserve(ref reserveDatas);
-
-                // 予約一覧関連のハッシュを作成
-                reserveMap.Clear();
-                foreach (ReserveData reserveData in reserveDatas)
-                {
-                    // TSID + SID + EventID → 予約情報
-                    string tsidSidEventIdKey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
-
-                    if (! reserveMap.ContainsKey(tsidSidEventIdKey))
-                    {
-                        reserveMap.Add(tsidSidEventIdKey, reserveData);
-                    }
-                }
-
-                // 番組情報一覧取得
-                serviceEvents.Clear();
-                allEventMap.Clear();
-                ctrlCmdUtil.SendEnumPgAll(ref serviceEvents);
-
-                // 番組一覧関連のハッシュを作成
-                serviceMap.Clear();
-                foreach (EpgServiceEventInfo service in serviceEvents)
-                {
-                    // TSID + SID → サービス一覧(serviceが番組情報を保持している)
-                    string tsidSidKey = RockbarUtility.GetKey(service.serviceInfo.TSID, service.serviceInfo.SID);
-
-                    if (! serviceMap.ContainsKey(tsidSidKey))
-                    {
-                        serviceMap.Add(tsidSidKey, service);
-                    }
-
-                    // TSID + SID + EventID → 番組情報
-                    foreach (EpgEventInfo ev in service.eventList)
-                    {
-                        string tsidSidEventIdKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-
-                        if (! allEventMap.ContainsKey(tsidSidEventIdKey))
-                        {
-                            allEventMap.Add(tsidSidEventIdKey, ev);
-                        }
-                    }
-                }
-
-                // チューナーごとの予約一覧取得
-                tunerReserveInfos.Clear();
-                ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
-
-                // 録画済み情報の一覧取得
-                if (serviceTabControl.SelectedTab == recTabPage)
-                {
-                    FetchRecList();
-                }
-                else
-                {
-                    recFileInfos.Clear();
-                    recMap.Clear();
-                }
+                GetEpgTimerData();
             }
 
-            // チャンネル一覧・チューナー一覧にキー情報だけでアイテムを表示する(対象放送波切り替え時も実行)
-            if (isChannelRefresh)
+            try
             {
+                // 描画を一時停止
+                serviceListView.BeginUpdate();
+                tunerListView.BeginUpdate();
+
+                // チャンネル一覧・チューナー一覧にキー情報だけでアイテムを表示する(対象放送波切り替え時も実行)
+                if (isChannelRefresh)
+                {
+                    if (serviceTabControl.SelectedTab == reserveTabPage)
+                    {
+                        PrepareReserveList();
+                    }
+                    else if (serviceTabControl.SelectedTab == recTabPage)
+                    {
+                        PrepareRecList();
+                    }
+                    else
+                    {
+                        PrepareServiceList();
+                    }
+
+                    // フィルタ中のタブ切り替え時のちらつき低減
+                    filteringLabel.Visible = false;
+
+                    // チューナー表示
+                    PrepareTunerList();
+                }
+
                 if (serviceTabControl.SelectedTab == reserveTabPage)
                 {
-                    PrepareReserveList();
+                    RefreshReserveList();
                 }
                 else if (serviceTabControl.SelectedTab == recTabPage)
                 {
-                    PrepareRecList();
+                    RefreshRecList();
                 }
                 else
                 {
-                    serviceListView.Items.Clear();
-
-                    List<Service> services = null;
-
-                    if (serviceTabControl.SelectedTab.Text == "お気に入り")
-                    {
-                        services = favoriteServiceList;
-                    }
-                    else
-                    {
-                        services = allServiceList;
-                    }
-
-                    // チャンネル表示
-                    foreach (var service in services)
-                    {
-                        string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
-
-                        EpgServiceEventInfo matchedService = null;
-                        serviceMap.TryGetValue(key, out matchedService);
-
-                        // CSVのチャンネル一覧で設定されているサービスタイプを最優先で使用する
-                        // サービスタイプ設定が無い場合はEDCBからのデータをもとに自動判別
-                        ServiceType serviceType = matchedService != null
-                            ? RockbarUtility.GetServiceType(service.Type, matchedService.serviceInfo.ONID)
-                            : RockbarUtility.GetServiceType(service.Type, null);
-
-                        if (serviceTabControl.SelectedTab == dttvTabPage && serviceType != ServiceType.DTTV)
-                        {
-                            continue;
-                        }
-                        else if (serviceTabControl.SelectedTab == bsTabPage && serviceType != ServiceType.BS)
-                        {
-                            continue;
-                        }
-                        else if (serviceTabControl.SelectedTab == csTabPage && serviceType != ServiceType.CS)
-                        {
-                            continue;
-                        }
-
-                        // CSVのチャンネル一覧で設定されているチャンネル名を最優先で使用する
-                        // チャンネル名設定がない場合はEDCBからのデータを使用し、それもなければTsid_Sid
-                        string serviceName = !string.IsNullOrWhiteSpace(service.Name)
-                            ? service.Name
-                            : matchedService != null ? matchedService.serviceInfo.service_name : key;
-
-                        // 1回キーとチャンネル名だけで追加
-                        String[] data = {
-                            serviceName,
-                            "",
-                            "",
-                            "EPG未取得"
-                        };
-
-                        ListViewItem item = new ListViewItem(data);
-                        item.Name = key;
-                        item.Tag = service;
-                        serviceListView.Items.Add(item);
-                    }
+                    // チャンネル一覧の追加済みアイテムに対して、現在放送中の番組情報を付与する
+                    RefreshServiceList();
                 }
 
-                adjustListViewColumns(serviceListView);
+                // チューナー一覧の追加済みアイテムに対して、直近で終了する予約の番組情報を付与する
+                RefreshTunerList();
+            }
+            finally
+            {
+                // 描画を再開
+                serviceListView.EndUpdate();
+                tunerListView.EndUpdate();
+            }
+        }
+        /// <summary>
+        /// EpgTimerSrvから予約一覧・番組一覧・チューナー一覧・録画一覧を取得し、
+        /// reserveMap / serviceMap / allEventMap / recMap を構築する。
+        private void GetEpgTimerData()
+        {
+            // 予約一覧取得
+            reserveDatas.Clear();
+            ctrlCmdUtil.SendEnumReserve(ref reserveDatas);
 
-                filteringLabel.Visible = false;
+            // 予約一覧関連のハッシュを作成
+            reserveMap.Clear();
+            foreach (ReserveData reserveData in reserveDatas)
+            {
+                // TSID + SID + EventID → 予約情報
+                string evkey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
+                reserveMap[evkey] = reserveData;
+            }
 
-                tunerListView.Items.Clear();
+            // 番組一覧取得
+            serviceEvents.Clear();
+            allEventMap.Clear();
+            ctrlCmdUtil.SendEnumPgAll(ref serviceEvents);
 
-                // チューナー表示
-                foreach (var tuner in tunerReserveInfos)
+            // 番組一覧関連のハッシュを作成
+            serviceMap.Clear();
+            foreach (EpgServiceEventInfo service in serviceEvents)
+            {
+                // TSID + SID → サービス一覧(serviceが番組情報を保持している)
+                string key = RockbarUtility.GetKey(service.serviceInfo.TSID, service.serviceInfo.SID);
+                serviceMap[key] = service;
+
+                // TSID + SID + EventID → 番組情報
+                foreach (EpgEventInfo ev in service.eventList)
                 {
-                    string name = null;
-                    
-                    // 設定にチューナー名があれば取得し、なければデフォルト名で表示
-                    if (rockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
-                    {
-                        name = rockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
-                    }
-                    else
-                    {
-                        name = RockbarUtility.GetDefaultTunerName(tuner.tunerName);
-                    }
-
-                    // 連番付与
-                    if (tuner.tunerID != 0xffffffff)
-                    {
-                        name += (tuner.tunerID & 0xffff).ToString();
-                    }
-
-                    // 1回キーとチューナー名だけで追加
-                    string[] data = {name, ""};
-                    ListViewItem item = new ListViewItem(data);
-                    item.Name = tuner.tunerID.ToString();
-
-                    tunerListView.Items.Add(item);
+                    string evKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    allEventMap[evKey] = ev;
                 }
-
-                adjustListViewColumns(tunerListView);
             }
 
-            if (serviceTabControl.SelectedTab == reserveTabPage)
+            // チューナーごとの予約一覧取得
+            tunerReserveInfos.Clear();
+            ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
+
+            // 録画済み情報の一覧取得
+            if (serviceTabControl.SelectedTab == recTabPage)
             {
-                RefreshReserveList();
-            }
-            else if (serviceTabControl.SelectedTab == recTabPage)
-            {
-                RefreshRecList();
+                FetchRecList();
             }
             else
             {
-                // チャンネル一覧の追加済みアイテムに対して、現在放送中の番組情報を付与する
-                foreach (var service in serviceEvents)
-                {
-                    string key = RockbarUtility.GetKey(service.serviceInfo.TSID, service.serviceInfo.SID);
-
-                    var ev = service.eventList.Find(x => x.start_time <= DateTime.Now && x.start_time.AddSeconds(x.durationSec) >= DateTime.Now);
-
-                    // チャンネル一覧ListViewでこのサービスが表示対象
-                    if (serviceListView.Items.ContainsKey(key))
-                    {
-                        ListViewItem item = serviceListView.Items[key];
-
-                        if (ev != null)
-                        {
-                            // 現在放送中の番組あり
-                            string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-
-                            ReserveStatus reserveStatus = ReserveStatus.NONE;
-
-                            // 予約状態文字列を取得
-                            if (reserveMap.ContainsKey(eventKey)) {
-                                ReserveData reserveData = reserveMap[eventKey];
-
-                                reserveStatus = ReserveStatus.OK;
-
-                                if (reserveData.RecSetting.IsNoRec())
-                                {
-                                    reserveStatus = ReserveStatus.DISABLED;
-                                }
-                                else if (reserveData.OverlapMode == 1)
-                                {
-                                    reserveStatus = ReserveStatus.PARTIAL;
-                                }
-                                else if (reserveData.OverlapMode == 2)
-                                {
-                                    reserveStatus = ReserveStatus.NG;
-                                }
-                            }
-
-                            string reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
-
-                            // 番組情報を表示
-                            item.SubItems[1].Text = ev.start_time.ToString("HH:mm") + '-' + ev.start_time.AddSeconds(ev.durationSec).ToString("HH:mm");
-                            item.SubItems[2].Text = reserveString;
-                            item.SubItems[3].Text = ev.ShortInfo?.event_name;
-                            item.ToolTipText = ev.ShortInfo?.event_name;
-
-                            // 色変更
-                            switch (reserveStatus)
-                            {
-                                case ReserveStatus.NONE:
-                                    item.BackColor = this.listBackColor;
-                                    break;
-                                case ReserveStatus.OK:
-                                    item.BackColor = this.okReserveListBackColor;
-                                    break;
-                                case ReserveStatus.PARTIAL:
-                                    item.BackColor = this.partialReserveListBackColor;
-                                    break;
-                                case ReserveStatus.NG:
-                                    item.BackColor = this.ngReserveListBackColor;
-                                    break;
-                                case ReserveStatus.DISABLED:
-                                    item.BackColor = this.disabledReserveListBackColor;
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            // 現在放送中の番組なし
-                            item.SubItems[1].Text = "";
-                            item.SubItems[2].Text = "";
-                            item.SubItems[3].Text = "";
-                            item.ToolTipText = "";
-                            item.BackColor = this.listBackColor;
-                        }
-                    }
-                }
-            }
-
-            // チューナー一覧の追加済みアイテムに対して、直近で終了する予約の番組情報を付与する
-            foreach (var tuner in tunerReserveInfos)
-            {
-                // チューナーのListViewItemを拾う
-                var item = tunerListView.Items[tuner.tunerID.ToString()];
-
-                // 使用中の予約タイトルとツールチップを表示
-                HashSet<uint> reserveIds = tuner.reserveList.ToHashSet();
-
-                List<ReserveData> reserves = reserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID));
-
-                var nearestReserve = reserves
-                    .OrderBy(x => x.StartTime.AddSeconds(x.DurationSecond)) // 終了時刻が近い順
-                    .FirstOrDefault();
-
-                bool isRecording = false;
-
-                if (nearestReserve != null)
-                {
-                    // 録画中かチェック
-                    isRecording =
-                        nearestReserve.StartTime <= DateTime.Now &&
-                        nearestReserve.StartTime.AddSeconds(nearestReserve.DurationSecond) >= DateTime.Now;
-
-                    DateTime start = nearestReserve.StartTime;
-                    DateTime end = start.AddSeconds(nearestReserve.DurationSecond);
-
-                    string date = start.ToString("MM/dd");
-                    string week = start.ToString("(ddd)");
-                    string time = $"{start:HH:mm}-{end:HH:mm}";
-                    string channel = nearestReserve.StationName;
-                    string title = nearestReserve.Title;
-
-                    item.SubItems[1].Text = $"{date}{week} {time} {channel} {title}";
-                    item.ToolTipText = $"{date}{week} {time} {channel} {title}";
-                }
-                else
-                {
-                    item.SubItems[1].Text = "";
-                    item.ToolTipText = "";
-                }
-
-                // 直近30件に限らず、将来変な予約がある場合警告として色を変える
-                if (reserves.Count(x => x.OverlapMode == 1) > 0)
-                {
-                    // 一部予約に1件でも予約が入っている場合、黃背景色で警告
-                    item.BackColor = this.partialReserveListBackColor;
-                }
-                else if (reserves.Count(x => x.OverlapMode == 2) > 0)
-                {
-                    // TU不足に1件でも予約が入っている場合、赤背景色で警告
-                    item.BackColor = this.ngReserveListBackColor;
-                }
-                else if (isRecording)
-                {
-                    // 録画中の場合、正常予約背景
-                    item.BackColor = this.okReserveListBackColor;
-                }
-                else
-                {
-                    item.BackColor = this.listBackColor;
-                }
+                recFileInfos.Clear();
+                recMap.Clear();
             }
         }
 
@@ -973,6 +755,274 @@ namespace RockbarForEDCB
             while (index < serviceListView.Items.Count)
             {
                 serviceListView.Items.RemoveAt(index);
+            }
+        }
+
+        /// <summary>
+        /// チャンネル一覧の枠を作成する（チャンネル名だけ追加）
+        /// </summary>
+        private void PrepareServiceList()
+        {
+            serviceListView.Items.Clear();
+
+            List<Service> services = null;
+
+            if (serviceTabControl.SelectedTab == favoriteTabPage)
+            {
+                services = favoriteServiceList;
+            }
+            else
+            {
+                services = allServiceList;
+            }
+
+            // チャンネル表示
+            foreach (var service in services)
+            {
+                string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
+
+                EpgServiceEventInfo matchedService = null;
+                serviceMap.TryGetValue(key, out matchedService);
+
+                // CSVのチャンネル一覧で設定されているサービスタイプを最優先で使用する
+                // サービスタイプ設定が無い場合はEDCBからのデータをもとに自動判別
+                ServiceType serviceType = matchedService != null
+                    ? RockbarUtility.GetServiceType(service.Type, matchedService.serviceInfo.ONID)
+                    : RockbarUtility.GetServiceType(service.Type, null);
+
+                if (serviceTabControl.SelectedTab == dttvTabPage && serviceType != ServiceType.DTTV)
+                {
+                    continue;
+                }
+                else if (serviceTabControl.SelectedTab == bsTabPage && serviceType != ServiceType.BS)
+                {
+                    continue;
+                }
+                else if (serviceTabControl.SelectedTab == csTabPage && serviceType != ServiceType.CS)
+                {
+                    continue;
+                }
+
+                // CSVのチャンネル一覧で設定されているチャンネル名を最優先で使用する
+                // チャンネル名設定がない場合はEDCBからのデータを使用し、それもなければTsid_Sid
+                string serviceName = !string.IsNullOrWhiteSpace(service.Name)
+                    ? service.Name
+                    : matchedService != null ? matchedService.serviceInfo.service_name : key;
+
+                // 1回キーとチャンネル名だけで追加
+                String[] data = {
+                    serviceName,
+                    "",
+                    "",
+                    ""
+                };
+
+                ListViewItem item = new ListViewItem(data);
+                item.Name = key;
+                item.Tag = service;
+                serviceListView.Items.Add(item);
+            }
+
+            adjustListViewColumns(serviceListView);
+        }
+
+        /// <summary>
+        /// チャンネル一覧の追加済みアイテムに対して、現在放送中の番組情報を付与する
+        /// </summary>
+        private void RefreshServiceList()
+        {
+            foreach (ListViewItem item in serviceListView.Items)
+            {
+                Service service = (Service)item.Tag;
+                string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
+
+                EpgServiceEventInfo matchedService = null;
+
+                // EPG情報があるか？
+                if (!serviceMap.TryGetValue(key, out matchedService))
+                {
+                    item.SubItems[1].Text = "";
+                    item.SubItems[2].Text = "";
+                    item.SubItems[3].Text = "EPG未取得";
+                    item.BackColor = listBackColor;
+                    continue;
+                }
+
+                // 現在放送中の番組を探す
+                EpgEventInfo ev = matchedService.eventList.Find(x =>
+                    x.start_time <= DateTime.Now &&
+                    x.start_time.AddSeconds(x.durationSec) >= DateTime.Now);
+
+                if (ev == null)
+                {
+                    // 現在放送中の番組なし
+                    item.SubItems[1].Text = "";
+                    item.SubItems[2].Text = "";
+                    item.SubItems[3].Text = "";
+                    item.BackColor = listBackColor;
+                    continue;
+                }
+
+                // 現在放送中の番組あり
+                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+
+                ReserveStatus reserveStatus = ReserveStatus.NONE;
+                ReserveData reserveData;
+
+                // 予約状態文字列を取得
+                if (reserveMap.TryGetValue(eventKey, out reserveData))
+                {
+                    reserveStatus = ReserveStatus.OK;
+
+                    if (reserveData.RecSetting.IsNoRec())
+                    {
+                        reserveStatus = ReserveStatus.DISABLED;
+                    }
+                    else if (reserveData.OverlapMode == 1)
+                    {
+                        reserveStatus = ReserveStatus.PARTIAL;
+                    }
+                    else if (reserveData.OverlapMode == 2)
+                    {
+                        reserveStatus = ReserveStatus.NG;
+                    }
+                }
+
+                string reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
+
+                // 番組情報を表示
+                item.SubItems[1].Text = $"{ev.start_time:HH:mm}-{ev.start_time.AddSeconds(ev.durationSec):HH:mm}";
+                item.SubItems[2].Text = reserveString;
+                item.SubItems[3].Text = ev.ShortInfo?.event_name;
+                item.ToolTipText = ev.ShortInfo?.event_name;
+
+                // 色変更
+                switch (reserveStatus)
+                {
+                    case ReserveStatus.NONE:
+                        item.BackColor = this.listBackColor;
+                        break;
+                    case ReserveStatus.OK:
+                        item.BackColor = this.okReserveListBackColor;
+                        break;
+                    case ReserveStatus.PARTIAL:
+                        item.BackColor = this.partialReserveListBackColor;
+                        break;
+                    case ReserveStatus.NG:
+                        item.BackColor = this.ngReserveListBackColor;
+                        break;
+                    case ReserveStatus.DISABLED:
+                        item.BackColor = this.disabledReserveListBackColor;
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// チューナー一覧の枠を作成する（チューナー名だけ追加）
+        /// </summary>
+        private void PrepareTunerList()
+        {
+            tunerListView.Items.Clear();
+
+            // チューナー表示
+            foreach (var tuner in tunerReserveInfos)
+            {
+                string name = null;
+
+                // 設定にチューナー名があれば取得し、なければデフォルト名で表示
+                if (rockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
+                {
+                    name = rockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
+                }
+                else
+                {
+                    name = RockbarUtility.GetDefaultTunerName(tuner.tunerName);
+                }
+
+                // 連番付与
+                if (tuner.tunerID != 0xffffffff)
+                {
+                    name += (tuner.tunerID & 0xffff).ToString();
+                }
+
+                // 1回キーとチューナー名だけで追加
+                string[] data = { name, "" };
+                ListViewItem item = new ListViewItem(data);
+                item.Name = tuner.tunerID.ToString();
+
+                tunerListView.Items.Add(item);
+            }
+
+            adjustListViewColumns(tunerListView);
+        }
+
+        /// <summary>
+        /// チューナー一覧の追加済みアイテムに対して、直近で終了する予約の番組情報を付与する
+        /// </summary>
+        private void RefreshTunerList()
+        {
+            foreach (var tuner in tunerReserveInfos)
+            {
+                // チューナーのListViewItemを拾う
+                var item = tunerListView.Items[tuner.tunerID.ToString()];
+
+                // 使用中の予約タイトルとツールチップを表示
+                HashSet<uint> reserveIds = tuner.reserveList.ToHashSet();
+
+                List<ReserveData> reserves = reserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID));
+
+                var nearestReserve = reserves
+                    .OrderBy(x => x.StartTime.AddSeconds(x.DurationSecond)) // 終了時刻が近い順
+                    .FirstOrDefault();
+
+                bool isRecording = false;
+
+                if (nearestReserve != null)
+                {
+                    // 録画中かチェック
+                    isRecording =
+                        nearestReserve.StartTime <= DateTime.Now &&
+                        nearestReserve.StartTime.AddSeconds(nearestReserve.DurationSecond) >= DateTime.Now;
+
+                    DateTime start = nearestReserve.StartTime;
+                    DateTime end = start.AddSeconds(nearestReserve.DurationSecond);
+
+                    string date = start.ToString("MM/dd");
+                    string week = start.ToString("(ddd)");
+                    string time = $"{start:HH:mm}-{end:HH:mm}";
+                    string channel = nearestReserve.StationName;
+                    string title = nearestReserve.Title;
+
+                    item.SubItems[1].Text = $"{date}{week} {time} {channel} {title}";
+                    item.ToolTipText = $"{date}{week} {time} {channel} {title}";
+                }
+                else
+                {
+                    item.SubItems[1].Text = "";
+                    item.ToolTipText = "";
+                }
+
+                // 直近30件に限らず、将来変な予約がある場合警告として色を変える
+                if (reserves.Count(x => x.OverlapMode == 1) > 0)
+                {
+                    // 一部予約に1件でも予約が入っている場合、黃背景色で警告
+                    item.BackColor = this.partialReserveListBackColor;
+                }
+                else if (reserves.Count(x => x.OverlapMode == 2) > 0)
+                {
+                    // TU不足に1件でも予約が入っている場合、赤背景色で警告
+                    item.BackColor = this.ngReserveListBackColor;
+                }
+                else if (isRecording)
+                {
+                    // 録画中の場合、正常予約背景
+                    item.BackColor = this.okReserveListBackColor;
+                }
+                else
+                {
+                    item.BackColor = this.listBackColor;
+                }
             }
         }
 
