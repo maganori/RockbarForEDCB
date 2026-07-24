@@ -1972,7 +1972,8 @@ namespace RockbarForEDCB
 
             filterTextBox.Text = text;
             filterTextBox.Focus();
-            Filter();
+            //Filter();
+            RefreshEvent(true, false);
         }
 
         /// <summary>
