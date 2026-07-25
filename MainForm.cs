@@ -164,7 +164,7 @@ namespace RockbarForEDCB
             filteringLabel.Visible = false;
 
             // 初回表示
-            RefreshEvent(true, true);
+            RefreshList(true, true, true);
 
             // タイマーを有効化
             timer.Enabled = true;
@@ -312,9 +312,11 @@ namespace RockbarForEDCB
         /// 描画更新処理
         /// 必要があればEpgTimerSrv通信を行い、チャンネルListView・チューナListViewの表示を更新する。
         /// </summary>
-        /// <param name="isChannelRefresh">対象チャンネルリストの切り替え要否</param>
-        /// <param name="isTrasnmission">EpgTimerSrvと通信要否</param>
-        private void RefreshEvent(bool isForceRefreshRequested, bool isTrasnmission)
+        /// <param name="isTransmission">EpgTimerSrvと通信要否</param>
+        /// <param name="forceServiceListRefresh">ServiceListView(Main Pane)の強制リフレッシュ要否</param>
+        /// <param name="forceTunerListRefresh">TunerListtView(Sub Pane)の強制リフレッシュ要否</param>
+
+        private void RefreshList(bool isTransmission, bool forceServiceListRefresh, bool forceTunerListRefresh)
         {
             DateTime now = DateTime.Now;
 
@@ -327,24 +329,24 @@ namespace RockbarForEDCB
             bool isRecChanged = false;
 
             // EpgTimerSrvと通信する
-            if (isTrasnmission && canConnect)
+            if (isTransmission && canConnect)
             {
                 GetEpgTimerData(out isServiceChanged, out isTunerChanged, out isReserveChanged, out isRecChanged);
             }
-            
+
             // 現在アクティブなタブに応じて描画処理を分岐
             // 予約タブ
             if (serviceTabControl.SelectedTab == reserveTabPage)
             {
-                if (isForceRefreshRequested || isReserveChanged || (now >= reserveRefreshTime))
-                { 
+                if (forceServiceListRefresh || isReserveChanged || (now >= reserveRefreshTime))
+                {
                     BuildReserveList();
                 }
             }
             // 録画タブ
             else if (serviceTabControl.SelectedTab == recTabPage)
             {
-                if (isForceRefreshRequested || isRecChanged)
+                if (forceServiceListRefresh || isRecChanged)
                 {
                     BuildRecList();
                 }
@@ -352,14 +354,14 @@ namespace RockbarForEDCB
             // チャンネルタブ
             else
             {
-                if (isForceRefreshRequested || isServiceChanged || isReserveChanged || (now >= serviceRefreshTime))
+                if (forceServiceListRefresh || isServiceChanged || isReserveChanged || (now >= serviceRefreshTime))
                 {
                     BuildServiceList();
                 }
             }
 
             // チューナー一覧
-            if (isTunerChanged || (now >= reserveRefreshTime))
+            if (forceTunerListRefresh || isTunerChanged || (now >= reserveRefreshTime))
             {
                 BuildTunerList();
             }
@@ -1190,7 +1192,7 @@ namespace RockbarForEDCB
             // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
             filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
 
-            RefreshEvent(true, false);
+            RefreshList(false, true, false);
         }
 
         /// <summary>
@@ -1215,7 +1217,7 @@ namespace RockbarForEDCB
             {
                 MessageBox.Show("予約変更でエラーが発生しました。", "予約変更エラー");
             }
-            RefreshEvent(false, true);
+            RefreshList(true, false, false);
         }
 
         /// <summary>
@@ -1513,7 +1515,7 @@ namespace RockbarForEDCB
 
             filterTextBox.Text = text;
             filterTextBox.Focus();
-            RefreshEvent(true, false);
+            RefreshList(false, true, false);
         }
 
         /// <summary>
@@ -2227,7 +2229,7 @@ namespace RockbarForEDCB
             DateTime timerTime = DateTime.Now;
 
             if (timerTime.Second == 0) {
-                RefreshEvent(false, true);
+                RefreshList(true, false, false);
             }
             
             if (! rockbarSetting.IsAutoOpenTvtest)
@@ -2354,7 +2356,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void serviceTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            RefreshEvent(true, false);
+            RefreshList(false, true, false);
         }
 
         /// <summary>
@@ -2423,7 +2425,7 @@ namespace RockbarForEDCB
                 // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
                 filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
 
-                RefreshEvent(true, false);
+                RefreshList(false, true, false);
                 e.SuppressKeyPress = true;
             }
             else if (e.KeyCode == Keys.Escape)
@@ -2455,7 +2457,7 @@ namespace RockbarForEDCB
             // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
             filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
 
-            RefreshEvent(true, false);
+            RefreshList(false, true, false);
         }
 
         /// <summary>
@@ -2474,7 +2476,7 @@ namespace RockbarForEDCB
             {
                 ReloadSetting();
                 applySetting();
-                RefreshEvent(true, true);
+                RefreshList(true, true, true);
             }
         }
 
