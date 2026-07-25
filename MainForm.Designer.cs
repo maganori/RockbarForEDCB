@@ -61,8 +61,6 @@
             this.filterTextBox = new System.Windows.Forms.TextBox();
             this.resetButton = new System.Windows.Forms.Button();
             this.closeButton = new System.Windows.Forms.Button();
-            this.filteringLabel = new System.Windows.Forms.Label();
-            this.filterButton = new System.Windows.Forms.Button();
             this.settingButton = new System.Windows.Forms.Button();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.taskTrayContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -89,6 +87,7 @@
             this.serviceListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
             this.serviceListView.FullRowSelect = true;
             this.serviceListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.serviceListView.HideSelection = true;
             this.serviceListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem1,
             listViewItem2,
@@ -101,10 +100,10 @@
             this.serviceListView.TabIndex = 0;
             this.serviceListView.UseCompatibleStateImageBehavior = false;
             this.serviceListView.View = System.Windows.Forms.View.Details;
-            this.serviceListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseClick);
-            this.serviceListView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseUp);
-            this.serviceListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseDoubleClick);
             this.serviceListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.serviceListView_ItemSelectionChanged);
+            this.serviceListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseClick);
+            this.serviceListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseDoubleClick);
+            this.serviceListView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseUp);
             // 
             // columnHeader1
             // 
@@ -162,7 +161,7 @@
             this.allTabPage.Location = new System.Drawing.Point(4, 22);
             this.allTabPage.Name = "allTabPage";
             this.allTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.allTabPage.Size = new System.Drawing.Size(237, 0);
+            this.allTabPage.Size = new System.Drawing.Size(317, 0);
             this.allTabPage.TabIndex = 0;
             this.allTabPage.Text = "全て";
             this.allTabPage.UseVisualStyleBackColor = true;
@@ -172,7 +171,7 @@
             this.dttvTabPage.Location = new System.Drawing.Point(4, 22);
             this.dttvTabPage.Name = "dttvTabPage";
             this.dttvTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.dttvTabPage.Size = new System.Drawing.Size(237, 0);
+            this.dttvTabPage.Size = new System.Drawing.Size(317, 0);
             this.dttvTabPage.TabIndex = 1;
             this.dttvTabPage.Text = "地デジ";
             this.dttvTabPage.UseVisualStyleBackColor = true;
@@ -182,7 +181,7 @@
             this.bsTabPage.Location = new System.Drawing.Point(4, 22);
             this.bsTabPage.Name = "bsTabPage";
             this.bsTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.bsTabPage.Size = new System.Drawing.Size(237, 0);
+            this.bsTabPage.Size = new System.Drawing.Size(317, 0);
             this.bsTabPage.TabIndex = 2;
             this.bsTabPage.Text = "BS";
             this.bsTabPage.UseVisualStyleBackColor = true;
@@ -191,7 +190,7 @@
             // 
             this.csTabPage.Location = new System.Drawing.Point(4, 22);
             this.csTabPage.Name = "csTabPage";
-            this.csTabPage.Size = new System.Drawing.Size(237, 0);
+            this.csTabPage.Size = new System.Drawing.Size(317, 0);
             this.csTabPage.TabIndex = 3;
             this.csTabPage.Text = "CS";
             this.csTabPage.UseVisualStyleBackColor = true;
@@ -200,7 +199,7 @@
             // 
             this.favoriteTabPage.Location = new System.Drawing.Point(4, 22);
             this.favoriteTabPage.Name = "favoriteTabPage";
-            this.favoriteTabPage.Size = new System.Drawing.Size(237, 0);
+            this.favoriteTabPage.Size = new System.Drawing.Size(317, 0);
             this.favoriteTabPage.TabIndex = 4;
             this.favoriteTabPage.Text = "お気に入り";
             this.favoriteTabPage.UseVisualStyleBackColor = true;
@@ -210,7 +209,7 @@
             this.reserveTabPage.Location = new System.Drawing.Point(4, 22);
             this.reserveTabPage.Name = "reserveTabPage";
             this.reserveTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.reserveTabPage.Size = new System.Drawing.Size(237, 0);
+            this.reserveTabPage.Size = new System.Drawing.Size(317, 0);
             this.reserveTabPage.TabIndex = 5;
             this.reserveTabPage.Text = "予約";
             this.reserveTabPage.UseVisualStyleBackColor = true;
@@ -220,7 +219,7 @@
             this.recTabPage.Location = new System.Drawing.Point(4, 22);
             this.recTabPage.Name = "recTabPage";
             this.recTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.recTabPage.Size = new System.Drawing.Size(237, 0);
+            this.recTabPage.Size = new System.Drawing.Size(317, 0);
             this.recTabPage.TabIndex = 6;
             this.recTabPage.Text = "録画";
             this.recTabPage.UseVisualStyleBackColor = true;
@@ -237,6 +236,7 @@
             this.tunerListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
             this.tunerListView.FullRowSelect = true;
             this.tunerListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.tunerListView.HideSelection = true;
             this.tunerListView.Location = new System.Drawing.Point(0, 0);
             this.tunerListView.MultiSelect = false;
             this.tunerListView.Name = "tunerListView";
@@ -253,10 +253,11 @@
             // 
             // filterTextBox
             // 
-            this.filterTextBox.Location = new System.Drawing.Point(388, 8);
+            this.filterTextBox.Location = new System.Drawing.Point(440, 9);
             this.filterTextBox.Name = "filterTextBox";
             this.filterTextBox.Size = new System.Drawing.Size(128, 19);
             this.filterTextBox.TabIndex = 4;
+            this.filterTextBox.TextChanged += new System.EventHandler(this.filterTextBox_TextChanged);
             this.filterTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.filterTextBox_KeyDown);
             // 
             // resetButton
@@ -279,26 +280,6 @@
             this.closeButton.Text = "×";
             this.closeButton.UseVisualStyleBackColor = true;
             this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
-            // 
-            // filteringLabel
-            // 
-            this.filteringLabel.AutoSize = true;
-            this.filteringLabel.ForeColor = System.Drawing.Color.Red;
-            this.filteringLabel.Location = new System.Drawing.Point(337, 11);
-            this.filteringLabel.Name = "filteringLabel";
-            this.filteringLabel.Size = new System.Drawing.Size(50, 12);
-            this.filteringLabel.TabIndex = 7;
-            this.filteringLabel.Text = "フィルタ中";
-            // 
-            // filterButton
-            // 
-            this.filterButton.Location = new System.Drawing.Point(522, 7);
-            this.filterButton.Name = "filterButton";
-            this.filterButton.Size = new System.Drawing.Size(47, 23);
-            this.filterButton.TabIndex = 8;
-            this.filterButton.Text = "Filter";
-            this.filterButton.UseVisualStyleBackColor = true;
-            this.filterButton.Click += new System.EventHandler(this.filterButton_Click);
             // 
             // settingButton
             // 
@@ -360,8 +341,6 @@
             this.ClientSize = new System.Drawing.Size(746, 233);
             this.ControlBox = false;
             this.Controls.Add(this.splitContainer);
-            this.Controls.Add(this.filterButton);
-            this.Controls.Add(this.filteringLabel);
             this.Controls.Add(this.settingButton);
             this.Controls.Add(this.closeButton);
             this.Controls.Add(this.resetButton);
@@ -415,8 +394,6 @@
         private System.Windows.Forms.TextBox filterTextBox;
         private System.Windows.Forms.Button resetButton;
         private System.Windows.Forms.Button closeButton;
-        private System.Windows.Forms.Label filteringLabel;
-        private System.Windows.Forms.Button filterButton;
         private System.Windows.Forms.Button settingButton;
         private System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.ContextMenuStrip taskTrayContextMenuStrip;

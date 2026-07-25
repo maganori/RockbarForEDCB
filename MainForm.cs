@@ -80,9 +80,6 @@ namespace RockbarForEDCB
         private Color ngReserveMenuBackColor;
         private Color disabledReserveMenuBackColor;
 
-        // フィルタリング中かどうか
-        private bool isFiltering => filteringLabel != null && filteringLabel.Visible;
-
         // 各列の余白
         private int columnPadding = -1;
 
@@ -105,9 +102,9 @@ namespace RockbarForEDCB
             // フォーム表示完了イベント
             this.Shown += MainForm_Shown;
 
-            // フォーカスが外れたときの強調表示反転防止
-            tunerListView.HideSelection = true;
-            serviceListView.HideSelection = true;
+            //// フォーカスが外れたときの強調表示反転防止
+            //tunerListView.HideSelection = true;
+            //serviceListView.HideSelection = true;
 
             try
             {
@@ -159,9 +156,6 @@ namespace RockbarForEDCB
                     MessageBoxIcon.Information
                 );
             }
-
-            // フィルタ未適用状態
-            filteringLabel.Visible = false;
 
             // 初回表示
             RefreshList(true, true, true);
@@ -269,9 +263,7 @@ namespace RockbarForEDCB
             serviceTabControl.Font = tabFont;
             resetButton.Font = buttonFont;
             closeButton.Font = buttonFont;
-            filteringLabel.Font = labelFont;
             filterTextBox.Font = textBoxFont;
-            filterButton.Font = buttonFont;
             settingButton.Font = buttonFont;
 
             // 列の幅
@@ -1158,13 +1150,22 @@ namespace RockbarForEDCB
             var separators = new char[] { ' ', ' ' };
             var filterWords = filterText.Split(separators, StringSplitOptions.RemoveEmptyEntries);
 
+            // 検索対象側の文字列をあらかじめ全角→半角変換する
+            var normalizedTargets = targets
+                .Where(t => !string.IsNullOrEmpty(t))
+                .Select(t => ToHankaku(t))
+                .ToList();
+
             // すべてのキーワードが含まれているか検証する
             foreach (var word in filterWords)
             {
+                // 検索キーワードも半角に正規化
+                string normalizedWord = ToHankaku(word);
+
                 bool wordMatched = false;
-                foreach (var target in targets)
+                foreach (var target in normalizedTargets)
                 {
-                    if (!string.IsNullOrEmpty(target) && target.IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (target.IndexOf(normalizedWord, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         wordMatched = true;
                         break;
@@ -1182,16 +1183,36 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// 全角英数字および全角記号を半角に変換するヘルパーメソッド
+        /// </summary>
+        private static string ToHankaku(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return input;
+
+            char[] chars = input.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+            {
+                // 全角英数・記号（ASCIIの 0x21～0x7E に対応する Unicode 0xFF01～0xFF5E）
+                if (chars[i] >= '！' && chars[i] <= '～')
+                {
+                    chars[i] = (char)(chars[i] - 0xfee0);
+                }
+                // 全角スペース
+                else if (chars[i] == ' ')
+                {
+                    chars[i] = ' ';
+                }
+            }
+            return new string(chars);
+        }
+
+        /// <summary>
         /// フィルタのリセット処理
         /// フィルタ文字列をクリアしフィルタ結果をリセットする。
         /// </summary>
         private void ResetFilter()
         {
             filterTextBox.Clear();
-
-            // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
-            filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
-
             RefreshList(false, true, false);
         }
 
@@ -1504,13 +1525,9 @@ namespace RockbarForEDCB
         /// <param name="text">対象テキスト</param>
         private void filterWith(string text)
         {
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrWhiteSpace(text))
             {
                 return;
-            }
-            else if (isFiltering)
-            {
-                ResetFilter();
             }
 
             filterTextBox.Text = text;
@@ -2414,25 +2431,34 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// フィルタ入力欄キー押下処理
-        /// Enter入力時にフィルタを行う。
+        /// Esc入力時にフィルタをリセットする。
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
         private void filterTextBox_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
-            {
-                // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
-                filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
-
-                RefreshList(false, true, false);
-                e.SuppressKeyPress = true;
-            }
-            else if (e.KeyCode == Keys.Escape)
+            // Escキーが押されたらフィルタをリセットする
+            if (e.KeyCode == Keys.Escape)
             {
                 ResetFilter();
-                e.SuppressKeyPress = true;
+                e.SuppressKeyPress = true;  // ビープ音を抑止
             }
+        }
+
+        /// <summary>
+        /// フィルタテキストボックス入力処理
+        /// リアルタイムにフィルタを行う
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void filterTextBox_TextChanged(object sender, EventArgs e)
+        {
+            bool hasText = !string.IsNullOrWhiteSpace(filterTextBox.Text);
+
+            // テキストボックスに文字が入力されていたら色を変える（空ならデフォルト色）
+            filterTextBox.BackColor = hasText ? Color.Pink : SystemColors.Window;
+
+            RefreshList(false, true, false);
         }
 
         /// <summary>
@@ -2444,20 +2470,6 @@ namespace RockbarForEDCB
         private void resetButton_Click(object sender, EventArgs e)
         {
             ResetFilter();
-        }
-
-        /// <summary>
-        /// フィルタボタン押下処理
-        /// フィルタを行う。
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void filterButton_Click(object sender, EventArgs e)
-        {
-            // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
-            filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
-
-            RefreshList(false, true, false);
         }
 
         /// <summary>
