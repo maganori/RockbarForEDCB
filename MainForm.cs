@@ -32,6 +32,12 @@ namespace RockbarForEDCB
         private List<ReserveData> reserveDatas = new List<ReserveData>();
         private List<RecFileInfo> recFileInfos = new List<RecFileInfo>();
 
+        // CtrlCmdの結果のハッシュ
+        private string prevReserveHash = "";
+        private string prevServiceHash = "";
+        private string prevTunerHash = "";
+        private string prevRecHash = "";
+
         // サービス一覧(+番組)の保持用(TSID + SID → サービス情報(+番組))
         private Dictionary<string, EpgServiceEventInfo> serviceMap = new Dictionary<string, EpgServiceEventInfo>();
 
@@ -83,6 +89,10 @@ namespace RockbarForEDCB
         // 各列の幅
         private int maxServiceNameWidth = -1;
         private int maxTunerNameWidth = -1;
+
+        // 次回の画面更新が必要になる最早時刻
+        private DateTime nextServiceListRefreshTime = DateTime.MinValue;
+        private DateTime nextReserveListRefreshTime = DateTime.MinValue;
 
         /// <summary>
         /// コンストラクタ
@@ -304,39 +314,61 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="isChannelRefresh">対象チャンネルリストの切り替え要否</param>
         /// <param name="isTrasnmission">EpgTimerSrvと通信要否</param>
-        private void RefreshEvent(bool isChannelRefresh, bool isTrasnmission)
+        private void RefreshEvent(bool isForceRefreshRequested, bool isTrasnmission)
         {
+            DateTime now = DateTime.Now;
+
+            DateTime reserveRefreshTime = nextReserveListRefreshTime;
+            DateTime serviceRefreshTime = nextServiceListRefreshTime;
+
+            bool isReserveChanged = false;
+            bool isServiceChanged = false;
+            bool isTunerChanged = false;
+            bool isRecChanged = false;
+
             // EpgTimerSrvと通信する
             if (isTrasnmission && canConnect)
             {
-                GetEpgTimerData();
-
-                // チューナー一覧
-                BuildTunerList();
+                GetEpgTimerData(out isServiceChanged, out isTunerChanged, out isReserveChanged, out isRecChanged);
             }
-
+            
             // 現在アクティブなタブに応じて描画処理を分岐
             // 予約タブ
             if (serviceTabControl.SelectedTab == reserveTabPage)
             {
-                BuildReserveList();
+                if (isForceRefreshRequested || isReserveChanged || (now >= reserveRefreshTime))
+                { 
+                    BuildReserveList();
+                }
             }
             // 録画タブ
             else if (serviceTabControl.SelectedTab == recTabPage)
             {
-                BuildRecList();
+                if (isForceRefreshRequested || isRecChanged)
+                {
+                    BuildRecList();
+                }
             }
             // チャンネルタブ
             else
             {
-                BuildServiceList();
+                if (isForceRefreshRequested || isServiceChanged || isReserveChanged || (now >= serviceRefreshTime))
+                {
+                    BuildServiceList();
+                }
+            }
+
+            // チューナー一覧
+            if (isTunerChanged || (now >= reserveRefreshTime))
+            {
+                BuildTunerList();
             }
         }
 
         /// <summary>
         /// EpgTimerSrvから予約一覧・番組一覧・チューナー一覧・録画一覧を取得し、
         /// reserveMap / serviceMap / allEventMap / recMap を構築する。
-        private void GetEpgTimerData()
+        private void GetEpgTimerData(out bool isServiceChanged, out bool isTunerChanged, out bool isReserveChanged, out bool isRecChanged)
         {
             // 予約一覧取得
             reserveDatas.Clear();
@@ -350,6 +382,14 @@ namespace RockbarForEDCB
                 string evkey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
                 reserveMap[evkey] = reserveData;
             }
+
+            // 予約一覧の差分有無チェック
+            // 予約数、予約ID、重複状態、録画モード(全サービス録画、無効など)
+            string currentReserveHash = $"{reserveDatas.Count}_" +
+                string.Join(",", reserveDatas.Select(r => $"{r.ReserveID}_{r.OverlapMode}_{r.RecSetting.RecMode}"));
+            isReserveChanged = (currentReserveHash != prevReserveHash);
+            prevReserveHash = currentReserveHash;
+
 
             // 番組一覧取得
             serviceEvents.Clear();
@@ -372,9 +412,23 @@ namespace RockbarForEDCB
                 }
             }
 
+            // 番組一覧の差分有無チェック
+            // チャンネル数、前番組データ数
+            string currentServiceHash = $"{serviceEvents.Count}_{allEventMap.Count}";
+            isServiceChanged = (currentServiceHash != prevServiceHash);
+            prevServiceHash = currentServiceHash;
+
+
             // チューナーごとの予約一覧取得
             tunerReserveInfos.Clear();
             ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
+
+            // チューナーごとの予約一覧の差分有無チェック
+            // チューナー台数、各チューナーの識別ID、各チューナーに割り当てられている予約の件数
+            string currentTunerHash = $"{tunerReserveInfos.Count}_" +
+                string.Join(",", tunerReserveInfos.Select(t => $"{t.tunerID}_{t.reserveList.Count}"));
+            isTunerChanged = (currentTunerHash != prevTunerHash);
+            prevTunerHash = currentTunerHash;
 
             // 録画済み情報の一覧取得
             if (serviceTabControl.SelectedTab == recTabPage)
@@ -386,6 +440,13 @@ namespace RockbarForEDCB
                 recFileInfos.Clear();
                 recMap.Clear();
             }
+
+            // 録画済み情報の一覧の差分有無チェック
+            // 録画済みファイルの件数、各録画済みファイルの固有ID
+            string currentRecHash = $"{recFileInfos.Count}_" +
+                string.Join(",", recFileInfos.Select(r => r.ID));
+            isRecChanged = (currentRecHash != prevRecHash);
+            prevRecHash = currentRecHash;
         }
 
         /// <summary>
@@ -407,7 +468,7 @@ namespace RockbarForEDCB
                     DateTime endTime = startTime.AddSeconds(reserveData.DurationSecond);
 
                     // 過去の予約（すでに終了しているもの）は表示しない
-                    if (endTime < DateTime.Now)
+                    if (endTime <= DateTime.Now)
                     {
                         continue;
                     }
@@ -665,6 +726,9 @@ namespace RockbarForEDCB
         /// </summary>
         private void BuildServiceList()
         {
+            DateTime now = DateTime.Now;
+            DateTime minNextStartTime = DateTime.MaxValue;
+
             // チラつきを抑えるため描画を停止
             serviceListView.BeginUpdate();
 
@@ -768,8 +832,28 @@ namespace RockbarForEDCB
                     }
 
                     serviceListView.Items.Add(item);
+
+                    // 次に始まる最初の番組の「開始時刻」を探す
+                    if (matchedService?.eventList != null)
+                    {
+                        var nextEv = matchedService.eventList
+                            .Where(x => x.start_time > now)
+                            .OrderBy(x => x.start_time)
+                            .FirstOrDefault();
+
+                        if (nextEv != null && nextEv.start_time < minNextStartTime)
+                        {
+                            minNextStartTime = nextEv.start_time;
+                        }
+                    }
                 }
 
+                // --- 次回更新時刻の設定 ---
+                if (minNextStartTime != DateTime.MaxValue)
+                {
+                    this.nextServiceListRefreshTime = minNextStartTime; 
+                }
+                
                 // --- 列幅の設定 ---
                 // 列0: チャンネル名の最長幅
                 int col0Width = maxServiceNameWidth + columnPadding;
@@ -805,6 +889,10 @@ namespace RockbarForEDCB
             // チラつきを抑えるため描画を停止
             tunerListView.BeginUpdate();
 
+            // 次回更新時間判定用：現在時刻以降で最も近いイベント時刻（開始 or 終了）を保持
+            DateTime now = DateTime.Now;
+            DateTime nearestEventTime = DateTime.MaxValue;
+
             try
             {
                 // 一覧を全件クリア
@@ -837,6 +925,7 @@ namespace RockbarForEDCB
                     List<ReserveData> reserves = reserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID));
 
                     var nearestReserve = reserves
+                        .Where(x => x.StartTime.AddSeconds(x.DurationSecond) > now)
                         .OrderBy(x => x.StartTime.AddSeconds(x.DurationSecond)) // 終了時刻が近い順
                         .FirstOrDefault();
 
@@ -858,6 +947,18 @@ namespace RockbarForEDCB
                         dateTimeText = $"{start:MM/dd(ddd) HH:mm}-{end:HH:mm}";
                         serviceName = nearestReserve.StationName;
                         title = nearestReserve.Title;
+
+                        // --- 次回更新時刻の候補判定 ---
+                        // 開始時刻が現在以降かつ、これまでの最小値より近ければ更新
+                        if (start >= now && start < nearestEventTime)
+                        {
+                            nearestEventTime = start;
+                        }
+                        // 終了時刻が現在以降かつ、これまでの最小値より近ければ更新
+                        if (end >= now && end < nearestEventTime)
+                        {
+                            nearestEventTime = end;
+                        }
                     }
 
                     // --- ListViewItem の生成 ---
@@ -892,6 +993,13 @@ namespace RockbarForEDCB
                     }
 
                     tunerListView.Items.Add(item);
+                }
+
+                // --- 次回更新時間の設定 ---
+                // 現在以降のイベント（開始 or 終了）を設定
+                if (nearestEventTime != DateTime.MaxValue)
+                {
+                    this.nextReserveListRefreshTime = nearestEventTime;
                 }
 
                 // --- 列幅の設定（設定ファイルの最長文字数に基づく計算） ---
@@ -1059,7 +1167,7 @@ namespace RockbarForEDCB
             // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
             filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
 
-            RefreshEvent(false, false);
+            RefreshEvent(true, false);
         }
 
         /// <summary>
@@ -2267,7 +2375,7 @@ namespace RockbarForEDCB
                 // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
                 filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
 
-                RefreshEvent(false, false);
+                RefreshEvent(true, false);
                 e.SuppressKeyPress = true;
             }
             else if (e.KeyCode == Keys.Escape)
@@ -2299,7 +2407,7 @@ namespace RockbarForEDCB
             // フィルタテキストが存在する場合はラベルを表示してフィルタ中であることを通知する
             filteringLabel.Visible = !string.IsNullOrWhiteSpace(filterTextBox.Text);
 
-            RefreshEvent(false, false);
+            RefreshEvent(true, false);
         }
 
         /// <summary>
