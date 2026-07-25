@@ -77,8 +77,12 @@ namespace RockbarForEDCB
         // フィルタリング中かどうか
         private bool isFiltering => filteringLabel != null && filteringLabel.Visible;
 
-        // 各列のの余白
-        private const int ColumnPadding = 12;
+        // 各列の余白
+        private int columnPadding = -1;
+
+        // 各列の幅
+        private int maxServiceNameWidth = -1;
+        private int maxTunerNameWidth = -1;
 
         /// <summary>
         /// コンストラクタ
@@ -87,6 +91,9 @@ namespace RockbarForEDCB
         public MainForm()
         {
             InitializeComponent();
+
+            // フォーム表示完了イベント
+            this.Shown += MainForm_Shown;
 
             // フォーカスが外れたときの強調表示反転防止
             tunerListView.HideSelection = true;
@@ -111,11 +118,11 @@ namespace RockbarForEDCB
                 splitContainer.SplitterDistance = rockbarSetting.SplitterDistance;
             }
 
-            // 設定反映
-            applySetting();
-
             allServiceList = RockbarUtility.GetAllServicesFromSetting();
             favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
+
+            // 設定反映
+            applySetting();
 
             if (rockbarSetting.UseTcpIp) {
                 // TCP/IP通信にする
@@ -256,6 +263,11 @@ namespace RockbarForEDCB
             filterTextBox.Font = textBoxFont;
             filterButton.Font = buttonFont;
             settingButton.Font = buttonFont;
+
+            // 列の幅
+            columnPadding = GetColumnPadding(font);
+            maxServiceNameWidth = GetMaxServiceNameWidth(font);
+            maxTunerNameWidth = GetMaxTunerNameWidth(font);
 
             // 色
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
@@ -488,14 +500,14 @@ namespace RockbarForEDCB
                 }
 
                 // --- 列幅の設定（設定ファイルの最長文字数に基づく計算） ---
-                // 列0: チューナー名の最長幅（設定ファイルから算出）
-                int col0Width = GetMaxTunerNameWidth(serviceListView.Font) + ColumnPadding;
+                // 列0: チューナー名の最長幅
+                int col0Width = maxTunerNameWidth + columnPadding;
 
                 // 列1: 日時表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00/00(日) 00:00-00:00", serviceListView.Font).Width + ColumnPadding;
+                int col1Width = TextRenderer.MeasureText("00/00(日) 00:00-00:00", serviceListView.Font).Width + columnPadding;
 
-                // 列2: チャンネル名の最長幅（設定ファイルの allServiceList から算出）
-                int col2Width = GetMaxServiceNameWidth(serviceListView.Font) + ColumnPadding;
+                // 列2: チャンネル名の最長幅
+                int col2Width = maxServiceNameWidth + columnPadding;
 
                 serviceListView.Columns[0].Width = col0Width;
                 serviceListView.Columns[1].Width = col1Width;
@@ -510,6 +522,8 @@ namespace RockbarForEDCB
                 // 描画を再開
                 serviceListView.EndUpdate();
             }
+            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
+            adjustListViewColumns(serviceListView);
         }
 
         /// <summary>
@@ -620,14 +634,14 @@ namespace RockbarForEDCB
                 }
 
                 // --- 列幅の設定 ---
-                // 列0: 録画状態（"ドロップ", "スクランブル" 等の短文固定幅）
-                int col0Width = TextRenderer.MeasureText("◎", serviceListView.Font).Width + ColumnPadding;
+                // 列0: 録画状態
+                int col0Width = TextRenderer.MeasureText("◎", serviceListView.Font).Width + columnPadding;
 
                 // 列1: 日時表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00/00/00(日) 00:00-00:00", serviceListView.Font).Width + ColumnPadding;
+                int col1Width = TextRenderer.MeasureText("00/00/00(日) 00:00-00:00", serviceListView.Font).Width + columnPadding;
 
-                // 列2: チャンネル名の最長幅（設定ファイルの allServiceList から算出）
-                int col2Width = GetMaxServiceNameWidth(serviceListView.Font) + ColumnPadding;
+                // 列2: チャンネル名の最長幅
+                int col2Width = maxServiceNameWidth + columnPadding;
 
                 serviceListView.Columns[0].Width = col0Width;
                 serviceListView.Columns[1].Width = col1Width;
@@ -642,6 +656,8 @@ namespace RockbarForEDCB
                 // 描画を再開
                 serviceListView.EndUpdate();
             }
+            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
+            adjustListViewColumns(serviceListView);
         }
 
         /// <summary>
@@ -755,14 +771,14 @@ namespace RockbarForEDCB
                 }
 
                 // --- 列幅の設定 ---
-                // 列0: チャンネル名の最長幅（設定ファイルの allServiceList から算出）
-                int col0Width = GetMaxServiceNameWidth(serviceListView.Font) + ColumnPadding;
+                // 列0: チャンネル名の最長幅
+                int col0Width = maxServiceNameWidth + columnPadding;
 
                 // 列1: 時間表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00:00-00:00", serviceListView.Font).Width + ColumnPadding;
+                int col1Width = TextRenderer.MeasureText("00:00-00:00", serviceListView.Font).Width + columnPadding;
 
-                // 列2: 予約状態（"ドロップ", "スクランブル" 等の短文固定幅）
-                int col2Width = TextRenderer.MeasureText("◎", serviceListView.Font).Width + ColumnPadding;
+                // 列2: 予約状態
+                int col2Width = TextRenderer.MeasureText("◎", serviceListView.Font).Width + columnPadding;
 
                 serviceListView.Columns[0].Width = col0Width;
                 serviceListView.Columns[1].Width = col1Width;
@@ -777,6 +793,8 @@ namespace RockbarForEDCB
                 // 描画を再開
                 serviceListView.EndUpdate();
             }
+            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
+            adjustListViewColumns(serviceListView);
         }
 
         /// <summary>
@@ -877,14 +895,14 @@ namespace RockbarForEDCB
                 }
 
                 // --- 列幅の設定（設定ファイルの最長文字数に基づく計算） ---
-                // 列0: チューナー名の最長幅（設定ファイルから算出）
-                int col0Width = GetMaxTunerNameWidth(tunerListView.Font) + ColumnPadding;
-
+                // 列0: チューナー名の最長幅
+                int col0Width = maxTunerNameWidth + columnPadding;
+                
                 // 列1: 日時表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00/00(水) 00:00-00:00", tunerListView.Font).Width + ColumnPadding;
+                int col1Width = TextRenderer.MeasureText("00/00(水) 00:00-00:00", tunerListView.Font).Width + columnPadding;
 
-                // 列2: チャンネル名の最長幅（設定ファイルの allServiceList から算出）
-                int col2Width = GetMaxServiceNameWidth(tunerListView.Font) + ColumnPadding;
+                // 列2: チャンネル名の最長幅
+                int col2Width = maxServiceNameWidth + columnPadding;
 
                 tunerListView.Columns[0].Width = col0Width;
                 tunerListView.Columns[1].Width = col1Width;
@@ -899,6 +917,19 @@ namespace RockbarForEDCB
                 // 描画を再開
                 tunerListView.EndUpdate();
             }
+            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
+            adjustListViewColumns(tunerListView);
+        }
+
+        /// <summary>
+        /// フォントに応じた適切な余白（パディング）幅を取得する
+        /// </summary>
+        private int GetColumnPadding(Font font)
+        {
+            // "M"（比較的大幅な文字）の幅を基準に余白を計算
+            // フォントサイズやDPIが大きくなれば、この幅も自動的に大きくなる
+            int charWidth = TextRenderer.MeasureText("M", font).Width;
+            return charWidth*8/14;
         }
 
         /// <summary>
@@ -906,20 +937,30 @@ namespace RockbarForEDCB
         /// </summary>
         private int GetMaxTunerNameWidth(Font font)
         {
-            string longestText = "0"; // デフォルト・最小長
+            int maxWidth = 0;
 
             if (rockbarSetting?.BonDriverNameToTunerName != null)
             {
                 foreach (var name in rockbarSetting.BonDriverNameToTunerName.Values)
                 {
-                    if (!string.IsNullOrEmpty(name) && name.Length > longestText.Length)
+                    if (string.IsNullOrEmpty(name))
+                        continue;
+
+                    int width = TextRenderer.MeasureText(name, font).Width;
+                    if (width > maxWidth)
                     {
-                        longestText = name;
+                        maxWidth = width;
                     }
                 }
             }
 
-            return TextRenderer.MeasureText(longestText, font).Width;
+            if (maxWidth == 0)
+            {
+                maxWidth = TextRenderer.MeasureText("BS/CS1", font).Width;
+            }
+
+            maxTunerNameWidth = maxWidth;
+            return maxTunerNameWidth;
         }
 
         /// <summary>
@@ -927,20 +968,30 @@ namespace RockbarForEDCB
         /// </summary>
         private int GetMaxServiceNameWidth(Font font)
         {
-            string longestText = "0"; // デフォルト・最小長
+            int maxWidth = 0;
 
             if (allServiceList != null)
             {
                 foreach (var service in allServiceList)
                 {
-                    if (!string.IsNullOrEmpty(service.Name) && service.Name.Length > longestText.Length)
+                    if (string.IsNullOrEmpty(service.Name))
+                        continue;
+                    
+                    int width = TextRenderer.MeasureText(service.Name, font).Width;
+                    if (width > maxWidth)
                     {
-                        longestText = service.Name;
+                        maxWidth = width;
                     }
                 }
             }
 
-            return TextRenderer.MeasureText(longestText, font).Width;
+            if (maxWidth == 0)
+            {
+                maxWidth = TextRenderer.MeasureText("ＮＨＫ総合１・東京", font).Width;
+            }
+
+            maxServiceNameWidth = maxWidth;
+            return maxServiceNameWidth;
         }
 
         /// <summary>
@@ -1326,7 +1377,7 @@ namespace RockbarForEDCB
         private void adjustListViewColumns(ListView listView)
         {
             // 1列目を内容で広げる
-            listView.AutoResizeColumn(0, ColumnHeaderAutoResizeStyle.ColumnContent);
+            //listView.AutoResizeColumn(0, ColumnHeaderAutoResizeStyle.ColumnContent);
 
             // 1列目・最終列以外は固定幅
             int columnWidth = 0;
@@ -2355,6 +2406,16 @@ namespace RockbarForEDCB
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
         private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            adjustListViewColumns(serviceListView);
+            adjustListViewColumns(tunerListView);
+        }
+
+        /// <summary>
+        /// フォーム初回表示完了時処理
+        /// 実際の画面描画サイズ確定後にリストビューの列幅を再調整して水平スクロールバーを防ぐ。
+        /// </summary>
+        private void MainForm_Shown(object sender, EventArgs e)
         {
             adjustListViewColumns(serviceListView);
             adjustListViewColumns(tunerListView);
