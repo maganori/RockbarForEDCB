@@ -473,8 +473,16 @@ namespace RockbarForEDCB
                         continue;
                     }
 
+                    // --- チャンネル名の取得 ---
+                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                    string key = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID);
+                    Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                    string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                        ? service.Name
+                        : reserveData.StationName;
+
                     // フィルタ条件チェック
-                    if (!IsMatchFilter(reserveData.StationName, reserveData.Title))
+                    if (!IsMatchFilter(serviceName, reserveData.Title))
                     {
                         continue;
                     }
@@ -519,7 +527,6 @@ namespace RockbarForEDCB
                     }
 
                     string dateTimeText = $"{startTime:MM/dd(ddd) HH:mm}-{endTime:HH:mm}";
-                    string serviceName = reserveData.StationName;
                     string title = reserveData.Title;
 
                     // --- UI要素（ListViewItem）の生成 ---
@@ -629,8 +636,16 @@ namespace RockbarForEDCB
                     DateTime startTime = recFile.StartTime;
                     DateTime endTime = startTime.AddSeconds(recFile.DurationSecond);
 
+                    // --- チャンネル名の取得 ---
+                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
+                    string key = RockbarUtility.GetKey(recFile.TransportStreamID, recFile.ServiceID);
+                    Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                    string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                        ? service.Name
+                        : recFile.ServiceName;
+
                     // フィルタ条件チェック
-                    if (!IsMatchFilter(recFile.ServiceName, recFile.Title))
+                    if (!IsMatchFilter(serviceName, recFile.Title))
                     {
                         continue;
                     }
@@ -639,7 +654,6 @@ namespace RockbarForEDCB
                     RecEndStatus recEndStatus = (RecEndStatus)recFile.RecStatus;
                     string statusText = RockbarUtility.GetRecEndStatusString(recEndStatus);
                     string dateTimeText = $"{startTime:yy/MM/dd(ddd) HH:mm}-{endTime:HH:mm}";
-                    string serviceName = recFile.ServiceName;
                     string title = recFile.Title;
 
                     // --- UI要素（ListViewItem）の生成 ---
@@ -944,8 +958,15 @@ namespace RockbarForEDCB
                         // 録画中判定
                         isRecording = start <= DateTime.Now && end >= DateTime.Now;
 
+                        // --- チャンネル名の取得 ---
+                        // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                        string key = RockbarUtility.GetKey(nearestReserve.TransportStreamID, nearestReserve.ServiceID);
+                        Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                        serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                            ? service.Name
+                            : nearestReserve.StationName;
+
                         dateTimeText = $"{start:MM/dd(ddd) HH:mm}-{end:HH:mm}";
-                        serviceName = nearestReserve.StationName;
                         title = nearestReserve.Title;
 
                         // --- 次回更新時刻の候補判定 ---
