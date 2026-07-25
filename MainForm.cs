@@ -534,7 +534,7 @@ namespace RockbarForEDCB
                     ListViewItem item = new ListViewItem(rowData);
 
                     item.Name = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
-                    item.ToolTipText = $"{startTime:yyyy/MM/dd(ddd) HH:mm}-{endTime:HH:mm} {title}";
+                    item.ToolTipText = $"{startTime:yyyy/MM/dd(ddd) HH:mm}～{endTime:HH:mm} {title}";
                     item.ForeColor = this.foreColor;
 
                     // --- 背景色の設定 ---
@@ -945,6 +945,7 @@ namespace RockbarForEDCB
 
                     // --- 表示文字列の作成 ---
                     string dateTimeText = "";
+                    string toolTipDateTimeText = "";
                     string serviceName = "";
                     string title = "";
                     bool isRecording = false;
@@ -967,6 +968,7 @@ namespace RockbarForEDCB
                             : nearestReserve.StationName;
 
                         dateTimeText = $"{start:MM/dd(ddd) HH:mm}-{end:HH:mm}";
+                        toolTipDateTimeText = $"{start:MM/dd(ddd) HH:mm}～{end:HH:mm}";
                         title = nearestReserve.Title;
 
                         // --- 次回更新時刻の候補判定 ---
@@ -987,7 +989,7 @@ namespace RockbarForEDCB
                     ListViewItem item = new ListViewItem(rowData)
                     {
                         Name = tuner.tunerID.ToString(),
-                        ToolTipText = $"{dateTimeText} {serviceName} {title}",
+                        ToolTipText = $"{toolTipDateTimeText} {serviceName} {title}",
                         ForeColor = this.foreColor
                     };
 
@@ -1282,14 +1284,22 @@ namespace RockbarForEDCB
 
             if (isTuner)
             {
+                // --- チャンネル名の取得 ---
+                // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                string key = RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID);
+                Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                    ? service.Name
+                    : reserve.StationName;
+
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)
-                item.Text = reserve.StartTime.ToString("MM/dd HH:mm") + "～" + reserve.StartTime.AddSeconds(reserve.DurationSecond).ToString("HH:mm") + "  " +
-                    reserveString + "    " + reserve.StationName + "    " + reserve.Title;
+                item.Text = reserve.StartTime.ToString("MM/dd(ddd) HH:mm") + "～" + reserve.StartTime.AddSeconds(reserve.DurationSecond).ToString("HH:mm") + "  " +
+                    reserveString + "    " + serviceName + "    " + reserve.Title;
             }
             else
             {
                 // サービスから開いた場合は番組情報を表示(必ず番組情報あり)
-                item.Text = ev.start_time.ToString("MM/dd HH:mm") + "～" + ev.start_time.AddSeconds(ev.durationSec).ToString("HH:mm") + "  " +
+                item.Text = ev.start_time.ToString("MM/dd(ddd) HH:mm") + "～" + ev.start_time.AddSeconds(ev.durationSec).ToString("HH:mm") + "  " +
                     reserveString + "  " + ev.ShortInfo?.event_name;
             }
 
@@ -1343,7 +1353,7 @@ namespace RockbarForEDCB
         {
             List<List<RecInfoDetailText>> detailTexts = new List<List<RecInfoDetailText>>();
             {
-                var text = $"{recFile.StartTime.ToString("yyyy/MM/dd(ddd) HH:mm")}-{recFile.StartTime.AddSeconds(recFile.DurationSecond).ToString("HH:mm")}";
+                var text = $"{recFile.StartTime.ToString("yyyy/MM/dd(ddd) HH:mm")}～{recFile.StartTime.AddSeconds(recFile.DurationSecond).ToString("HH:mm")}";
                 var dateTimes = new List<RecInfoDetailText>()
                     {
                         new RecInfoDetailText { Value = text, CopyText = text },
@@ -1351,9 +1361,17 @@ namespace RockbarForEDCB
                 detailTexts.Add(dateTimes);
             }
 
+            // --- チャンネル名の取得 ---
+            // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
+            string key = RockbarUtility.GetKey(recFile.TransportStreamID, recFile.ServiceID);
+            Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+            string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                ? service.Name
+                : recFile.ServiceName;
+
             var services = new List<RecInfoDetailText>()
                 {
-                    new RecInfoDetailText { Value = recFile.ServiceName, CopyText = recFile.ServiceName },
+                    new RecInfoDetailText { Value = serviceName, CopyText = serviceName },
                     new RecInfoDetailText { Value = recFile.Title, CopyText = recFile.Title },
                 };
             detailTexts.Add(services);
@@ -1808,7 +1826,7 @@ namespace RockbarForEDCB
                         listContextMenuStrip.Items.Add(new ToolStripSeparator());
                     }
 
-                    var dateTime = $"{ev.start_time.ToString("yyyy/MM/dd(ddd) HH:mm")}-{ev.start_time.AddSeconds(ev.durationSec).ToString("HH:mm")}";
+                    var dateTime = $"{ev.start_time.ToString("yyyy/MM/dd(ddd) HH:mm")}～{ev.start_time.AddSeconds(ev.durationSec).ToString("HH:mm")}";
                     var dateItem = listContextMenuStrip.Items.Add(dateTime);
                     dateItem.Click += (s2, e2) => copyText(dateTime);
                     listContextMenuStrip.Items.Add(new ToolStripSeparator());
@@ -1819,15 +1837,24 @@ namespace RockbarForEDCB
                         const string copyCommandText = "テキストをコピー";
                         const string copyCommandTooltipText = "クリックでテキストをコピー";
                         const string filterCommandText = "フィルタリング";
+
+                        // --- チャンネル名の取得 ---
+                        // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                        string key = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID);
+                        Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                        string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                            ? service.Name
+                            : reserveData.StationName;
+
                         // サービス名を追加
-                        if (! string.IsNullOrEmpty(reserveData.StationName))
+                        if (! string.IsNullOrEmpty(serviceName))
                         {
-                            var item = new ToolStripMenuItem(reserveData.StationName);
+                            var item = new ToolStripMenuItem(serviceName);
                             listContextMenuStrip.Items.Add(item);
                             var subItem = item.DropDownItems.Add(copyCommandText);
-                            subItem.Click += (s2, e2) => copyText(reserveData.StationName);
+                            subItem.Click += (s2, e2) => copyText(serviceName);
                             subItem = item.DropDownItems.Add(filterCommandText);
-                            subItem.Click += (s2, e2) => filterWith(reserveData.StationName);
+                            subItem.Click += (s2, e2) => filterWith(serviceName);
                         }
                         // 予約番組名を追加
                         if (! string.IsNullOrEmpty(reserveData.Title))
