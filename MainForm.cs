@@ -102,9 +102,9 @@ namespace RockbarForEDCB
             // フォーム表示完了イベント
             this.Shown += MainForm_Shown;
 
-            //// フォーカスが外れたときの強調表示反転防止
-            //tunerListView.HideSelection = true;
-            //serviceListView.HideSelection = true;
+            // フォーカスが外れたときの強調表示反転防止
+            tunerListView.HideSelection = true;
+            serviceListView.HideSelection = true;
 
             try
             {
@@ -343,6 +343,14 @@ namespace RockbarForEDCB
                     BuildRecList();
                 }
             }
+            else if (serviceTabControl.SelectedTab == newProgramTabPage)
+            {
+                if (forceServiceListRefresh || isRecChanged)
+                {
+                    BuildNewProgramList();
+                }
+            }
+            
             // チャンネルタブ
             else
             {
@@ -723,6 +731,137 @@ namespace RockbarForEDCB
             finally
             {
                 // 描画を再開
+                serviceListView.EndUpdate();
+            }
+            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
+            adjustListViewColumns(serviceListView);
+        }
+
+        private void BuildNewProgramList()
+        {
+            DateTime now = DateTime.Now;
+
+            // チラつきを抑えるため描画を停止
+            serviceListView.BeginUpdate();
+
+            try
+            {
+                // 一覧を全件クリア
+                serviceListView.Items.Clear();
+
+                if (serviceEvents == null) return;
+
+                // --- 全サービスの番組リストから「[新]」が含まれる番組を抽出し、開始時間順に平坦化（Flatten）してソート ---
+                var newPrograms = serviceEvents
+                    .Where(se => se != null && se.eventList != null)
+                    .SelectMany(se => se.eventList, (se, ev) => new { ServiceEvent = se, Event = ev })
+                    .Where(x => x.Event.ShortInfo != null &&
+                                !string.IsNullOrEmpty(x.Event.ShortInfo.event_name) &&
+                                (x.Event.ShortInfo.event_name.Contains("[新]") || x.Event.ShortInfo.event_name.Contains("［新］")))
+                    // ※ 終了していない番組だけに絞り込む場合は、下行のコメントアウトを解除
+                    // .Where(x => x.Event.start_time.AddSeconds(x.Event.durationSec) >= now)
+                    .OrderBy(x => x.Event.start_time)
+                    .ToList();
+
+                // --- 抽出結果を ListViewItem として登録 ---
+                foreach (var itemData in newPrograms)
+                {
+                    var matchedService = itemData.ServiceEvent;
+                    var ev = itemData.Event;
+
+                    // サービス（チャンネル）の決定
+                    string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
+                    Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                    if (service == null)
+                    {
+                        continue; // 登録チャンネル一覧にない場合は処理を飛ばす
+                    }
+
+                    // サービス名の取得
+                    string serviceName = !string.IsNullOrWhiteSpace(service?.Name)
+                        ? service.Name
+                        : (matchedService?.serviceInfo != null ? matchedService.serviceInfo.service_name : key);
+
+                    // 番組タイトルの取得
+                    string eventTitle = ev.ShortInfo?.event_name ?? "";
+
+                    // フィルタ条件チェック（既存の検索テキストボックス用）
+                    if (!IsMatchFilter(serviceName, eventTitle))
+                    {
+                        continue;
+                    }
+
+                    // 時刻テキストの設定（未来の番組が多いため日付曜日付き）
+                    string timeText = $"{ev.start_time:MM/dd(ddd) HH:mm}-{ev.start_time.AddSeconds(ev.durationSec):HH:mm}";
+
+                    // 予約状態の設定
+                    string reserveString = "";
+                    ReserveStatus reserveStatus = ReserveStatus.NONE;
+                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+
+                    if (reserveMap.TryGetValue(eventKey, out ReserveData reserveData))
+                    {
+                        reserveStatus = ReserveStatus.OK;
+                        if (reserveData.RecSetting.IsNoRec()) reserveStatus = ReserveStatus.DISABLED;
+                        else if (reserveData.OverlapMode == 1) reserveStatus = ReserveStatus.PARTIAL;
+                        else if (reserveData.OverlapMode == 2) reserveStatus = ReserveStatus.NG;
+                    }
+                    reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
+
+                    // UI要素（ListViewItem）の生成
+                    string[] rowData = { reserveString, timeText, serviceName, eventTitle };
+                    ListViewItem item = new ListViewItem(rowData)
+                    {
+                        Name = key,
+                        Tag = ev,
+                        ToolTipText = ev.ShortInfo?.text_char ?? eventTitle,
+                        ForeColor = this.foreColor
+                    };
+
+                    // 予約状況に応じた背景色の変更
+                    switch (reserveStatus)
+                    {
+                        case ReserveStatus.NONE:
+                            item.BackColor = this.listBackColor;
+                            break;
+                        case ReserveStatus.OK:
+                            item.BackColor = this.okReserveListBackColor;
+                            break;
+                        case ReserveStatus.PARTIAL:
+                            item.BackColor = this.partialReserveListBackColor;
+                            break;
+                        case ReserveStatus.NG:
+                            item.BackColor = this.ngReserveListBackColor;
+                            break;
+                        case ReserveStatus.DISABLED:
+                            item.BackColor = this.disabledReserveListBackColor;
+                            break;
+                    }
+
+                    serviceListView.Items.Add(item);
+                }
+                // --- 列幅の設定 ---
+                // 列0: 予約状態
+                int col0Width = TextRenderer.MeasureText("◎", serviceListView.Font).Width + columnPadding;
+
+                // 列1: 時間表記の固定幅
+                int col1Width = TextRenderer.MeasureText("MM/dd(ddd) 00:00-00:00", serviceListView.Font).Width + columnPadding;
+
+                // 列2: チャンネル名の最長幅
+                int col2Width = maxServiceNameWidth + columnPadding;
+
+                serviceListView.Columns[0].Width = col0Width;
+                serviceListView.Columns[1].Width = col1Width;
+                serviceListView.Columns[2].Width = col2Width;
+
+                // 列3: 番組名（残りの幅をすべて充当）
+                int remainingWidth = serviceListView.ClientSize.Width - (col0Width + col1Width + col2Width);
+                serviceListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
+
+            }
+            finally
+            {
+                // 描画再開
                 serviceListView.EndUpdate();
             }
             // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
@@ -1663,7 +1802,11 @@ namespace RockbarForEDCB
                 recListView_MouseClick(sender, e);
                 return;
             }
-
+            else if (serviceTabControl.SelectedTab == newProgramTabPage)
+            {
+                newProgramListView_MouseClick(sender, e);
+                return;
+            }
             // 右クリック
             // 現在の番組を含め、今後の番組を30件までコンテキストメニューで表示(TVRockの仕様踏襲)
             if (e.Button == MouseButtons.Right)
@@ -1744,7 +1887,11 @@ namespace RockbarForEDCB
                 recListView_MouseDoubleClick(sender, e);
                 return;
             }
-
+            else if (serviceTabControl.SelectedTab == newProgramTabPage)
+            {
+                newProgramListView_MouseDoubleClick(sender, e);
+                return;
+            }
             // TVTest使用時のみ
             if (! rockbarSetting.UseDoubleClickTvtest)
             {
@@ -2179,6 +2326,164 @@ namespace RockbarForEDCB
                 {
                     // TvtPlay
                     startTvtPlay(recFile.RecFilePath);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 録画済み情報マウスクリック処理
+        /// 右クリック時、対象の番組情報をコンテキストメニューに表示。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void newProgramListView_MouseClick(object sender, MouseEventArgs e)
+        {
+            var selectedCount = serviceListView.SelectedItems.Count;
+            if (selectedCount == 0)
+            {
+                return;
+            }
+
+            // 右クリック以外は処理しない
+            // 対象の番組情報をコンテキストメニューで表示
+            if (e.Button != MouseButtons.Right) return;
+
+            // クリックされた位置にあるアイテム（番組）を取得
+            var hitTest = serviceListView.HitTest(e.Location);
+            var selectedItem = hitTest.Item;
+
+            if (selectedItem == null) return;
+
+            // Tagに格納されているものがEpgEventInfoならevへ代入
+            if (selectedItem.Tag is EpgEventInfo ev)
+            {
+                listContextMenuStrip.Items.Clear();
+
+                // Web番組詳細リンク (オプション有効時)
+                if (rockbarSetting.UseWebLink)
+                {
+                    var item = listContextMenuStrip.Items.Add(">> Web番組詳細を開く");
+                    item.Click += (s2, e2) => accessWebUrl(ev);
+                    listContextMenuStrip.Items.Add(new ToolStripSeparator());
+                }
+
+                // 予約データの検索し、有無結果を格納
+                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                var hasData = reserveMap.TryGetValue(eventKey, out var reserveData);
+
+                // 録画の有効・無効切り替え (予約データが存在する場合)
+                if (hasData)
+                {
+                    var item = listContextMenuStrip.Items.Add(reserveData.RecSetting.IsNoRec() ? "録画を有効にする" : "録画を無効にする");
+                    item.Click += (s2, e2) => ToggleRecMode(reserveData);
+                    listContextMenuStrip.Items.Add(new ToolStripSeparator());
+                }
+
+                // 放送日時
+                var dateTime = $"{ev.start_time:yyyy/MM/dd(ddd) HH:mm}～{ev.start_time.AddSeconds(ev.durationSec):HH:mm}";
+                var dateItem = listContextMenuStrip.Items.Add(dateTime);
+                dateItem.Click += (s2, e2) => copyText(dateTime);
+                dateItem.ToolTipText = "クリックで日時をコピー";
+
+                // チャンネル名
+                // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
+                Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                EpgServiceEventInfo matchedService = null;
+                serviceMap.TryGetValue(key, out matchedService);
+                string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
+                    ? service.Name
+                    : (matchedService != null ? matchedService.serviceInfo.service_name : key);
+
+                if (!string.IsNullOrEmpty(serviceName))
+                {
+                    var serviceItem = listContextMenuStrip.Items.Add(serviceName);
+                    serviceItem.Click += (s2, e2) => copyText(serviceName);
+                    serviceItem.ToolTipText = "クリックでチャンネル名をコピー";
+                }
+
+                // 番組名
+                string eventTitle = ev.ShortInfo?.event_name;
+                if (!string.IsNullOrEmpty(eventTitle))
+                {
+                    var titleItem = listContextMenuStrip.Items.Add(eventTitle);
+                    titleItem.Click += (s2, e2) => copyText(eventTitle);
+                    titleItem.ToolTipText = "クリックで番組名をコピー";
+                }
+
+                listContextMenuStrip.Items.Add(new ToolStripSeparator());
+
+                // 番組基本情報 (説明文)
+                var shortStrs = RockbarUtility.BreakString(ev.ShortInfo?.text_char);
+                if (shortStrs != null)
+                {
+                    foreach (string str in shortStrs)
+                    {
+                        var item = listContextMenuStrip.Items.Add(str);
+                        item.Enabled = false; // テキスト表示用（クリック不可）
+                    }
+                }
+
+                // 番組拡張情報
+                var longStrs = RockbarUtility.BreakString(ev.ExtInfo?.text_char);
+                if (longStrs != null && longStrs.Count > 0)
+                {
+                    listContextMenuStrip.Items.Add(new ToolStripSeparator());
+                    foreach (string str in longStrs)
+                    {
+                        var item = listContextMenuStrip.Items.Add(str);
+                        item.Enabled = false; // テキスト表示用（クリック不可）
+                    }
+                }
+
+                // メニューを表示
+                listContextMenuStrip.Show((Control)sender, e.Location);
+            }
+        }
+
+        /// <summary>
+        /// 新番組一覧マウスダブルクリック処理
+        /// Web LinkオプションがONの場合、カーソル箇所の番組のWeb番組情報にアクセスする。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void newProgramListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            // Web番組詳細使用時のみ
+            if (!rockbarSetting.UseWebLink)
+            {
+                return;
+            }
+
+            var selectedCount = serviceListView.SelectedItems.Count;
+            if (selectedCount == 0)
+            {
+                return;
+            }
+
+            // 左ダブルクリック
+            // Web番組詳細にアクセスする
+            if (e.Button == MouseButtons.Left)
+            {
+                try
+                {
+                    // 選択されている行（アイテム）を取得
+                    var selected = serviceListView.SelectedItems[0];
+
+                    // Tag から EpgEventInfo を安全に取り出して Web ページを開く
+                    if (selected.Tag is EpgEventInfo ev)
+                    {
+                        accessWebUrl(ev);
+                    }
+                    else
+                    {
+                        MessageBox.Show("番組情報を取得できませんでした。", "ブラウザ起動エラー");
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show("番組情報を取得できませんでした。", "ブラウザ起動エラー");
+                    return;
                 }
             }
         }
