@@ -66,6 +66,7 @@
             this.taskTrayContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.newProgramTabPage = new System.Windows.Forms.TabPage();
             this.listContextMenuStrip.SuspendLayout();
             this.serviceTabControl.SuspendLayout();
             this.taskTrayContextMenuStrip.SuspendLayout();
@@ -87,7 +88,6 @@
             this.serviceListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
             this.serviceListView.FullRowSelect = true;
             this.serviceListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-            this.serviceListView.HideSelection = true;
             this.serviceListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem1,
             listViewItem2,
@@ -147,12 +147,13 @@
             this.serviceTabControl.Controls.Add(this.bsTabPage);
             this.serviceTabControl.Controls.Add(this.csTabPage);
             this.serviceTabControl.Controls.Add(this.favoriteTabPage);
+            this.serviceTabControl.Controls.Add(this.newProgramTabPage);
             this.serviceTabControl.Controls.Add(this.reserveTabPage);
             this.serviceTabControl.Controls.Add(this.recTabPage);
             this.serviceTabControl.Location = new System.Drawing.Point(8, 10);
             this.serviceTabControl.Name = "serviceTabControl";
             this.serviceTabControl.SelectedIndex = 0;
-            this.serviceTabControl.Size = new System.Drawing.Size(325, 20);
+            this.serviceTabControl.Size = new System.Drawing.Size(388, 20);
             this.serviceTabControl.TabIndex = 1;
             this.serviceTabControl.SelectedIndexChanged += new System.EventHandler(this.serviceTabControl_SelectedIndexChanged);
             // 
@@ -161,7 +162,7 @@
             this.allTabPage.Location = new System.Drawing.Point(4, 22);
             this.allTabPage.Name = "allTabPage";
             this.allTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.allTabPage.Size = new System.Drawing.Size(317, 0);
+            this.allTabPage.Size = new System.Drawing.Size(380, 0);
             this.allTabPage.TabIndex = 0;
             this.allTabPage.Text = "全て";
             this.allTabPage.UseVisualStyleBackColor = true;
@@ -171,7 +172,7 @@
             this.dttvTabPage.Location = new System.Drawing.Point(4, 22);
             this.dttvTabPage.Name = "dttvTabPage";
             this.dttvTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.dttvTabPage.Size = new System.Drawing.Size(317, 0);
+            this.dttvTabPage.Size = new System.Drawing.Size(380, 0);
             this.dttvTabPage.TabIndex = 1;
             this.dttvTabPage.Text = "地デジ";
             this.dttvTabPage.UseVisualStyleBackColor = true;
@@ -181,7 +182,7 @@
             this.bsTabPage.Location = new System.Drawing.Point(4, 22);
             this.bsTabPage.Name = "bsTabPage";
             this.bsTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.bsTabPage.Size = new System.Drawing.Size(317, 0);
+            this.bsTabPage.Size = new System.Drawing.Size(380, 0);
             this.bsTabPage.TabIndex = 2;
             this.bsTabPage.Text = "BS";
             this.bsTabPage.UseVisualStyleBackColor = true;
@@ -190,16 +191,19 @@
             // 
             this.csTabPage.Location = new System.Drawing.Point(4, 22);
             this.csTabPage.Name = "csTabPage";
-            this.csTabPage.Size = new System.Drawing.Size(317, 0);
+            this.csTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.csTabPage.Size = new System.Drawing.Size(380, 0);
             this.csTabPage.TabIndex = 3;
             this.csTabPage.Text = "CS";
             this.csTabPage.UseVisualStyleBackColor = true;
             // 
             // favoriteTabPage
             // 
+            this.favoriteTabPage.Font = new System.Drawing.Font("MS UI Gothic", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.favoriteTabPage.Location = new System.Drawing.Point(4, 22);
             this.favoriteTabPage.Name = "favoriteTabPage";
-            this.favoriteTabPage.Size = new System.Drawing.Size(317, 0);
+            this.favoriteTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.favoriteTabPage.Size = new System.Drawing.Size(380, 0);
             this.favoriteTabPage.TabIndex = 4;
             this.favoriteTabPage.Text = "お気に入り";
             this.favoriteTabPage.UseVisualStyleBackColor = true;
@@ -209,7 +213,7 @@
             this.reserveTabPage.Location = new System.Drawing.Point(4, 22);
             this.reserveTabPage.Name = "reserveTabPage";
             this.reserveTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.reserveTabPage.Size = new System.Drawing.Size(317, 0);
+            this.reserveTabPage.Size = new System.Drawing.Size(380, 0);
             this.reserveTabPage.TabIndex = 5;
             this.reserveTabPage.Text = "予約";
             this.reserveTabPage.UseVisualStyleBackColor = true;
@@ -219,7 +223,7 @@
             this.recTabPage.Location = new System.Drawing.Point(4, 22);
             this.recTabPage.Name = "recTabPage";
             this.recTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.recTabPage.Size = new System.Drawing.Size(317, 0);
+            this.recTabPage.Size = new System.Drawing.Size(380, 0);
             this.recTabPage.TabIndex = 6;
             this.recTabPage.Text = "録画";
             this.recTabPage.UseVisualStyleBackColor = true;
@@ -236,7 +240,6 @@
             this.tunerListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
             this.tunerListView.FullRowSelect = true;
             this.tunerListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-            this.tunerListView.HideSelection = true;
             this.tunerListView.Location = new System.Drawing.Point(0, 0);
             this.tunerListView.MultiSelect = false;
             this.tunerListView.Name = "tunerListView";
@@ -333,6 +336,16 @@
             this.splitContainer.TabIndex = 11;
             this.splitContainer.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.splitContainer_SplitterMoved);
             // 
+            // newProgramTabPage
+            // 
+            this.newProgramTabPage.Location = new System.Drawing.Point(4, 22);
+            this.newProgramTabPage.Name = "newProgramTabPage";
+            this.newProgramTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.newProgramTabPage.Size = new System.Drawing.Size(380, 0);
+            this.newProgramTabPage.TabIndex = 7;
+            this.newProgramTabPage.Text = "新番組";
+            this.newProgramTabPage.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -399,6 +412,7 @@
         private System.Windows.Forms.ContextMenuStrip taskTrayContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
         private System.Windows.Forms.SplitContainer splitContainer;
+        private System.Windows.Forms.TabPage newProgramTabPage;
     }
 }
 
