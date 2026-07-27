@@ -51,6 +51,7 @@
             this.bsTabPage = new System.Windows.Forms.TabPage();
             this.csTabPage = new System.Windows.Forms.TabPage();
             this.favoriteTabPage = new System.Windows.Forms.TabPage();
+            this.newProgramTabPage = new System.Windows.Forms.TabPage();
             this.reserveTabPage = new System.Windows.Forms.TabPage();
             this.recTabPage = new System.Windows.Forms.TabPage();
             this.tunerListView = new System.Windows.Forms.ListView();
@@ -66,7 +67,6 @@
             this.taskTrayContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
-            this.newProgramTabPage = new System.Windows.Forms.TabPage();
             this.listContextMenuStrip.SuspendLayout();
             this.serviceTabControl.SuspendLayout();
             this.taskTrayContextMenuStrip.SuspendLayout();
@@ -208,6 +208,16 @@
             this.favoriteTabPage.Text = "お気に入り";
             this.favoriteTabPage.UseVisualStyleBackColor = true;
             // 
+            // newProgramTabPage
+            // 
+            this.newProgramTabPage.Location = new System.Drawing.Point(4, 22);
+            this.newProgramTabPage.Name = "newProgramTabPage";
+            this.newProgramTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.newProgramTabPage.Size = new System.Drawing.Size(380, 0);
+            this.newProgramTabPage.TabIndex = 7;
+            this.newProgramTabPage.Text = "新番組";
+            this.newProgramTabPage.UseVisualStyleBackColor = true;
+            // 
             // reserveTabPage
             // 
             this.reserveTabPage.Location = new System.Drawing.Point(4, 22);
@@ -335,16 +345,6 @@
             this.splitContainer.SplitterDistance = 467;
             this.splitContainer.TabIndex = 11;
             this.splitContainer.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.splitContainer_SplitterMoved);
-            // 
-            // newProgramTabPage
-            // 
-            this.newProgramTabPage.Location = new System.Drawing.Point(4, 22);
-            this.newProgramTabPage.Name = "newProgramTabPage";
-            this.newProgramTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.newProgramTabPage.Size = new System.Drawing.Size(380, 0);
-            this.newProgramTabPage.TabIndex = 7;
-            this.newProgramTabPage.Text = "新番組";
-            this.newProgramTabPage.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 

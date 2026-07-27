@@ -343,9 +343,10 @@ namespace RockbarForEDCB
                     BuildRecList();
                 }
             }
+            // 新番組タブ
             else if (serviceTabControl.SelectedTab == newProgramTabPage)
             {
-                if (forceServiceListRefresh || isRecChanged)
+                if (forceServiceListRefresh || isServiceChanged || isReserveChanged || (now >= serviceRefreshTime))
                 {
                     BuildNewProgramList();
                 }
@@ -737,6 +738,9 @@ namespace RockbarForEDCB
             adjustListViewColumns(serviceListView);
         }
 
+        /// <summary>
+        /// 新番組一覧の生成
+        /// </summary>
         private void BuildNewProgramList()
         {
             DateTime now = DateTime.Now;
@@ -758,8 +762,7 @@ namespace RockbarForEDCB
                     .Where(x => x.Event.ShortInfo != null &&
                                 !string.IsNullOrEmpty(x.Event.ShortInfo.event_name) &&
                                 (x.Event.ShortInfo.event_name.Contains("[新]") || x.Event.ShortInfo.event_name.Contains("［新］")))
-                    // ※ 終了していない番組だけに絞り込む場合は、下行のコメントアウトを解除
-                    // .Where(x => x.Event.start_time.AddSeconds(x.Event.durationSec) >= now)
+                    .Where(x => x.Event.start_time.AddSeconds(x.Event.durationSec) > now)
                     .OrderBy(x => x.Event.start_time)
                     .ToList();
 
@@ -840,6 +843,18 @@ namespace RockbarForEDCB
 
                     serviceListView.Items.Add(item);
                 }
+                // --- リストアップされた番組のうち、終了時間が直近のものを取得して次回更新時刻に設定 ---
+                var nearestEndTime = newPrograms
+                    .Select(x => x.Event.start_time.AddSeconds(x.Event.durationSec))
+                    .Where(endTime => endTime > now)
+                    .DefaultIfEmpty(DateTime.MaxValue)
+                    .Min();
+
+                if (nearestEndTime != DateTime.MaxValue)
+                {
+                    this.nextServiceListRefreshTime = nearestEndTime;
+                }
+
                 // --- 列幅の設定 ---
                 // 列0: 予約状態
                 int col0Width = TextRenderer.MeasureText("◎", serviceListView.Font).Width + columnPadding;
