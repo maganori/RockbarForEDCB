@@ -2003,6 +2003,7 @@ namespace RockbarForEDCB
             this.Controls.Add(this.settingTabControl);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.applyButton);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "SettingForm";
             this.Text = "設定";
             this.settingTabControl.ResumeLayout(false);
