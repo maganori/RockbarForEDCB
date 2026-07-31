@@ -72,6 +72,8 @@ namespace RockbarForEDCB
             this.selectedServiceTvtestOptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.settingTabControl = new System.Windows.Forms.TabControl();
             this.edcbLinkageTabPage = new System.Windows.Forms.TabPage();
+            this.webEPGLabel = new System.Windows.Forms.Label();
+            this.webEPGUrlTextBox = new System.Windows.Forms.TextBox();
             this.portNumberNoteLabel = new System.Windows.Forms.Label();
             this.portNumberNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
@@ -433,6 +435,8 @@ namespace RockbarForEDCB
             // 
             // edcbLinkageTabPage
             // 
+            this.edcbLinkageTabPage.Controls.Add(this.webEPGLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.webEPGUrlTextBox);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNoteLabel);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNumericUpDown);
             this.edcbLinkageTabPage.Controls.Add(this.label3);
@@ -506,9 +510,9 @@ namespace RockbarForEDCB
             // webLinkUrlExampleLabel
             // 
             this.webLinkUrlExampleLabel.AutoSize = true;
-            this.webLinkUrlExampleLabel.Location = new System.Drawing.Point(120, 255);
+            this.webLinkUrlExampleLabel.Location = new System.Drawing.Point(120, 282);
             this.webLinkUrlExampleLabel.Name = "webLinkUrlExampleLabel";
-            this.webLinkUrlExampleLabel.Size = new System.Drawing.Size(452, 84);
+            this.webLinkUrlExampleLabel.Size = new System.Drawing.Size(484, 84);
             this.webLinkUrlExampleLabel.TabIndex = 11;
             this.webLinkUrlExampleLabel.Text = resources.GetString("webLinkUrlExampleLabel.Text");
             // 
@@ -527,9 +531,9 @@ namespace RockbarForEDCB
             this.useWebLinkCheckBox.AutoSize = true;
             this.useWebLinkCheckBox.Location = new System.Drawing.Point(22, 153);
             this.useWebLinkCheckBox.Name = "useWebLinkCheckBox";
-            this.useWebLinkCheckBox.Size = new System.Drawing.Size(170, 16);
+            this.useWebLinkCheckBox.Size = new System.Drawing.Size(197, 16);
             this.useWebLinkCheckBox.TabIndex = 3;
-            this.useWebLinkCheckBox.Text = "Web番組詳細へのリンクを表示";
+            this.useWebLinkCheckBox.Text = "Web番組表機能(WebUI)を使用する";
             this.useWebLinkCheckBox.UseVisualStyleBackColor = true;
             // 
             // ipAddressLabel
@@ -541,23 +545,32 @@ namespace RockbarForEDCB
             this.ipAddressLabel.TabIndex = 8;
             this.ipAddressLabel.Text = "IPアドレス";
             // 
+            // webEPGLabel
+            // 
+            this.webEPGLabel.AutoSize = true;
+            this.webEPGLabel.Location = new System.Drawing.Point(35, 178);
+            this.webEPGLabel.Name = "webEPGLabel";
+            this.webEPGLabel.Size = new System.Drawing.Size(63, 12);
+            this.webEPGLabel.TabIndex = 18;
+            this.webEPGLabel.Text = "番組表URL";
+            // 
             // webLinkUrlLabel
             // 
             this.webLinkUrlLabel.AutoSize = true;
-            this.webLinkUrlLabel.Location = new System.Drawing.Point(20, 184);
+            this.webLinkUrlLabel.Location = new System.Drawing.Point(35, 212);
             this.webLinkUrlLabel.Name = "webLinkUrlLabel";
-            this.webLinkUrlLabel.Size = new System.Drawing.Size(96, 12);
+            this.webLinkUrlLabel.Size = new System.Drawing.Size(75, 12);
             this.webLinkUrlLabel.TabIndex = 8;
-            this.webLinkUrlLabel.Text = "Web番組詳細URL";
+            this.webLinkUrlLabel.Text = "番組詳細URL";
             // 
             // recInfoWebLinkUrlLabel
             // 
             this.recInfoWebLinkUrlLabel.AutoSize = true;
-            this.recInfoWebLinkUrlLabel.Location = new System.Drawing.Point(20, 220);
+            this.recInfoWebLinkUrlLabel.Location = new System.Drawing.Point(35, 247);
             this.recInfoWebLinkUrlLabel.Name = "recInfoWebLinkUrlLabel";
-            this.recInfoWebLinkUrlLabel.Size = new System.Drawing.Size(96, 12);
+            this.recInfoWebLinkUrlLabel.Size = new System.Drawing.Size(75, 12);
             this.recInfoWebLinkUrlLabel.TabIndex = 9;
-            this.recInfoWebLinkUrlLabel.Text = "Web録画詳細URL";
+            this.recInfoWebLinkUrlLabel.Text = "録画詳細URL";
             // 
             // ipAddressTextBox
             // 
@@ -566,16 +579,23 @@ namespace RockbarForEDCB
             this.ipAddressTextBox.Size = new System.Drawing.Size(166, 19);
             this.ipAddressTextBox.TabIndex = 1;
             // 
+            // webEPGUrlTextBox
+            // 
+            this.webEPGUrlTextBox.Location = new System.Drawing.Point(122, 175);
+            this.webEPGUrlTextBox.Name = "webEPGUrlTextBox";
+            this.webEPGUrlTextBox.Size = new System.Drawing.Size(478, 19);
+            this.webEPGUrlTextBox.TabIndex = 17;
+            // 
             // webLinkUrlTextBox
             // 
-            this.webLinkUrlTextBox.Location = new System.Drawing.Point(122, 181);
+            this.webLinkUrlTextBox.Location = new System.Drawing.Point(122, 209);
             this.webLinkUrlTextBox.Name = "webLinkUrlTextBox";
             this.webLinkUrlTextBox.Size = new System.Drawing.Size(478, 19);
             this.webLinkUrlTextBox.TabIndex = 4;
             // 
             // recInfoWebLinkUrlTextBox
             // 
-            this.recInfoWebLinkUrlTextBox.Location = new System.Drawing.Point(122, 217);
+            this.recInfoWebLinkUrlTextBox.Location = new System.Drawing.Point(122, 244);
             this.recInfoWebLinkUrlTextBox.Name = "recInfoWebLinkUrlTextBox";
             this.recInfoWebLinkUrlTextBox.Size = new System.Drawing.Size(478, 19);
             this.recInfoWebLinkUrlTextBox.TabIndex = 5;
@@ -784,7 +804,7 @@ namespace RockbarForEDCB
             // selectedService2SidColumnHeader
             // 
             this.selectedService2SidColumnHeader.Text = "SID";
-            //
+            // 
             // selectedService2TvtestOptionColumnHeader
             // 
             this.selectedService2TvtestOptionColumnHeader.Text = "TVTestオプション";
@@ -2043,6 +2063,8 @@ namespace RockbarForEDCB
         private System.Windows.Forms.OpenFileDialog tvtestOpenFileDialog;
         private System.Windows.Forms.Label webLinkUrlExampleLabel;
         private System.Windows.Forms.CheckBox useWebLinkCheckBox;
+        private System.Windows.Forms.Label webEPGLabel;
+        private System.Windows.Forms.TextBox webEPGUrlTextBox;
         private System.Windows.Forms.Label webLinkUrlLabel;
         private System.Windows.Forms.TextBox webLinkUrlTextBox;
         private System.Windows.Forms.Label recInfoWebLinkUrlLabel;

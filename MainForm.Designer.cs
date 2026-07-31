@@ -65,7 +65,9 @@
             this.settingButton = new System.Windows.Forms.Button();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.taskTrayContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openWebEPGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openSettingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listContextMenuStrip.SuspendLayout();
             this.serviceTabControl.SuspendLayout();
@@ -88,6 +90,7 @@
             this.serviceListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
             this.serviceListView.FullRowSelect = true;
             this.serviceListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.serviceListView.HideSelection = false;
             this.serviceListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem1,
             listViewItem2,
@@ -250,6 +253,7 @@
             this.tunerListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
             this.tunerListView.FullRowSelect = true;
             this.tunerListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.tunerListView.HideSelection = false;
             this.tunerListView.Location = new System.Drawing.Point(0, 0);
             this.tunerListView.MultiSelect = false;
             this.tunerListView.Name = "tunerListView";
@@ -315,16 +319,32 @@
             // taskTrayContextMenuStrip
             // 
             this.taskTrayContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.closeToolStripMenuItem});
+            this.openWebEPGToolStripMenuItem,
+            this.openSettingToolStripMenuItem,
+            this.exitToolStripMenuItem});
             this.taskTrayContextMenuStrip.Name = "taskTrayContextMenuStrip";
-            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(99, 26);
+            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(152, 70);
             // 
-            // closeToolStripMenuItem
+            // openWebEPGToolStripMenuItem
             // 
-            this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
-            this.closeToolStripMenuItem.Size = new System.Drawing.Size(98, 22);
-            this.closeToolStripMenuItem.Text = "終了";
-            this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
+            this.openWebEPGToolStripMenuItem.Name = "openWebEPGToolStripMenuItem";
+            this.openWebEPGToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.openWebEPGToolStripMenuItem.Text = "テレビ番組表";
+            this.openWebEPGToolStripMenuItem.Click += new System.EventHandler(this.openWebEPGToolStripMenuItem_Click);
+            // 
+            // openSettingToolStripMenuItem
+            // 
+            this.openSettingToolStripMenuItem.Name = "openSettingToolStripMenuItem";
+            this.openSettingToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.openSettingToolStripMenuItem.Text = "設定";
+            this.openSettingToolStripMenuItem.Click += new System.EventHandler(this.settingButton_Click);
+            // 
+            // exitToolStripMenuItem
+            // 
+            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.exitToolStripMenuItem.Text = "Rockbarの終了";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // splitContainer
             // 
@@ -361,7 +381,7 @@
             this.Controls.Add(this.serviceTabControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(680, 100);
+            this.MinimumSize = new System.Drawing.Size(630, 100);
             this.Name = "MainForm";
             this.ShowInTaskbar = false;
             this.Text = "RockbarForEDCB";
@@ -410,7 +430,9 @@
         private System.Windows.Forms.Button settingButton;
         private System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.ContextMenuStrip taskTrayContextMenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openWebEPGToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openSettingToolStripMenuItem;
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.TabPage newProgramTabPage;
     }
