@@ -433,6 +433,7 @@ namespace RockbarForEDCB
                 recListMaxCountNumericUpDown.Value = setting.RecListMaxCount;
             }
             useWebLinkCheckBox.Checked = setting.UseWebLink;
+            webEPGUrlTextBox.Text = setting.WebEPGUrl;
             webLinkUrlTextBox.Text = setting.WebLinkUrl;
             recInfoWebLinkUrlTextBox.Text = setting.RecInfoWebLinkUrl;
 
@@ -1109,6 +1110,7 @@ namespace RockbarForEDCB
             rockbarSetting.IpAddress = ipAddressTextBox.Text;
             rockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
             rockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
+            rockbarSetting.WebEPGUrl = webEPGUrlTextBox.Text;
             rockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
             rockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
 

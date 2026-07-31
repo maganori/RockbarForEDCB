@@ -78,6 +78,7 @@ namespace RockbarForEDCB
 
             this.PortNumber = 4510;
             this.UseWebLink = true;
+            this.WebEPGUrl = "http://localhost:5510/EMWUI/epg.html";
             this.WebLinkUrl = "http://localhost:5510/EMWUI/epginfo.html?onid={ONID}&tsid={TSID}&sid={SID}&eid={EID}";
             this.RecInfoWebLinkUrl = "http://localhost:5510/EMWUI/recinfodesc.html?id={RecID}";
             this.AutoOpenMargin = 15;
@@ -133,6 +134,8 @@ namespace RockbarForEDCB
         public uint PortNumber { get; set; }
         // Web Link使用
         public bool UseWebLink { get; set; }
+        // WebEPG URL
+        public string WebEPGUrl { get; set; }
         // Web Link URL
         public string WebLinkUrl { get; set; }
         // Web Link URL(録画結果)

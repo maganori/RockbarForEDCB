@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -62,6 +64,9 @@ namespace RockbarForEDCB
 
         // マウスのクリック位置を記憶
         private Point mousePoint;
+
+        // マウスのシングルクリック、ダブルクリック判別用
+        private CancellationTokenSource _cts;
 
         // 色の設定情報(設定情報から変数にロードしたもの)
         private Color formBackColor;
@@ -298,6 +303,10 @@ namespace RockbarForEDCB
             tunerListView.ForeColor = this.foreColor;
 
             listContextMenuStrip.BackColor = this.menuBackColor;
+
+            // Web番組表機能を使用するときのみタスクトレイアイコンの右クリックメニューに「テレビ番組表」を表示
+            this.openWebEPGToolStripMenuItem.Visible = rockbarSetting.UseWebLink;
+
         }
 
         /// <summary>
@@ -2835,44 +2844,137 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
         }
 
         /// <summary>
-        /// タスクトレイアイコンマウスボタン押下処理
-        /// トグルオプションONの場合、表示・非表示切り替え＋アクティブ化。それ以外の場合アクテイブ化のみ
+        /// タスクトレイテレビ番組表コンテキストメニュークリック処理
+        /// テレビ番組表を開く
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void notifyIcon_MouseDown(object sender, MouseEventArgs e)
+        private void openWebEPGToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if ((e.Button & MouseButtons.Left) == MouseButtons.Left)
+            OpenWebEPG();
+        }
+
+        /// <summary>
+        /// タスクトレイアイコンマウスボタン押下処理
+        /// シングルクリックとダブルクリックの判定
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private async void notifyIcon_MouseDown(object sender, MouseEventArgs e)
+        {
+            // 左クリック以外は無視
+            if (e.Button != MouseButtons.Left) return;
+
+            // 既に待機中のクリックがある場合（＝ダブルクリック成立）
+            if (_cts != null)
             {
-                if (this.Visible)
+                // 1回目のシングルクリック待ち（Task.Delay）をキャンセルする
+                _cts.Cancel();
+
+                // ダブルクリック処理を実行
+                Debug.WriteLine("★ダブルクリック実行");
+                notifyIconDoubleClickAction();
+                return;
+            }
+
+            // --- 1回目のクリック処理 ---
+            _cts = new CancellationTokenSource();
+
+            try
+            {
+                // OS設定のダブルクリック時間だけ非同期で待機
+                await Task.Delay(SystemInformation.DoubleClickTime, _cts.Token);
+
+                // 時間内にキャンセルされなかった場合のみシングルクリック実行
+                Debug.WriteLine("★シングルクリック実行");
+                notifyIconSingleClickAction();
+            }
+            catch (OperationCanceledException)
+            {
+                // ダブルクリックによってキャンセルされた場合はここを通る（正常動作なので無視）
+                Debug.WriteLine("シングルクリック待機がキャンセルされました");
+            }
+            catch (Exception ex)
+            {
+                // その他の予期せぬエラー用ログ
+                Debug.WriteLine($"エラーが発生しました: {ex.Message}");
+            }
+            finally
+            {
+                // ダブルクリックの場合もここで後処理
+                _cts?.Dispose();
+                _cts = null;
+            }
+        }
+
+        /// <summary>
+        /// タスクトレイアイコンシングルクリック処理
+        /// トグルオプションONの場合、表示・非表示切り替え＋アクティブ化。それ以外の場合アクテイブ化のみ
+        /// </summary>
+        private void notifyIconSingleClickAction()
+        {
+            if (this.Visible)
+            {
+                // フォーム表示時に左クリックした場合はオプションにより挙動切り替え
+                if (rockbarSetting.ToggleVisibleTaskTrayIconClick)
                 {
-                    // フォーム表示時に左クリックした場合はオプションにより挙動切り替え
-                    if (rockbarSetting.ToggleVisibleTaskTrayIconClick)
-                    {
-                        this.Visible = false;
-                    }
-                    else
-                    {
-                        this.Activate();
-                    }
+                    this.Visible = false;
                 }
                 else
                 {
-                    // フォーム非表示時に左クリックした場合は必ず表示
-                    this.Visible = true;
                     this.Activate();
+                }
+            }
+            else
+            {
+                // フォーム非表示時に左クリックした場合は必ず表示
+                this.Visible = true;
+                this.Activate();
 
-                    // オプションによりタスクトレイアイコン表示を切り替え
-                    if (!rockbarSetting.ShowTaskTrayIcon)
+                // オプションによりタスクトレイアイコン表示を切り替え
+                if (!rockbarSetting.ShowTaskTrayIcon)
+                {
+                    notifyIcon.Visible = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// タスクトレイアイコンダブルクリック処理
+        /// テレビ番組表を開く
+        /// </summary>
+        private void notifyIconDoubleClickAction()
+        {
+            OpenWebEPG();
+        }
+
+        /// <summary>
+        /// テレビ番組表を開く処理
+        /// </summary>
+        private void OpenWebEPG()
+        {
+            // Webリンク使用時のみ
+            if (rockbarSetting.UseWebLink)
+            {
+                // Webを開く
+                try
+                {
+                    // 設定内容のURLを開く
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        notifyIcon.Visible = false;
-                    }
+                        FileName = rockbarSetting.WebEPGUrl,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Webページを開けませんでした。\n{ex.Message}", "エラー");
                 }
             }
         }
