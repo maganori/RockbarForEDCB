@@ -37,7 +37,7 @@
             System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("");
             System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("");
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this.serviceListView = new System.Windows.Forms.ListView();
+            this.mainListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -45,7 +45,7 @@
             this.listContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.aaaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.timer = new System.Windows.Forms.Timer(this.components);
-            this.serviceTabControl = new System.Windows.Forms.TabControl();
+            this.mainFormTabControl = new System.Windows.Forms.TabControl();
             this.allTabPage = new System.Windows.Forms.TabPage();
             this.dttvTabPage = new System.Windows.Forms.TabPage();
             this.bsTabPage = new System.Windows.Forms.TabPage();
@@ -54,7 +54,7 @@
             this.newProgramTabPage = new System.Windows.Forms.TabPage();
             this.reserveTabPage = new System.Windows.Forms.TabPage();
             this.recTabPage = new System.Windows.Forms.TabPage();
-            this.tunerListView = new System.Windows.Forms.ListView();
+            this.subListView = new System.Windows.Forms.ListView();
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader7 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -70,7 +70,7 @@
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
             this.listContextMenuStrip.SuspendLayout();
-            this.serviceTabControl.SuspendLayout();
+            this.mainFormTabControl.SuspendLayout();
             this.taskTrayContextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
             this.splitContainer.Panel1.SuspendLayout();
@@ -78,35 +78,35 @@
             this.splitContainer.SuspendLayout();
             this.SuspendLayout();
             // 
-            // serviceListView
+            // mainListView
             // 
-            this.serviceListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
-            this.serviceListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.mainListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.mainListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2,
             this.columnHeader3,
             this.columnHeader4});
-            this.serviceListView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.serviceListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
-            this.serviceListView.FullRowSelect = true;
-            this.serviceListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-            this.serviceListView.HideSelection = false;
-            this.serviceListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
+            this.mainListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.mainListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
+            this.mainListView.FullRowSelect = true;
+            this.mainListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.mainListView.HideSelection = false;
+            this.mainListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
             listViewItem1,
             listViewItem2,
             listViewItem3});
-            this.serviceListView.Location = new System.Drawing.Point(0, 0);
-            this.serviceListView.MultiSelect = false;
-            this.serviceListView.Name = "serviceListView";
-            this.serviceListView.ShowItemToolTips = true;
-            this.serviceListView.Size = new System.Drawing.Size(467, 194);
-            this.serviceListView.TabIndex = 0;
-            this.serviceListView.UseCompatibleStateImageBehavior = false;
-            this.serviceListView.View = System.Windows.Forms.View.Details;
-            this.serviceListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.serviceListView_ItemSelectionChanged);
-            this.serviceListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseClick);
-            this.serviceListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseDoubleClick);
-            this.serviceListView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.serviceListView_MouseUp);
+            this.mainListView.Location = new System.Drawing.Point(0, 0);
+            this.mainListView.MultiSelect = false;
+            this.mainListView.Name = "mainListView";
+            this.mainListView.ShowItemToolTips = true;
+            this.mainListView.Size = new System.Drawing.Size(467, 194);
+            this.mainListView.TabIndex = 0;
+            this.mainListView.UseCompatibleStateImageBehavior = false;
+            this.mainListView.View = System.Windows.Forms.View.Details;
+            this.mainListView.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.mainListView_ItemSelectionChanged);
+            this.mainListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.mainListView_MouseClick);
+            this.mainListView.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.mainListView_MouseDoubleClick);
+            this.mainListView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.mainListView_MouseUp);
             // 
             // columnHeader1
             // 
@@ -143,22 +143,22 @@
             this.timer.Interval = 1000;
             this.timer.Tick += new System.EventHandler(this.timer_Tick);
             // 
-            // serviceTabControl
+            // mainFormTabControl
             // 
-            this.serviceTabControl.Controls.Add(this.allTabPage);
-            this.serviceTabControl.Controls.Add(this.dttvTabPage);
-            this.serviceTabControl.Controls.Add(this.bsTabPage);
-            this.serviceTabControl.Controls.Add(this.csTabPage);
-            this.serviceTabControl.Controls.Add(this.favoriteTabPage);
-            this.serviceTabControl.Controls.Add(this.newProgramTabPage);
-            this.serviceTabControl.Controls.Add(this.reserveTabPage);
-            this.serviceTabControl.Controls.Add(this.recTabPage);
-            this.serviceTabControl.Location = new System.Drawing.Point(8, 10);
-            this.serviceTabControl.Name = "serviceTabControl";
-            this.serviceTabControl.SelectedIndex = 0;
-            this.serviceTabControl.Size = new System.Drawing.Size(388, 20);
-            this.serviceTabControl.TabIndex = 1;
-            this.serviceTabControl.SelectedIndexChanged += new System.EventHandler(this.serviceTabControl_SelectedIndexChanged);
+            this.mainFormTabControl.Controls.Add(this.allTabPage);
+            this.mainFormTabControl.Controls.Add(this.dttvTabPage);
+            this.mainFormTabControl.Controls.Add(this.bsTabPage);
+            this.mainFormTabControl.Controls.Add(this.csTabPage);
+            this.mainFormTabControl.Controls.Add(this.favoriteTabPage);
+            this.mainFormTabControl.Controls.Add(this.newProgramTabPage);
+            this.mainFormTabControl.Controls.Add(this.reserveTabPage);
+            this.mainFormTabControl.Controls.Add(this.recTabPage);
+            this.mainFormTabControl.Location = new System.Drawing.Point(8, 10);
+            this.mainFormTabControl.Name = "mainFormTabControl";
+            this.mainFormTabControl.SelectedIndex = 0;
+            this.mainFormTabControl.Size = new System.Drawing.Size(388, 20);
+            this.mainFormTabControl.TabIndex = 1;
+            this.mainFormTabControl.SelectedIndexChanged += new System.EventHandler(this.mainFormTabControl_SelectedIndexChanged);
             // 
             // allTabPage
             // 
@@ -241,28 +241,28 @@
             this.recTabPage.Text = "録画";
             this.recTabPage.UseVisualStyleBackColor = true;
             // 
-            // tunerListView
+            // subListView
             // 
-            this.tunerListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
-            this.tunerListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.subListView.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.subListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader5,
             this.columnHeader6,
             this.columnHeader7,
             this.columnHeader8});
-            this.tunerListView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tunerListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
-            this.tunerListView.FullRowSelect = true;
-            this.tunerListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
-            this.tunerListView.HideSelection = false;
-            this.tunerListView.Location = new System.Drawing.Point(0, 0);
-            this.tunerListView.MultiSelect = false;
-            this.tunerListView.Name = "tunerListView";
-            this.tunerListView.ShowItemToolTips = true;
-            this.tunerListView.Size = new System.Drawing.Size(260, 194);
-            this.tunerListView.TabIndex = 2;
-            this.tunerListView.UseCompatibleStateImageBehavior = false;
-            this.tunerListView.View = System.Windows.Forms.View.Details;
-            this.tunerListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.tunerListView_MouseClick);
+            this.subListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.subListView.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(250)))), ((int)(((byte)(140)))));
+            this.subListView.FullRowSelect = true;
+            this.subListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.subListView.HideSelection = false;
+            this.subListView.Location = new System.Drawing.Point(0, 0);
+            this.subListView.MultiSelect = false;
+            this.subListView.Name = "subListView";
+            this.subListView.ShowItemToolTips = true;
+            this.subListView.Size = new System.Drawing.Size(260, 194);
+            this.subListView.TabIndex = 2;
+            this.subListView.UseCompatibleStateImageBehavior = false;
+            this.subListView.View = System.Windows.Forms.View.Details;
+            this.subListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.subListView_MouseClick);
             // 
             // columnHeader6
             // 
@@ -356,11 +356,11 @@
             // 
             // splitContainer.Panel1
             // 
-            this.splitContainer.Panel1.Controls.Add(this.serviceListView);
+            this.splitContainer.Panel1.Controls.Add(this.mainListView);
             // 
             // splitContainer.Panel2
             // 
-            this.splitContainer.Panel2.Controls.Add(this.tunerListView);
+            this.splitContainer.Panel2.Controls.Add(this.subListView);
             this.splitContainer.Size = new System.Drawing.Size(731, 194);
             this.splitContainer.SplitterDistance = 467;
             this.splitContainer.TabIndex = 11;
@@ -378,7 +378,7 @@
             this.Controls.Add(this.closeButton);
             this.Controls.Add(this.resetButton);
             this.Controls.Add(this.filterTextBox);
-            this.Controls.Add(this.serviceTabControl);
+            this.Controls.Add(this.mainFormTabControl);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(630, 100);
@@ -390,7 +390,7 @@
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MainForm_MouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MainForm_MouseMove);
             this.listContextMenuStrip.ResumeLayout(false);
-            this.serviceTabControl.ResumeLayout(false);
+            this.mainFormTabControl.ResumeLayout(false);
             this.taskTrayContextMenuStrip.ResumeLayout(false);
             this.splitContainer.Panel1.ResumeLayout(false);
             this.splitContainer.Panel2.ResumeLayout(false);
@@ -403,7 +403,7 @@
 
         #endregion
 
-        private System.Windows.Forms.ListView serviceListView;
+        private System.Windows.Forms.ListView mainListView;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;
@@ -411,14 +411,14 @@
         private System.Windows.Forms.ContextMenuStrip listContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem aaaToolStripMenuItem;
         private System.Windows.Forms.Timer timer;
-        private System.Windows.Forms.TabControl serviceTabControl;
+        private System.Windows.Forms.TabControl mainFormTabControl;
         private System.Windows.Forms.TabPage dttvTabPage;
         private System.Windows.Forms.TabPage bsTabPage;
         private System.Windows.Forms.TabPage csTabPage;
         private System.Windows.Forms.TabPage favoriteTabPage;
         private System.Windows.Forms.TabPage reserveTabPage;
         private System.Windows.Forms.TabPage recTabPage;
-        private System.Windows.Forms.ListView tunerListView;
+        private System.Windows.Forms.ListView subListView;
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private System.Windows.Forms.ColumnHeader columnHeader6;
         private System.Windows.Forms.ColumnHeader columnHeader7;
