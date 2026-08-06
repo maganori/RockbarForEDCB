@@ -336,12 +336,14 @@ namespace RockbarForEDCB
             }
 
             // 現在アクティブなタブに応じて描画処理を分岐
+            // -----mainListView-----
             // 予約タブ
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
-                if (forceMainListRefresh || isReserveChanged || (now >= subListRefreshTime))
+                if (forceMainListRefresh || isReserveChanged || (now >= mainListRefreshTime))
                 {
-                    BuildReserveList();
+                    DateTime nextTime = BuildReserveList(mainListView);
+                    this.nextMainListViewRefreshTime = nextTime;
                 }
             }
             // 録画タブ
@@ -349,7 +351,8 @@ namespace RockbarForEDCB
             {
                 if (forceMainListRefresh || isRecChanged)
                 {
-                    BuildRecList();
+                    BuildRecList(mainListView);
+                    this.nextMainListViewRefreshTime = DateTime.MaxValue;
                 }
             }
             // 新番組タブ
@@ -357,23 +360,26 @@ namespace RockbarForEDCB
             {
                 if (forceMainListRefresh || isServiceChanged || isReserveChanged || (now >= mainListRefreshTime))
                 {
-                    BuildNewProgramList();
+                    DateTime nextTime = BuildNewProgramList(mainListView);
+                    this.nextMainListViewRefreshTime = nextTime;
                 }
             }
-            
             // チャンネルタブ
             else
             {
                 if (forceMainListRefresh || isServiceChanged || isReserveChanged || (now >= mainListRefreshTime))
                 {
-                    BuildServiceList();
+                    DateTime nextTime = BuildServiceList(mainListView, mainFormTabControl.SelectedTab);
+                    this.nextMainListViewRefreshTime = nextTime;
                 }
             }
 
+            // -----subListView-----
             // チューナー一覧
             if (forceSubListRefresh || isTunerChanged || (now >= subListRefreshTime))
             {
-                BuildTunerList();
+                DateTime nextTime = BuildTunerList(subListView);
+                this.nextSubListViewRefreshTime = nextTime;
             }
         }
 
@@ -462,17 +468,22 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 予約一覧の生成
+        /// 予約一覧（ListView）の生成および描画を行い、次回画面更新が必要となる最速の時刻を取得します。
         /// </summary>
-        private void BuildReserveList()
+        /// <param name="targetListView">描画対象のListView</param>
+        /// <returns>次回更新が必要になる時刻</returns>
+        private DateTime BuildReserveList(ListView targetListView)
         {
+            DateTime now = DateTime.Now;
+            DateTime minNextRefreshTime = DateTime.MaxValue;
+
             // チラつきを抑えるため描画を停止
-            mainListView.BeginUpdate();
+            targetListView.BeginUpdate();
 
             try
             {
                 // 一覧を全件クリア
-                mainListView.Items.Clear();
+                targetListView.Items.Clear();
 
                 foreach (var reserveData in reserveDatas.OrderBy(r => r.StartTime))
                 {
@@ -485,13 +496,26 @@ namespace RockbarForEDCB
                         continue;
                     }
 
+                    // --- 次回画面更新時間の判定 ---
+                    // 開始時刻が現在以降かつ、これまでの最小値より近ければ更新
+                    if (startTime > now && startTime < minNextRefreshTime)
+                    {
+                        minNextRefreshTime = startTime;
+                    }
+
+                    // 終了時刻が現在以降かつ、これまでの最小値より近ければ更新
+                    if (endTime > now && endTime < minNextRefreshTime)
+                    {
+                        minNextRefreshTime = endTime;
+                    }
+
                     // --- チャンネル名の取得 ---
                     // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                    string key = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID);
-                    Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                    string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                        ? service.Name
-                        : reserveData.StationName;
+                    string serviceName = GetCustomServiceName(reserveData.TransportStreamID, reserveData.ServiceID);
+                    if (string.IsNullOrWhiteSpace(serviceName))
+                    {
+                        serviceName = reserveData.StationName;
+                    }
 
                     // フィルタ条件チェック
                     if (!IsMatchFilter(serviceName, reserveData.Title))
@@ -500,20 +524,7 @@ namespace RockbarForEDCB
                     }
 
                     // --- 表示文字列の作成 ---
-                    ReserveStatus reserveStatus = ReserveStatus.OK;
-                    if (reserveData.RecSetting.IsNoRec())
-                    {
-                        reserveStatus = ReserveStatus.DISABLED;
-                    }
-                    else if (reserveData.OverlapMode == 1)
-                    {
-                        reserveStatus = ReserveStatus.PARTIAL;
-                    }
-                    else if (reserveData.OverlapMode == 2)
-                    {
-                        reserveStatus = ReserveStatus.NG;
-                    }
-
+                    ReserveStatus reserveStatus = GetReserveStatus(reserveData);
                     string statusText = RockbarUtility.GetReserveStatusString(reserveStatus);
 
                     // ◎（正常予約）の場合はチューナー名を表示する
@@ -522,19 +533,7 @@ namespace RockbarForEDCB
                         var matchedTuner = tunerReserveInfos.FirstOrDefault(t => t.reserveList.Contains(reserveData.ReserveID));
                         if (matchedTuner != null)
                         {
-                            if (rockbarSetting.BonDriverNameToTunerName.ContainsKey(matchedTuner.tunerName))
-                            {
-                                statusText = rockbarSetting.BonDriverNameToTunerName[matchedTuner.tunerName];
-                            }
-                            else
-                            {
-                                statusText = RockbarUtility.GetDefaultTunerName(matchedTuner.tunerName);
-                            }
-
-                            if (matchedTuner.tunerID != 0xffffffff)
-                            {
-                                statusText += (matchedTuner.tunerID & 0xffff).ToString();
-                            }
+                            statusText = GetCustomTunerName(matchedTuner);
                         }
                     }
 
@@ -550,33 +549,9 @@ namespace RockbarForEDCB
                     item.ForeColor = this.foreColor;
 
                     // --- 背景色の設定 ---
-                    // 無効予約の場合
-                    if (reserveStatus == ReserveStatus.DISABLED)
-                    {
-                        item.BackColor = this.disabledReserveListBackColor;
-                    }
-                    // 変な予約がある場合警告として色を変える
-                    else if (reserveStatus == ReserveStatus.PARTIAL)
-                    {
-                        // 一部予約の場合、黃背景色で警告
-                        item.BackColor = this.partialReserveListBackColor;
-                    }
-                    else if (reserveStatus == ReserveStatus.NG)
-                    {
-                        // TU不足の場合、赤背景色で警告
-                        item.BackColor = this.ngReserveListBackColor;
-                    }
-                    else if (startTime <= DateTime.Now && endTime >= DateTime.Now)
-                    {
-                        // 現在録画中の場合、正常予約背景色で表示
-                        item.BackColor = this.okReserveListBackColor;
-                    }
-                    else
-                    {
-                        item.BackColor = this.listBackColor;
-                    }
+                    item.BackColor = GetReserveBackColor(reserveStatus, startTime, endTime);
 
-                    mainListView.Items.Add(item);
+                    targetListView.Items.Add(item);
                 }
 
                 // --- 列幅の設定（設定ファイルの最長文字数に基づく計算） ---
@@ -584,26 +559,29 @@ namespace RockbarForEDCB
                 int col0Width = maxTunerNameWidth + columnPadding;
 
                 // 列1: 日時表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00/00(日) 00:00-00:00", mainListView.Font).Width + columnPadding;
+                int col1Width = TextRenderer.MeasureText("00/00(日) 00:00-00:00", targetListView.Font).Width + columnPadding;
 
                 // 列2: チャンネル名の最長幅
                 int col2Width = maxServiceNameWidth + columnPadding;
 
-                mainListView.Columns[0].Width = col0Width;
-                mainListView.Columns[1].Width = col1Width;
-                mainListView.Columns[2].Width = col2Width;
+                targetListView.Columns[0].Width = col0Width;
+                targetListView.Columns[1].Width = col1Width;
+                targetListView.Columns[2].Width = col2Width;
 
                 // 列3: 番組名（残りの幅をすべて充当）
-                int remainingWidth = mainListView.ClientSize.Width - (col0Width + col1Width + col2Width);
-                mainListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
+                int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
+                targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
             }
             finally
             {
                 // 描画を再開
-                mainListView.EndUpdate();
+                targetListView.EndUpdate();
             }
             // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            adjustListViewColumns(mainListView);
+            adjustListViewColumns(targetListView);
+
+            // 次回更新候補時刻を返す
+            return (minNextRefreshTime);
         }
 
         /// <summary>
@@ -628,7 +606,8 @@ namespace RockbarForEDCB
         /// <summary>
         /// 録画済み一覧の生成
         /// </summary>
-        private void BuildRecList()
+        /// <param name="targetListView">描画対象のListView</param>
+        private void BuildRecList(ListView targetListView)
         {
             if (recFileInfos.Count == 0)
             {
@@ -636,12 +615,12 @@ namespace RockbarForEDCB
             }
 
             // チラつきを抑えるため描画を停止
-            mainListView.BeginUpdate();
+            targetListView.BeginUpdate();
 
             try
             {
                 // 一覧を全件クリア
-                mainListView.Items.Clear();
+                targetListView.Items.Clear();
 
                 foreach (var recFile in recFileInfos)
                 {
@@ -650,11 +629,11 @@ namespace RockbarForEDCB
 
                     // --- チャンネル名の取得 ---
                     // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-                    string key = RockbarUtility.GetKey(recFile.TransportStreamID, recFile.ServiceID);
-                    Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                    string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                        ? service.Name
-                        : recFile.ServiceName;
+                    string serviceName = GetCustomServiceName(recFile.TransportStreamID, recFile.ServiceID);
+                    if (string.IsNullOrWhiteSpace(serviceName))
+                    {
+                        serviceName = recFile.ServiceName;
+                    }
 
                     // フィルタ条件チェック
                     if (!IsMatchFilter(serviceName, recFile.Title))
@@ -717,52 +696,55 @@ namespace RockbarForEDCB
                         item.BackColor = this.ngReserveListBackColor;
                     }
 
-                    mainListView.Items.Add(item);
+                    targetListView.Items.Add(item);
                 }
 
                 // --- 列幅の設定 ---
                 // 列0: 録画状態
-                int col0Width = TextRenderer.MeasureText("◎", mainListView.Font).Width + columnPadding;
+                int col0Width = TextRenderer.MeasureText("◎", targetListView.Font).Width + columnPadding;
 
                 // 列1: 日時表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00/00/00(日) 00:00-00:00", mainListView.Font).Width + columnPadding;
+                int col1Width = TextRenderer.MeasureText("00/00/00(日) 00:00-00:00", targetListView.Font).Width + columnPadding;
 
                 // 列2: チャンネル名の最長幅
                 int col2Width = maxServiceNameWidth + columnPadding;
 
-                mainListView.Columns[0].Width = col0Width;
-                mainListView.Columns[1].Width = col1Width;
-                mainListView.Columns[2].Width = col2Width;
+                targetListView.Columns[0].Width = col0Width;
+                targetListView.Columns[1].Width = col1Width;
+                targetListView.Columns[2].Width = col2Width;
 
                 // 列3: 番組名（残りの幅をすべて充当）
-                int remainingWidth = mainListView.ClientSize.Width - (col0Width + col1Width + col2Width);
-                mainListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
+                int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
+                targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
             }
             finally
             {
                 // 描画を再開
-                mainListView.EndUpdate();
+                targetListView.EndUpdate();
             }
             // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            adjustListViewColumns(mainListView);
+            adjustListViewColumns(targetListView);
         }
 
         /// <summary>
         /// 新番組一覧の生成
         /// </summary>
-        private void BuildNewProgramList()
+        /// <param name="targetListView">描画対象のListView</param>
+        /// <returns>次回更新が必要になる時刻</returns>
+        private DateTime BuildNewProgramList(ListView targetListView)
         {
             DateTime now = DateTime.Now;
+            DateTime minNextRefreshTime = DateTime.MaxValue;
 
             // チラつきを抑えるため描画を停止
-            mainListView.BeginUpdate();
+            targetListView.BeginUpdate();
 
             try
             {
                 // 一覧を全件クリア
-                mainListView.Items.Clear();
+                targetListView.Items.Clear();
 
-                if (serviceEvents == null) return;
+                if (serviceEvents == null) return DateTime.MinValue;
 
                 // --- 全サービスの番組リストから「[新]」が含まれる番組を抽出し、開始時間順に平坦化（Flatten）してソート ---
                 var newPrograms = serviceEvents
@@ -792,7 +774,7 @@ namespace RockbarForEDCB
                     // サービス名の取得
                     string serviceName = !string.IsNullOrWhiteSpace(service?.Name)
                         ? service.Name
-                        : (matchedService?.serviceInfo != null ? matchedService.serviceInfo.service_name : key);
+                        : matchedService?.serviceInfo?.service_name ?? key;
 
                     // 番組タイトルの取得
                     string eventTitle = ev.ShortInfo?.event_name ?? "";
@@ -813,10 +795,7 @@ namespace RockbarForEDCB
 
                     if (reserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                     {
-                        reserveStatus = ReserveStatus.OK;
-                        if (reserveData.RecSetting.IsNoRec()) reserveStatus = ReserveStatus.DISABLED;
-                        else if (reserveData.OverlapMode == 1) reserveStatus = ReserveStatus.PARTIAL;
-                        else if (reserveData.OverlapMode == 2) reserveStatus = ReserveStatus.NG;
+                        reserveStatus = GetReserveStatus(reserveData);
                     }
                     reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
 
@@ -831,86 +810,70 @@ namespace RockbarForEDCB
                     };
 
                     // 予約状況に応じた背景色の変更
-                    switch (reserveStatus)
-                    {
-                        case ReserveStatus.NONE:
-                            item.BackColor = this.listBackColor;
-                            break;
-                        case ReserveStatus.OK:
-                            item.BackColor = this.okReserveListBackColor;
-                            break;
-                        case ReserveStatus.PARTIAL:
-                            item.BackColor = this.partialReserveListBackColor;
-                            break;
-                        case ReserveStatus.NG:
-                            item.BackColor = this.ngReserveListBackColor;
-                            break;
-                        case ReserveStatus.DISABLED:
-                            item.BackColor = this.disabledReserveListBackColor;
-                            break;
-                    }
+                    item.BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec));
 
-                    mainListView.Items.Add(item);
+                    targetListView.Items.Add(item);
                 }
                 // --- リストアップされた番組のうち、終了時間が直近のものを取得して次回更新時刻に設定 ---
-                var nearestEndTime = newPrograms
+                minNextRefreshTime = newPrograms
                     .Select(x => x.Event.start_time.AddSeconds(x.Event.durationSec))
                     .Where(endTime => endTime > now)
                     .DefaultIfEmpty(DateTime.MaxValue)
                     .Min();
 
-                if (nearestEndTime != DateTime.MaxValue)
-                {
-                    this.nextMainListViewRefreshTime = nearestEndTime;
-                }
-
                 // --- 列幅の設定 ---
                 // 列0: 予約状態
-                int col0Width = TextRenderer.MeasureText("◎", mainListView.Font).Width + columnPadding;
+                int col0Width = TextRenderer.MeasureText("◎", targetListView.Font).Width + columnPadding;
 
                 // 列1: 時間表記の固定幅
-                int col1Width = TextRenderer.MeasureText("MM/dd(ddd) 00:00-00:00", mainListView.Font).Width + columnPadding;
+                int col1Width = TextRenderer.MeasureText("MM/dd(ddd) 00:00-00:00", targetListView.Font).Width + columnPadding;
 
                 // 列2: チャンネル名の最長幅
                 int col2Width = maxServiceNameWidth + columnPadding;
 
-                mainListView.Columns[0].Width = col0Width;
-                mainListView.Columns[1].Width = col1Width;
-                mainListView.Columns[2].Width = col2Width;
+                targetListView.Columns[0].Width = col0Width;
+                targetListView.Columns[1].Width = col1Width;
+                targetListView.Columns[2].Width = col2Width;
 
                 // 列3: 番組名（残りの幅をすべて充当）
-                int remainingWidth = mainListView.ClientSize.Width - (col0Width + col1Width + col2Width);
-                mainListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
+                int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
+                targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
 
             }
             finally
             {
                 // 描画再開
-                mainListView.EndUpdate();
+                targetListView.EndUpdate();
             }
             // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            adjustListViewColumns(mainListView);
+            adjustListViewColumns(targetListView);
+
+            // 次回更新候補時刻を返す
+            return (minNextRefreshTime);
         }
 
         /// <summary>
         /// チャンネル一覧の生成
         /// </summary>
-        private void BuildServiceList()
+        /// <param name="targetListView">描画対象のListView</param>
+        /// <param name="selectedTab">判定基準となる選択中TabPage</param>
+        /// <returns>次回更新が必要になる時刻</returns>
+        private DateTime BuildServiceList(ListView targetListView, TabPage selectedTab)
         {
             DateTime now = DateTime.Now;
-            DateTime minNextStartTime = DateTime.MaxValue;
+            DateTime minNextRefreshTime = DateTime.MaxValue;
 
             // チラつきを抑えるため描画を停止
-            mainListView.BeginUpdate();
+            targetListView.BeginUpdate();
 
             try
             {
                 // 一覧を全件クリア
-                mainListView.Items.Clear();
+                targetListView.Items.Clear();
 
-                List<Service> services = (mainFormTabControl.SelectedTab == favoriteTabPage)
-                    ? favoriteServiceList
-                    : allServiceList;
+                List<Service> services = (selectedTab == favoriteTabPage)
+                     ? favoriteServiceList
+                     : allServiceList;
 
                 // チャンネル表示
                 foreach (var service in services)
@@ -927,15 +890,15 @@ namespace RockbarForEDCB
                         : RockbarUtility.GetServiceType(service.Type, null);
 
                     // 選択中タブ（地デジ / BS / CS）と不一致のサービスは除外する
-                    if (mainFormTabControl.SelectedTab == dttvTabPage && serviceType != ServiceType.DTTV) continue;
-                    if (mainFormTabControl.SelectedTab == bsTabPage && serviceType != ServiceType.BS) continue;
-                    if (mainFormTabControl.SelectedTab == csTabPage && serviceType != ServiceType.CS) continue;
+                    if (selectedTab == dttvTabPage && serviceType != ServiceType.DTTV) continue;
+                    if (selectedTab == bsTabPage && serviceType != ServiceType.BS) continue;
+                    if (selectedTab == csTabPage && serviceType != ServiceType.CS) continue;
 
                     // CSVのチャンネル一覧で設定されているチャンネル名を最優先で使用する
                     // チャンネル名設定がない場合はEDCBからのデータを使用し、それもなければTsid_Sid
                     string serviceName = !string.IsNullOrWhiteSpace(service.Name)
                         ? service.Name
-                        : (matchedService != null ? matchedService.serviceInfo.service_name : key);
+                        : matchedService?.serviceInfo?.service_name ?? key;
 
                     // 現在放送中の番組を探す
                     EpgEventInfo ev = matchedService?.eventList.Find(x =>
@@ -964,10 +927,7 @@ namespace RockbarForEDCB
                         // 予約状態文字列を取得
                         if (reserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                         {
-                            reserveStatus = ReserveStatus.OK;
-                            if (reserveData.RecSetting.IsNoRec()) reserveStatus = ReserveStatus.DISABLED;
-                            else if (reserveData.OverlapMode == 1) reserveStatus = ReserveStatus.PARTIAL;
-                            else if (reserveData.OverlapMode == 2) reserveStatus = ReserveStatus.NG;
+                            reserveStatus = GetReserveStatus(reserveData);
                         }
                         reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
                     }
@@ -983,26 +943,12 @@ namespace RockbarForEDCB
                     };
 
                     // 色変更
-                    switch (reserveStatus)
+                    if (ev != null)
                     {
-                        case ReserveStatus.NONE:
-                            item.BackColor = this.listBackColor;
-                            break;
-                        case ReserveStatus.OK:
-                            item.BackColor = this.okReserveListBackColor;
-                            break;
-                        case ReserveStatus.PARTIAL:
-                            item.BackColor = this.partialReserveListBackColor;
-                            break;
-                        case ReserveStatus.NG:
-                            item.BackColor = this.ngReserveListBackColor;
-                            break;
-                        case ReserveStatus.DISABLED:
-                            item.BackColor = this.disabledReserveListBackColor;
-                            break;
+                        item.BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec));
                     }
 
-                    mainListView.Items.Add(item);
+                    targetListView.Items.Add(item);
 
                     // 次に始まる最初の番組の「開始時刻」を探す
                     if (matchedService?.eventList != null)
@@ -1012,83 +958,67 @@ namespace RockbarForEDCB
                             .OrderBy(x => x.start_time)
                             .FirstOrDefault();
 
-                        if (nextEv != null && nextEv.start_time < minNextStartTime)
+                        if (nextEv != null && nextEv.start_time < minNextRefreshTime)
                         {
-                            minNextStartTime = nextEv.start_time;
+                            minNextRefreshTime = nextEv.start_time;
                         }
                     }
                 }
 
-                // --- 次回更新時刻の設定 ---
-                if (minNextStartTime != DateTime.MaxValue)
-                {
-                    this.nextMainListViewRefreshTime = minNextStartTime; 
-                }
-                
                 // --- 列幅の設定 ---
                 // 列0: チャンネル名の最長幅
                 int col0Width = maxServiceNameWidth + columnPadding;
 
                 // 列1: 時間表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00:00-00:00", mainListView.Font).Width + columnPadding;
+                int col1Width = TextRenderer.MeasureText("00:00-00:00", targetListView.Font).Width + columnPadding;
 
                 // 列2: 予約状態
-                int col2Width = TextRenderer.MeasureText("◎", mainListView.Font).Width + columnPadding;
+                int col2Width = TextRenderer.MeasureText("◎", targetListView.Font).Width + columnPadding;
 
-                mainListView.Columns[0].Width = col0Width;
-                mainListView.Columns[1].Width = col1Width;
-                mainListView.Columns[2].Width = col2Width;
+                targetListView.Columns[0].Width = col0Width;
+                targetListView.Columns[1].Width = col1Width;
+                targetListView.Columns[2].Width = col2Width;
 
                 // 列3: 番組名（残りの幅をすべて充当）
-                int remainingWidth = mainListView.ClientSize.Width - (col0Width + col1Width + col2Width);
-                mainListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
+                int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
+                targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
             }
             finally
             {
                 // 描画を再開
-                mainListView.EndUpdate();
+                targetListView.EndUpdate();
             }
             // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            adjustListViewColumns(mainListView);
+            adjustListViewColumns(targetListView);
+
+            // 次回更新候補時刻を返す
+            return (minNextRefreshTime);
         }
 
         /// <summary>
         /// チューナー一覧の生成
         /// </summary>
-        private void BuildTunerList()
+        /// <param name="targetListView">描画対象のListView</param>
+        /// <returns>次回更新が必要になる時刻</returns>
+        private DateTime BuildTunerList(ListView targetListView)
         {
             // チラつきを抑えるため描画を停止
-            subListView.BeginUpdate();
+            targetListView.BeginUpdate();
 
             // 次回更新時間判定用：現在時刻以降で最も近いイベント時刻（開始 or 終了）を保持
             DateTime now = DateTime.Now;
-            DateTime nearestEventTime = DateTime.MaxValue;
+            DateTime minNextRefreshTime = DateTime.MaxValue;
 
             try
             {
                 // 一覧を全件クリア
-                subListView.Items.Clear();
+                targetListView.Items.Clear();
 
                 // チューナー表示
                 foreach (var tuner in tunerReserveInfos)
                 {
-                    string tunerName = null;
-
                     // 設定にチューナー名があれば取得し、なければデフォルト名で表示
-                    if (rockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
-                    {
-                        tunerName = rockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
-                    }
-                    else
-                    {
-                        tunerName = RockbarUtility.GetDefaultTunerName(tuner.tunerName);
-                    }
-
-                    // 連番付与
-                    if (tuner.tunerID != 0xffffffff)
-                    {
-                        tunerName += (tuner.tunerID & 0xffff).ToString();
-                    }
+                    string tunerName = GetCustomTunerName(tuner);
 
                     // 直近の予約タイトルとツールチップをを抽出する
                     HashSet<uint> reserveIds = tuner.reserveList.ToHashSet();
@@ -1110,34 +1040,34 @@ namespace RockbarForEDCB
 
                     if (nearestReserve != null)
                     {
-                        DateTime start = nearestReserve.StartTime;
-                        DateTime end = start.AddSeconds(nearestReserve.DurationSecond);
+                        DateTime startTime = nearestReserve.StartTime;
+                        DateTime endTime = startTime.AddSeconds(nearestReserve.DurationSecond);
 
                         // 録画中判定
-                        isRecording = start <= DateTime.Now && end >= DateTime.Now;
+                        isRecording = startTime <= DateTime.Now && endTime >= DateTime.Now;
 
                         // --- チャンネル名の取得 ---
                         // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                        string key = RockbarUtility.GetKey(nearestReserve.TransportStreamID, nearestReserve.ServiceID);
-                        Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                        serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                            ? service.Name
-                            : nearestReserve.StationName;
+                        serviceName = GetCustomServiceName(nearestReserve.TransportStreamID, nearestReserve.ServiceID);
+                        if (string.IsNullOrWhiteSpace(serviceName))
+                        {
+                            serviceName = nearestReserve.StationName;
+                        }
 
-                        dateTimeText = $"{start:MM/dd(ddd) HH:mm}-{end:HH:mm}";
-                        toolTipDateTimeText = $"{start:MM/dd(ddd) HH:mm}～{end:HH:mm}";
+                        dateTimeText = $"{startTime:MM/dd(ddd) HH:mm}-{endTime:HH:mm}";
+                        toolTipDateTimeText = $"{startTime:MM/dd(ddd) HH:mm}～{endTime:HH:mm}";
                         title = nearestReserve.Title;
 
                         // --- 次回更新時刻の候補判定 ---
                         // 開始時刻が現在以降かつ、これまでの最小値より近ければ更新
-                        if (start >= now && start < nearestEventTime)
+                        if (startTime >= now && startTime < minNextRefreshTime)
                         {
-                            nearestEventTime = start;
+                            minNextRefreshTime = startTime;
                         }
                         // 終了時刻が現在以降かつ、これまでの最小値より近ければ更新
-                        if (end >= now && end < nearestEventTime)
+                        if (endTime >= now && endTime < minNextRefreshTime)
                         {
-                            nearestEventTime = end;
+                            minNextRefreshTime = endTime;
                         }
                     }
 
@@ -1172,41 +1102,37 @@ namespace RockbarForEDCB
                         item.BackColor = this.listBackColor;
                     }
 
-                    subListView.Items.Add(item);
-                }
-
-                // --- 次回更新時間の設定 ---
-                // 現在以降のイベント（開始 or 終了）を設定
-                if (nearestEventTime != DateTime.MaxValue)
-                {
-                    this.nextSubListViewRefreshTime = nearestEventTime;
+                    targetListView.Items.Add(item);
                 }
 
                 // --- 列幅の設定（設定ファイルの最長文字数に基づく計算） ---
                 // 列0: チューナー名の最長幅
                 int col0Width = maxTunerNameWidth + columnPadding;
-                
+
                 // 列1: 日時表記の固定幅
-                int col1Width = TextRenderer.MeasureText("00/00(水) 00:00-00:00", subListView.Font).Width + columnPadding;
+                int col1Width = TextRenderer.MeasureText("00/00(水) 00:00-00:00", targetListView.Font).Width + columnPadding;
 
                 // 列2: チャンネル名の最長幅
                 int col2Width = maxServiceNameWidth + columnPadding;
 
-                subListView.Columns[0].Width = col0Width;
-                subListView.Columns[1].Width = col1Width;
-                subListView.Columns[2].Width = col2Width;
+                targetListView.Columns[0].Width = col0Width;
+                targetListView.Columns[1].Width = col1Width;
+                targetListView.Columns[2].Width = col2Width;
 
                 // 列3: 番組名（残りの幅をすべて充当）
-                int remainingWidth = subListView.ClientSize.Width - (col0Width + col1Width + col2Width);
-                subListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
+                int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
+                targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
             }
             finally
             {
                 // 描画を再開
-                subListView.EndUpdate();
+                targetListView.EndUpdate();
             }
             // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            adjustListViewColumns(subListView);
+            adjustListViewColumns(targetListView);
+
+            // 次回更新候補時刻を返す
+            return (minNextRefreshTime);
         }
 
         /// <summary>
@@ -1472,11 +1398,11 @@ namespace RockbarForEDCB
             {
                 // --- チャンネル名の取得 ---
                 // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                string key = RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID);
-                Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                    ? service.Name
-                    : reserve.StationName;
+                string serviceName = GetCustomServiceName(reserve.TransportStreamID, reserve.ServiceID);
+                if (string.IsNullOrWhiteSpace(serviceName))
+                {
+                    serviceName = reserve.StationName;
+                }
 
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)
                 item.Text = reserve.StartTime.ToString("MM/dd(ddd) HH:mm") + "～" + reserve.StartTime.AddSeconds(reserve.DurationSecond).ToString("HH:mm") + "  " +
@@ -1549,11 +1475,11 @@ namespace RockbarForEDCB
 
             // --- チャンネル名の取得 ---
             // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-            string key = RockbarUtility.GetKey(recFile.TransportStreamID, recFile.ServiceID);
-            Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-            string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                ? service.Name
-                : recFile.ServiceName;
+            string serviceName = GetCustomServiceName(recFile.TransportStreamID, recFile.ServiceID);
+            if (string.IsNullOrWhiteSpace(serviceName))
+            {
+                serviceName = recFile.ServiceName;
+            }
 
             var services = new List<RecInfoDetailText>()
                 {
@@ -1786,22 +1712,22 @@ namespace RockbarForEDCB
         {
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
-                reserveListView_MouseClick(sender, e);
+                reserveListView_MouseClick(sender, e, mainListView);
                 return;
             }
             else if (mainFormTabControl.SelectedTab == recTabPage)
             {
-                recListView_MouseClick(sender, e);
+                recListView_MouseClick(sender, e, mainListView);
                 return;
             }
             else if (mainFormTabControl.SelectedTab == newProgramTabPage)
             {
-                newProgramListView_MouseClick(sender, e);
+                newProgramListView_MouseClick(sender, e, mainListView);
                 return;
             }
             else
             {
-                serviceListView_MouseClick(sender, e);
+                serviceListView_MouseClick(sender, e, mainListView);
                 return;
             }
         }
@@ -1816,7 +1742,7 @@ namespace RockbarForEDCB
         {
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
-                reserveListView_MouseUp(sender, e);
+                reserveListView_MouseUp(sender, e, mainListView);
                 return;
             }
         }
@@ -1830,22 +1756,22 @@ namespace RockbarForEDCB
         {
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
-                reserveListView_MouseDoubleClick(sender, e);
+                reserveListView_MouseDoubleClick(sender, e, mainListView);
                 return;
             }
             else if (mainFormTabControl.SelectedTab == recTabPage)
             {
-                recListView_MouseDoubleClick(sender, e);
+                recListView_MouseDoubleClick(sender, e, mainListView);
                 return;
             }
             else if (mainFormTabControl.SelectedTab == newProgramTabPage)
             {
-                newProgramListView_MouseDoubleClick(sender, e);
+                newProgramListView_MouseDoubleClick(sender, e, mainListView);
                 return;
             }
             else
             {
-                serviceListView_MouseDoubleClick(sender, e);
+                serviceListView_MouseDoubleClick(sender, e, mainListView);
                 return;
             }
         }
@@ -1870,14 +1796,15 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void serviceListView_MouseClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void serviceListView_MouseClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // 右クリック
             // 現在の番組を含め、今後の番組を30件までコンテキストメニューで表示(TVRockの仕様踏襲)
             if (e.Button == MouseButtons.Right)
             {
                 // クリックした箇所が自動選択されるので拾う
-                var selected = mainListView.SelectedItems[0];
+                var selected = targetListView.SelectedItems[0];
 
                 listContextMenuStrip.Items.Clear();
 
@@ -1925,7 +1852,8 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void serviceListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void serviceListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // TVTest使用時のみ
             if (!rockbarSetting.UseDoubleClickTvtest)
@@ -1938,7 +1866,7 @@ namespace RockbarForEDCB
             if (e.Button == MouseButtons.Left)
             {
                 // クリックした箇所が自動選択されるので拾う
-                var selected = mainListView.SelectedItems[0];
+                var selected = targetListView.SelectedItems[0];
 
                 Service service = selected.Tag as Service;
                 EpgServiceEventInfo sv = null;
@@ -1975,9 +1903,10 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void reserveListView_MouseClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void reserveListView_MouseClick(object sender, MouseEventArgs e, ListView targetListView)
         {
-            var selectedCount = mainListView.SelectedItems.Count;
+            var selectedCount = targetListView.SelectedItems.Count;
             if (selectedCount == 0)
             {
                 return;
@@ -1992,7 +1921,7 @@ namespace RockbarForEDCB
                 try
                 {
                     // クリックした箇所が自動選択されるので拾う
-                    var selected = mainListView.SelectedItems[0];
+                    var selected = targetListView.SelectedItems[0];
 
                     EpgEventInfo ev = allEventMap[selected.Name];
 
@@ -2028,14 +1957,14 @@ namespace RockbarForEDCB
 
                         // --- チャンネル名の取得 ---
                         // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                        string key = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID);
-                        Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                        string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                            ? service.Name
-                            : reserveData.StationName;
+                        string serviceName = GetCustomServiceName(reserveData.TransportStreamID, reserveData.ServiceID);
+                        if (string.IsNullOrWhiteSpace(serviceName))
+                        {
+                            serviceName = reserveData.StationName;
+                        }
 
                         // サービス名を追加
-                        if (! string.IsNullOrEmpty(serviceName))
+                        if (!string.IsNullOrEmpty(serviceName))
                         {
                             var item = new ToolStripMenuItem(serviceName);
                             listContextMenuStrip.Items.Add(item);
@@ -2045,7 +1974,7 @@ namespace RockbarForEDCB
                             subItem.Click += (s2, e2) => filterWith(serviceName);
                         }
                         // 予約番組名を追加
-                        if (! string.IsNullOrEmpty(reserveData.Title))
+                        if (!string.IsNullOrEmpty(reserveData.Title))
                         {
                             var item = new ToolStripMenuItem(reserveData.Title);
                             listContextMenuStrip.Items.Add(item);
@@ -2056,7 +1985,7 @@ namespace RockbarForEDCB
                             listContextMenuStrip.Items.Add(new ToolStripSeparator());
                         }
                         // 予約コメントを追加
-                        if (! string.IsNullOrEmpty(reserveData.Comment))
+                        if (!string.IsNullOrEmpty(reserveData.Comment))
                         {
                             var item = listContextMenuStrip.Items.Add(reserveData.Comment);
                             item.Click += (s2, e2) => copyText(reserveData.Comment);
@@ -2069,7 +1998,7 @@ namespace RockbarForEDCB
                             var recFolderList = reserveData.RecSetting.RecFolderList;
                             foreach (var recInfo in recFolderList)
                             {
-                                if (! string.IsNullOrEmpty(recInfo.RecFolder))
+                                if (!string.IsNullOrEmpty(recInfo.RecFolder))
                                 {
                                     var item = listContextMenuStrip.Items.Add(recInfo.RecFolder);
                                     item.Click += (s2, e2) => copyText(recInfo.RecFolder);
@@ -2078,7 +2007,7 @@ namespace RockbarForEDCB
                             }
                             foreach (var fileName in reserveData.RecFileNameList)
                             {
-                                if (! string.IsNullOrEmpty(fileName))
+                                if (!string.IsNullOrEmpty(fileName))
                                 {
                                     var item = listContextMenuStrip.Items.Add(fileName);
                                     item.Click += (s2, e2) => copyText(fileName);
@@ -2130,14 +2059,15 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void reserveListView_MouseUp(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void reserveListView_MouseUp(object sender, MouseEventArgs e, ListView targetListView)
         {
             // 中央クリック
             // 予約情報の録画有効・無効を切り替える
             if (e.Button == MouseButtons.Middle)
             {
                 // クリックした箇所にある項目を取得する
-                var selected = mainListView.GetItemAt(e.Location.X, e.Location.Y);
+                var selected = targetListView.GetItemAt(e.Location.X, e.Location.Y);
 
                 if (selected != null && reserveMap.TryGetValue(selected.Name, out var reserve))
                 {
@@ -2152,15 +2082,16 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void reserveListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void reserveListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // Web番組詳細使用時のみ
-            if (! rockbarSetting.UseWebLink)
+            if (!rockbarSetting.UseWebLink)
             {
                 return;
             }
 
-            var selectedCount = mainListView.SelectedItems.Count;
+            var selectedCount = targetListView.SelectedItems.Count;
             if (selectedCount == 0)
             {
                 return;
@@ -2173,7 +2104,7 @@ namespace RockbarForEDCB
                 try
                 {
                     // クリックした箇所が自動選択されるので拾う
-                    var selected = mainListView.SelectedItems[0];
+                    var selected = targetListView.SelectedItems[0];
 
                     EpgEventInfo ev = allEventMap[selected.Name];
                     accessWebUrl(ev);
@@ -2192,9 +2123,10 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void recListView_MouseClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void recListView_MouseClick(object sender, MouseEventArgs e, ListView targetListView)
         {
-            var selectedCount = mainListView.SelectedItems.Count;
+            var selectedCount = targetListView.SelectedItems.Count;
             if (selectedCount == 0)
             {
                 return;
@@ -2209,9 +2141,9 @@ namespace RockbarForEDCB
                 try
                 {
                     // クリックした箇所が自動選択されるので拾う
-                    var selected = mainListView.SelectedItems[0];
+                    var selected = targetListView.SelectedItems[0];
                     uint recID;
-                    if (! uint.TryParse(selected.Name, out recID))
+                    if (!uint.TryParse(selected.Name, out recID))
                     {
                         MessageBox.Show("録画情報IDの取得に失敗しました。", "録画情報IDエラー");
                         return;
@@ -2301,15 +2233,16 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void recListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void recListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // TVTest使用時のみ
-            if (! rockbarSetting.UseDoubleClickTvtest)
+            if (!rockbarSetting.UseDoubleClickTvtest)
             {
                 return;
             }
 
-            var selectedCount = mainListView.SelectedItems.Count;
+            var selectedCount = targetListView.SelectedItems.Count;
             if (selectedCount == 0)
             {
                 return;
@@ -2320,10 +2253,10 @@ namespace RockbarForEDCB
             if (e.Button == MouseButtons.Left)
             {
                 // クリックした箇所が自動選択されるので拾う
-                var selected = mainListView.SelectedItems[0];
+                var selected = targetListView.SelectedItems[0];
 
                 uint recID;
-                if (! uint.TryParse(selected.Name, out recID))
+                if (!uint.TryParse(selected.Name, out recID))
                 {
                     MessageBox.Show("録画情報IDの取得に失敗しました。", "録画情報IDエラー");
                     return;
@@ -2358,9 +2291,10 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void newProgramListView_MouseClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void newProgramListView_MouseClick(object sender, MouseEventArgs e, ListView targetListView)
         {
-            var selectedCount = mainListView.SelectedItems.Count;
+            var selectedCount = targetListView.SelectedItems.Count;
             if (selectedCount == 0)
             {
                 return;
@@ -2371,7 +2305,7 @@ namespace RockbarForEDCB
             if (e.Button != MouseButtons.Right) return;
 
             // クリックされた位置にあるアイテム（番組）を取得
-            var hitTest = mainListView.HitTest(e.Location);
+            var hitTest = targetListView.HitTest(e.Location);
             var selectedItem = hitTest.Item;
 
             if (selectedItem == null) return;
@@ -2409,13 +2343,13 @@ namespace RockbarForEDCB
 
                 // チャンネル名
                 // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-                Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                EpgServiceEventInfo matchedService = null;
-                serviceMap.TryGetValue(key, out matchedService);
-                string serviceName = (service != null && !string.IsNullOrWhiteSpace(service.Name))
-                    ? service.Name
-                    : (matchedService != null ? matchedService.serviceInfo.service_name : key);
+                string serviceName = GetCustomServiceName(ev.transport_stream_id, ev.service_id);
+                if (string.IsNullOrWhiteSpace(serviceName))
+                {
+                    string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
+                    serviceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
+                    serviceName = matchedService?.serviceInfo?.service_name ?? key;
+                }
 
                 if (!string.IsNullOrEmpty(serviceName))
                 {
@@ -2469,7 +2403,8 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void newProgramListView_MouseDoubleClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void newProgramListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // Web番組詳細使用時のみ
             if (!rockbarSetting.UseWebLink)
@@ -2477,7 +2412,7 @@ namespace RockbarForEDCB
                 return;
             }
 
-            var selectedCount = mainListView.SelectedItems.Count;
+            var selectedCount = targetListView.SelectedItems.Count;
             if (selectedCount == 0)
             {
                 return;
@@ -2490,7 +2425,7 @@ namespace RockbarForEDCB
                 try
                 {
                     // 選択されている行（アイテム）を取得
-                    var selected = mainListView.SelectedItems[0];
+                    var selected = targetListView.SelectedItems[0];
 
                     // Tag から EpgEventInfo を安全に取り出して Web ページを開く
                     if (selected.Tag is EpgEventInfo ev)
@@ -2517,7 +2452,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void subListView_MouseClick(object sender, MouseEventArgs e)
         {
-            tunerListView_MouseClick(sender, e);
+            tunerListView_MouseClick(sender, e, subListView);
         }
 
         /// <summary>
@@ -2526,7 +2461,8 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void tunerListView_MouseClick(object sender, MouseEventArgs e)
+        /// <param name="targetListView">対象のListView</param>
+        private void tunerListView_MouseClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // 右クリック
             // 今後の予約を30件までコンテキストメニューで表示
@@ -2534,7 +2470,7 @@ namespace RockbarForEDCB
             if (e.Button == MouseButtons.Right)
             {
                 // クリックした箇所が自動選択されるので拾う
-                var selected = subListView.SelectedItems[0];
+                var selected = targetListView.SelectedItems[0];
 
                 listContextMenuStrip.Items.Clear();
 
@@ -3019,6 +2955,107 @@ namespace RockbarForEDCB
         {
             adjustListViewColumns(mainListView);
             adjustListViewColumns(subListView);
+        }
+
+        /// <summary>
+        /// 設定ファイルのサービス名を取得します。
+        /// </summary>
+        private string GetCustomServiceName(ushort transportStreamId, ushort serviceId)
+        {
+            string key = RockbarUtility.GetKey(transportStreamId, serviceId);
+
+            Service service = allServiceList?.FirstOrDefault(
+                x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+
+            if (service != null && !string.IsNullOrWhiteSpace(service.Name))
+            {
+                return service.Name;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 設定ファイルのチューナー名を取得します。
+        /// </summary>
+        private string GetCustomTunerName(TunerReserveInfo tuner)
+        {
+            string tunerName;
+
+            if (rockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
+            {
+                tunerName = rockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
+            }
+            else
+            {
+                tunerName = RockbarUtility.GetDefaultTunerName(tuner.tunerName);
+            }
+
+            if (tuner.tunerID != 0xffffffff)
+            {
+                tunerName += (tuner.tunerID & 0xffff).ToString();
+            }
+
+            return tunerName;
+        }
+
+        /// <summary>
+        /// 予約状態を取得します。
+        /// </summary>
+        private ReserveStatus GetReserveStatus(ReserveData reserveData)
+        {
+            if (reserveData.RecSetting.IsNoRec())
+            {
+                return ReserveStatus.DISABLED;
+            }
+
+            if (reserveData.OverlapMode == 1)
+            {
+                return ReserveStatus.PARTIAL;
+            }
+
+            if (reserveData.OverlapMode == 2)
+            {
+                return ReserveStatus.NG;
+            }
+
+            return ReserveStatus.OK;
+        }
+
+        /// <summary>
+        /// 予約状態から背景色を取得します。
+        /// </summary>
+        private Color GetReserveBackColor(ReserveStatus reserveStatus, DateTime startTime, DateTime endTime)
+        {
+            // 予約情報がない場合
+            if (reserveStatus == ReserveStatus.NONE)
+            {
+                return listBackColor;
+            }
+            // 無効予約の場合
+            else if (reserveStatus == ReserveStatus.DISABLED)
+            {
+                return disabledReserveListBackColor;
+            }
+            // 一部予約の場合、黃背景色で警告
+            else if (reserveStatus == ReserveStatus.PARTIAL)
+            {
+                return partialReserveListBackColor;
+            }
+            // TU不足の場合、赤背景色で警告
+            else if (reserveStatus == ReserveStatus.NG)
+            {
+                return ngReserveListBackColor;
+            }
+            // 現在録画中の場合、正常予約背景色で表示
+            else if (startTime <= DateTime.Now && endTime >= DateTime.Now)
+            {
+                return okReserveListBackColor;
+            }
+            else
+            {
+                return listBackColor;
+            }
         }
     }
 }
