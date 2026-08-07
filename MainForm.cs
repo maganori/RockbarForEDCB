@@ -96,6 +96,9 @@ namespace RockbarForEDCB
         private DateTime nextMainListViewRefreshTime = DateTime.MinValue;
         private DateTime nextSubListViewRefreshTime = DateTime.MinValue;
 
+        private readonly TimeSpan dataUpdateInterval = TimeSpan.FromMinutes(1);
+        private DateTime lastRecDataUpdateTime = DateTime.MinValue;
+
         /// <summary>
         /// コンストラクタ
         /// コンフィグの読み込み・CtrlCmdの初期化・初回表示処理を行う。
@@ -329,10 +332,27 @@ namespace RockbarForEDCB
             bool isTunerChanged = false;
             bool isRecChanged = false;
 
+            // 録画情報更新必要有無判定
+            bool isRecDataUpdateRequired = 
+                mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いているか
+                DateTime.Now - lastRecDataUpdateTime >= dataUpdateInterval; //前回更新時間から時間経過しているか
+
             // EpgTimerSrvと通信する
-            if (isTransmission && canConnect)
+            if (canConnect)
             {
-                GetEpgTimerData(out isServiceChanged, out isTunerChanged, out isReserveChanged, out isRecChanged);
+                // 定期更新など、通信が必要な場合
+                if (isTransmission)
+                {
+                    isServiceChanged = UpdateServiceData();
+                    isReserveChanged = UpdateReserveData();
+                    isTunerChanged = UpdateTunerData();
+                }
+
+                // 録画情報の更新が必要な場合
+                if (isRecDataUpdateRequired)
+                {
+                    isRecChanged = UpdateRecData();
+                }
             }
 
             // 現在アクティブなタブに応じて描画処理を分岐
@@ -384,31 +404,11 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// EpgTimerSrvから予約一覧・番組一覧・チューナー一覧・録画一覧を取得し、
-        /// reserveMap / serviceMap / allEventMap / recMap を構築する。
-        private void GetEpgTimerData(out bool isServiceChanged, out bool isTunerChanged, out bool isReserveChanged, out bool isRecChanged)
+        /// EpgTimerSrvから番組一覧を取得し、serviceMap / allEventMapを構築します。
+        /// </summary>
+        /// <returns>番組情報が変更された場合はtrue、それ以外はfalse</returns>
+        private bool UpdateServiceData()
         {
-            // 予約一覧取得
-            reserveDatas.Clear();
-            ctrlCmdUtil.SendEnumReserve(ref reserveDatas);
-
-            // 予約一覧関連のハッシュを作成
-            reserveMap.Clear();
-            foreach (ReserveData reserveData in reserveDatas)
-            {
-                // TSID + SID + EventID → 予約情報
-                string evkey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
-                reserveMap[evkey] = reserveData;
-            }
-
-            // 予約一覧の差分有無チェック
-            // 予約数、予約ID、重複状態、録画モード(全サービス録画、無効など)
-            string currentReserveHash = $"{reserveDatas.Count}_" +
-                string.Join(",", reserveDatas.Select(r => $"{r.ReserveID}_{r.OverlapMode}_{r.RecSetting.RecMode}"));
-            isReserveChanged = (currentReserveHash != prevReserveHash);
-            prevReserveHash = currentReserveHash;
-
-
             // 番組一覧取得
             serviceEvents.Clear();
             allEventMap.Clear();
@@ -431,40 +431,97 @@ namespace RockbarForEDCB
             }
 
             // 番組一覧の差分有無チェック
-            // チャンネル数、前番組データ数
+            // チェック対象：チャンネル数、前番組データ数
             string currentServiceHash = $"{serviceEvents.Count}_{allEventMap.Count}";
-            isServiceChanged = (currentServiceHash != prevServiceHash);
+
+            bool isServiceChanged = (currentServiceHash != prevServiceHash);
             prevServiceHash = currentServiceHash;
 
+            return isServiceChanged;
+        }
 
+        /// <summary>
+        /// EpgTimerSrvから予約一覧を取得し、reserveMapを構築します。
+        /// </summary>
+        /// <returns>予約情報が変更された場合はtrue、それ以外はfalse</returns>
+        private bool UpdateReserveData()
+        {
+            // 予約一覧取得
+            reserveDatas.Clear();
+            ctrlCmdUtil.SendEnumReserve(ref reserveDatas);
+
+            // 予約一覧関連のハッシュを作成
+            reserveMap.Clear();
+            foreach (ReserveData reserveData in reserveDatas)
+            {
+                // TSID + SID + EventID → 予約情報
+                string evkey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
+                reserveMap[evkey] = reserveData;
+            }
+
+            // 予約一覧の差分有無チェック
+            // チェック対象：予約数、予約ID、重複状態、録画モード(全サービス録画、無効など)
+            string currentReserveHash = $"{reserveDatas.Count}_" +
+                string.Join(",", reserveDatas.Select(r => $"{r.ReserveID}_{r.OverlapMode}_{r.RecSetting.RecMode}"));
+
+            bool isReserveChanged = (currentReserveHash != prevReserveHash);
+            prevReserveHash = currentReserveHash;
+
+            return isReserveChanged;
+        }
+
+        /// <summary>
+        /// EpgTimerSrvから録画済み情報を取得し、録画一覧を更新します。
+        /// </summary>
+        /// <returns>録画済み情報が変更された場合はtrue、それ以外はfalse</returns>
+        private bool UpdateRecData()
+        {
+            recFileInfos.Clear();
+            recMap.Clear();
+            ctrlCmdUtil.SendEnumRecInfoBasic(ref recFileInfos);
+
+            int recListMaxCount = rockbarSetting.RecListMaxCount;
+            if (recListMaxCount > 0 && recFileInfos.Count > recListMaxCount)
+            {
+                recFileInfos = recFileInfos.GetRange(recFileInfos.Count - recListMaxCount, recListMaxCount);
+            }
+            recFileInfos.Reverse();
+
+            recMap = recFileInfos.ToDictionary(r => r.ID);
+
+            //更新時間を取得
+            lastRecDataUpdateTime = DateTime.Now;
+
+            // 録画済み情報の一覧の差分有無チェック
+            // チェック対象：録画済みファイルの件数、各録画済みファイルの固有ID
+            string currentRecHash = $"{recFileInfos.Count}_" +
+                string.Join(",", recFileInfos.Select(r => r.ID));
+
+            bool isRecChanged = (currentRecHash != prevRecHash);
+            prevRecHash = currentRecHash;
+
+            return isRecChanged;
+        }
+
+        /// <summary>
+        /// EpgTimerSrvからチューナーごとの予約一覧を取得します。
+        /// </summary>
+        /// <returns>チューナー情報が変更された場合はtrue、それ以外はfalse</returns>
+        private bool UpdateTunerData()
+        {
             // チューナーごとの予約一覧取得
             tunerReserveInfos.Clear();
             ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
 
             // チューナーごとの予約一覧の差分有無チェック
-            // チューナー台数、各チューナーの識別ID、各チューナーに割り当てられている予約の件数
+            // チェック対象：チューナー台数、各チューナーの識別ID、各チューナーに割り当てられている予約の件数
             string currentTunerHash = $"{tunerReserveInfos.Count}_" +
                 string.Join(",", tunerReserveInfos.Select(t => $"{t.tunerID}_{t.reserveList.Count}"));
-            isTunerChanged = (currentTunerHash != prevTunerHash);
+
+            bool isTunerChanged = (currentTunerHash != prevTunerHash);
             prevTunerHash = currentTunerHash;
 
-            // 録画済み情報の一覧取得
-            if (mainFormTabControl.SelectedTab == recTabPage)
-            {
-                FetchRecList();
-            }
-            else
-            {
-                recFileInfos.Clear();
-                recMap.Clear();
-            }
-
-            // 録画済み情報の一覧の差分有無チェック
-            // 録画済みファイルの件数、各録画済みファイルの固有ID
-            string currentRecHash = $"{recFileInfos.Count}_" +
-                string.Join(",", recFileInfos.Select(r => r.ID));
-            isRecChanged = (currentRecHash != prevRecHash);
-            prevRecHash = currentRecHash;
+            return isTunerChanged;
         }
 
         /// <summary>
@@ -585,35 +642,11 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 録画済み一覧の取得処理
-        /// </summary>
-        private void FetchRecList()
-        {
-            recFileInfos.Clear();
-            recMap.Clear();
-            ctrlCmdUtil.SendEnumRecInfoBasic(ref recFileInfos);
-
-            int recListMaxCount = rockbarSetting.RecListMaxCount;
-            if (recListMaxCount > 0 && recFileInfos.Count > recListMaxCount)
-            {
-                recFileInfos = recFileInfos.GetRange(recFileInfos.Count - recListMaxCount, recListMaxCount);
-            }
-            recFileInfos.Reverse();
-
-            recMap = recFileInfos.ToDictionary(r => r.ID);
-        }
-
-        /// <summary>
         /// 録画済み一覧の生成
         /// </summary>
         /// <param name="targetListView">描画対象のListView</param>
         private void BuildRecList(ListView targetListView)
         {
-            if (recFileInfos.Count == 0)
-            {
-                FetchRecList();
-            }
-
             // チラつきを抑えるため描画を停止
             targetListView.BeginUpdate();
 
