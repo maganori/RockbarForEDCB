@@ -25,32 +25,11 @@ namespace RockbarForEDCB
         // 設定情報
         private RockBarSetting rockbarSetting = null;
 
+        // EpgTimerSrv通信とEPGデータ管理
+        private EpgDataManager _epgDataManager;
+
         // EpgTimerSrv接続可否
         private bool canConnect = true;
-
-        // CtrlCmdの結果格納用
-        private List<EpgServiceEventInfo> serviceEvents = new List<EpgServiceEventInfo>();
-        private List<TunerReserveInfo> tunerReserveInfos = new List<TunerReserveInfo>();
-        private List<ReserveData> reserveDatas = new List<ReserveData>();
-        private List<RecFileInfo> recFileInfos = new List<RecFileInfo>();
-
-        // CtrlCmdの結果のハッシュ
-        private string prevServiceHash = "";
-        private string prevTunerHash = "";
-        private string prevReserveHash = "";
-        private string prevRecHash = "";
-
-        // サービス一覧(+番組)の保持用(TSID + SID → サービス情報(+番組))
-        private Dictionary<string, EpgServiceEventInfo> serviceMap = new Dictionary<string, EpgServiceEventInfo>();
-
-        // 番組一覧の保持用(TSID + SID + EventID → 番組情報)
-        private Dictionary<string, EpgEventInfo> allEventMap = new Dictionary<string, EpgEventInfo>();
-
-        // 予約情報の保持用(TSID + SID + EventID → 予約情報)
-        private Dictionary<string, ReserveData> reserveMap = new Dictionary<string, ReserveData>();
-
-        // 録画済み情報の保持用(TSID + SID + EventID → 録画済み情報)
-        private Dictionary<uint, RecFileInfo> recMap = new Dictionary<uint, RecFileInfo>();
 
         // CSVサービスリストの格納
         private List<Service> allServiceList = null;
@@ -97,7 +76,6 @@ namespace RockbarForEDCB
         private DateTime nextSubListViewRefreshTime = DateTime.MinValue;
 
         private readonly TimeSpan dataUpdateInterval = TimeSpan.FromMinutes(1);
-        private DateTime lastRecDataUpdateTime = DateTime.MinValue;
 
         /// <summary>
         /// コンストラクタ
@@ -136,6 +114,8 @@ namespace RockbarForEDCB
             allServiceList = RockbarUtility.GetAllServicesFromSetting();
             favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
 
+            _epgDataManager = new EpgDataManager(this.ctrlCmdUtil);
+
             // 設定反映
             applySetting();
 
@@ -151,10 +131,7 @@ namespace RockbarForEDCB
             }
 
             // 適当な通信を行って、通信可否を確認し問題があればメッセージを出す
-            tunerReserveInfos.Clear();
-            ErrCode errCode = ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
-
-            if (errCode != ErrCode.CMD_SUCCESS)
+            if (!_epgDataManager.CheckConnection(out ErrCode errCode))
             {
                 canConnect = false;
                 MessageBox.Show(
@@ -310,6 +287,8 @@ namespace RockbarForEDCB
             // Web番組表機能を使用するときのみタスクトレイアイコンの右クリックメニューに「テレビ番組表」を表示
             this.openWebEPGToolStripMenuItem.Visible = rockbarSetting.UseWebLink;
 
+            // 録画済み一覧の最大表示数
+            _epgDataManager.RecListMaxCount = this.rockbarSetting.RecListMaxCount;
         }
 
         /// <summary>
@@ -335,7 +314,7 @@ namespace RockbarForEDCB
             // 録画情報更新必要有無判定
             bool isRecDataUpdateRequired = 
                 mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いているか
-                DateTime.Now - lastRecDataUpdateTime >= dataUpdateInterval; //前回更新時間から時間経過しているか
+                DateTime.Now - _epgDataManager.LastRecDataUpdateTime >= dataUpdateInterval; //前回更新時間から時間経過しているか
 
             // EpgTimerSrvと通信する
             if (canConnect)
@@ -343,15 +322,15 @@ namespace RockbarForEDCB
                 // 定期更新など、通信が必要な場合
                 if (isTransmission)
                 {
-                    isServiceChanged = UpdateServiceData();
-                    isReserveChanged = UpdateReserveData();
-                    isTunerChanged = UpdateTunerData();
+                    isServiceChanged = _epgDataManager.UpdateServiceData();
+                    isReserveChanged = _epgDataManager.UpdateReserveData();
+                    isTunerChanged = _epgDataManager.UpdateTunerData();
                 }
 
                 // 録画情報の更新が必要な場合
                 if (isRecDataUpdateRequired)
                 {
-                    isRecChanged = UpdateRecData();
+                    isRecChanged = _epgDataManager.UpdateRecData();
                 }
             }
 
@@ -402,128 +381,7 @@ namespace RockbarForEDCB
                 this.nextSubListViewRefreshTime = nextTime;
             }
         }
-
-        /// <summary>
-        /// EpgTimerSrvから番組一覧を取得し、serviceMap / allEventMapを構築します。
-        /// </summary>
-        /// <returns>番組情報が変更された場合はtrue、それ以外はfalse</returns>
-        private bool UpdateServiceData()
-        {
-            // 番組一覧取得
-            serviceEvents.Clear();
-            allEventMap.Clear();
-            ctrlCmdUtil.SendEnumPgAll(ref serviceEvents);
-
-            // 番組一覧関連のハッシュを作成
-            serviceMap.Clear();
-            foreach (EpgServiceEventInfo service in serviceEvents)
-            {
-                // TSID + SID → サービス一覧(serviceが番組情報を保持している)
-                string key = RockbarUtility.GetKey(service.serviceInfo.TSID, service.serviceInfo.SID);
-                serviceMap[key] = service;
-
-                // TSID + SID + EventID → 番組情報
-                foreach (EpgEventInfo ev in service.eventList)
-                {
-                    string evKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-                    allEventMap[evKey] = ev;
-                }
-            }
-
-            // 番組一覧の差分有無チェック
-            // チェック対象：チャンネル数、前番組データ数
-            string currentServiceHash = $"{serviceEvents.Count}_{allEventMap.Count}";
-
-            bool isServiceChanged = (currentServiceHash != prevServiceHash);
-            prevServiceHash = currentServiceHash;
-
-            return isServiceChanged;
-        }
-
-        /// <summary>
-        /// EpgTimerSrvから予約一覧を取得し、reserveMapを構築します。
-        /// </summary>
-        /// <returns>予約情報が変更された場合はtrue、それ以外はfalse</returns>
-        private bool UpdateReserveData()
-        {
-            // 予約一覧取得
-            reserveDatas.Clear();
-            ctrlCmdUtil.SendEnumReserve(ref reserveDatas);
-
-            // 予約一覧関連のハッシュを作成
-            reserveMap.Clear();
-            foreach (ReserveData reserveData in reserveDatas)
-            {
-                // TSID + SID + EventID → 予約情報
-                string evkey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
-                reserveMap[evkey] = reserveData;
-            }
-
-            // 予約一覧の差分有無チェック
-            // チェック対象：予約数、予約ID、重複状態、録画モード(全サービス録画、無効など)
-            string currentReserveHash = $"{reserveDatas.Count}_" +
-                string.Join(",", reserveDatas.Select(r => $"{r.ReserveID}_{r.OverlapMode}_{r.RecSetting.RecMode}"));
-
-            bool isReserveChanged = (currentReserveHash != prevReserveHash);
-            prevReserveHash = currentReserveHash;
-
-            return isReserveChanged;
-        }
-
-        /// <summary>
-        /// EpgTimerSrvから録画済み情報を取得し、録画一覧を更新します。
-        /// </summary>
-        /// <returns>録画済み情報が変更された場合はtrue、それ以外はfalse</returns>
-        private bool UpdateRecData()
-        {
-            recFileInfos.Clear();
-            recMap.Clear();
-            ctrlCmdUtil.SendEnumRecInfoBasic(ref recFileInfos);
-
-            int recListMaxCount = rockbarSetting.RecListMaxCount;
-            if (recListMaxCount > 0 && recFileInfos.Count > recListMaxCount)
-            {
-                recFileInfos = recFileInfos.GetRange(recFileInfos.Count - recListMaxCount, recListMaxCount);
-            }
-            recFileInfos.Reverse();
-
-            recMap = recFileInfos.ToDictionary(r => r.ID);
-
-            //更新時間を取得
-            lastRecDataUpdateTime = DateTime.Now;
-
-            // 録画済み情報の一覧の差分有無チェック
-            // チェック対象：録画済みファイルの件数、各録画済みファイルの固有ID
-            string currentRecHash = $"{recFileInfos.Count}_" +
-                string.Join(",", recFileInfos.Select(r => r.ID));
-
-            bool isRecChanged = (currentRecHash != prevRecHash);
-            prevRecHash = currentRecHash;
-
-            return isRecChanged;
-        }
-
-        /// <summary>
-        /// EpgTimerSrvからチューナーごとの予約一覧を取得します。
-        /// </summary>
-        /// <returns>チューナー情報が変更された場合はtrue、それ以外はfalse</returns>
-        private bool UpdateTunerData()
-        {
-            // チューナーごとの予約一覧取得
-            tunerReserveInfos.Clear();
-            ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
-
-            // チューナーごとの予約一覧の差分有無チェック
-            // チェック対象：チューナー台数、各チューナーの識別ID、各チューナーに割り当てられている予約の件数
-            string currentTunerHash = $"{tunerReserveInfos.Count}_" +
-                string.Join(",", tunerReserveInfos.Select(t => $"{t.tunerID}_{t.reserveList.Count}"));
-
-            bool isTunerChanged = (currentTunerHash != prevTunerHash);
-            prevTunerHash = currentTunerHash;
-
-            return isTunerChanged;
-        }
-
+ 
         /// <summary>
         /// 予約一覧（ListView）の生成および描画を行い、次回画面更新が必要となる最速の時刻を取得します。
         /// </summary>
@@ -542,7 +400,7 @@ namespace RockbarForEDCB
                 // 一覧を全件クリア
                 targetListView.Items.Clear();
 
-                foreach (var reserveData in reserveDatas.OrderBy(r => r.StartTime))
+                foreach (var reserveData in _epgDataManager.ReserveDatas.OrderBy(r => r.StartTime))
                 {
                     DateTime startTime = reserveData.StartTime;
                     DateTime endTime = startTime.AddSeconds(reserveData.DurationSecond);
@@ -587,7 +445,7 @@ namespace RockbarForEDCB
                     // ◎（正常予約）の場合はチューナー名を表示する
                     if (reserveStatus == ReserveStatus.OK)
                     {
-                        var matchedTuner = tunerReserveInfos.FirstOrDefault(t => t.reserveList.Contains(reserveData.ReserveID));
+                        var matchedTuner = _epgDataManager.TunerReserveInfos.FirstOrDefault(t => t.reserveList.Contains(reserveData.ReserveID));
                         if (matchedTuner != null)
                         {
                             statusText = GetCustomTunerName(matchedTuner);
@@ -655,7 +513,7 @@ namespace RockbarForEDCB
                 // 一覧を全件クリア
                 targetListView.Items.Clear();
 
-                foreach (var recFile in recFileInfos)
+                foreach (var recFile in _epgDataManager.RecFileInfos)
                 {
                     DateTime startTime = recFile.StartTime;
                     DateTime endTime = startTime.AddSeconds(recFile.DurationSecond);
@@ -777,10 +635,10 @@ namespace RockbarForEDCB
                 // 一覧を全件クリア
                 targetListView.Items.Clear();
 
-                if (serviceEvents == null) return DateTime.MinValue;
+                if (_epgDataManager.ServiceEvents == null) return DateTime.MinValue;
 
                 // --- 全サービスの番組リストから「[新]」が含まれる番組を抽出し、開始時間順に平坦化（Flatten）してソート ---
-                var newPrograms = serviceEvents
+                var newPrograms = _epgDataManager.ServiceEvents
                     .Where(se => se != null && se.eventList != null)
                     .SelectMany(se => se.eventList, (se, ev) => new { ServiceEvent = se, Event = ev })
                     .Where(x => x.Event.ShortInfo != null &&
@@ -826,7 +684,7 @@ namespace RockbarForEDCB
                     ReserveStatus reserveStatus = ReserveStatus.NONE;
                     string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
 
-                    if (reserveMap.TryGetValue(eventKey, out ReserveData reserveData))
+                    if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                     {
                         reserveStatus = GetReserveStatus(reserveData);
                     }
@@ -914,7 +772,7 @@ namespace RockbarForEDCB
                     string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
 
                     EpgServiceEventInfo matchedService = null;
-                    serviceMap.TryGetValue(key, out matchedService);
+                    _epgDataManager.ServiceMap.TryGetValue(key, out matchedService);
 
                     // CSVのチャンネル一覧で設定されているサービスタイプを最優先で使用する
                     // サービスタイプ設定が無い場合はEDCBからのデータをもとに自動判別
@@ -958,7 +816,7 @@ namespace RockbarForEDCB
                         string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
 
                         // 予約状態文字列を取得
-                        if (reserveMap.TryGetValue(eventKey, out ReserveData reserveData))
+                        if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                         {
                             reserveStatus = GetReserveStatus(reserveData);
                         }
@@ -1048,7 +906,7 @@ namespace RockbarForEDCB
                 targetListView.Items.Clear();
 
                 // チューナー表示
-                foreach (var tuner in tunerReserveInfos)
+                foreach (var tuner in _epgDataManager.TunerReserveInfos)
                 {
                     // 設定にチューナー名があれば取得し、なければデフォルト名で表示
                     string tunerName = GetCustomTunerName(tuner);
@@ -1056,7 +914,7 @@ namespace RockbarForEDCB
                     // 直近の予約タイトルとツールチップをを抽出する
                     HashSet<uint> reserveIds = tuner.reserveList.ToHashSet();
 
-                    List<ReserveData> reserves = reserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID));
+                    List<ReserveData> reserves = _epgDataManager.ReserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID));
 
                     var nearestReserve = reserves
                         .Where(x => x.StartTime.AddSeconds(x.DurationSecond) > now)
@@ -1842,7 +1700,7 @@ namespace RockbarForEDCB
                 listContextMenuStrip.Items.Clear();
 
                 EpgServiceEventInfo sv = null;
-                serviceMap.TryGetValue(selected.Name, out sv);
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out sv);
 
                 // EPG未取得チャンネルは処理を抜ける
                 if (sv == null)
@@ -1860,9 +1718,9 @@ namespace RockbarForEDCB
 
                     ReserveData reserveData = null;
 
-                    if (reserveMap.ContainsKey(eventKey))
+                    if (_epgDataManager.ReserveMap.ContainsKey(eventKey))
                     {
-                        reserveData = reserveMap[eventKey];
+                        reserveData = _epgDataManager.ReserveMap[eventKey];
                     }
 
                     listContextMenuStrip.Items.Add(createEventToolStripMenuItem(ev, reserveData, false));
@@ -1903,7 +1761,7 @@ namespace RockbarForEDCB
 
                 Service service = selected.Tag as Service;
                 EpgServiceEventInfo sv = null;
-                serviceMap.TryGetValue(selected.Name, out sv);
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out sv);
 
                 if (service == null)
                 {
@@ -1956,7 +1814,7 @@ namespace RockbarForEDCB
                     // クリックした箇所が自動選択されるので拾う
                     var selected = targetListView.SelectedItems[0];
 
-                    EpgEventInfo ev = allEventMap[selected.Name];
+                    EpgEventInfo ev = _epgDataManager.AllEventMap[selected.Name];
 
                     // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
                     if (rockbarSetting.UseWebLink)
@@ -1968,7 +1826,7 @@ namespace RockbarForEDCB
                     }
 
                     // 有効化・無効化を追加
-                    var hasData = reserveMap.TryGetValue(selected.Name, out var reserveData);
+                    var hasData = _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserveData);
                     if (hasData)
                     {
                         var item = listContextMenuStrip.Items.Add(reserveData.RecSetting.IsNoRec() ? "録画を有効にする" : "録画を無効にする");
@@ -2102,7 +1960,7 @@ namespace RockbarForEDCB
                 // クリックした箇所にある項目を取得する
                 var selected = targetListView.GetItemAt(e.Location.X, e.Location.Y);
 
-                if (selected != null && reserveMap.TryGetValue(selected.Name, out var reserve))
+                if (selected != null && _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserve))
                 {
                     ToggleRecMode(reserve);
                 }
@@ -2139,7 +1997,7 @@ namespace RockbarForEDCB
                     // クリックした箇所が自動選択されるので拾う
                     var selected = targetListView.SelectedItems[0];
 
-                    EpgEventInfo ev = allEventMap[selected.Name];
+                    EpgEventInfo ev = _epgDataManager.AllEventMap[selected.Name];
                     accessWebUrl(ev);
                 }
                 catch
@@ -2182,7 +2040,7 @@ namespace RockbarForEDCB
                         return;
                     }
 
-                    RecFileInfo recFile = recMap[recID];
+                    RecFileInfo recFile = _epgDataManager.RecMap[recID];
 
                     // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
                     if (rockbarSetting.UseWebLink)
@@ -2295,7 +2153,7 @@ namespace RockbarForEDCB
                     return;
                 }
 
-                RecFileInfo recFile = recMap[recID];
+                RecFileInfo recFile = _epgDataManager.RecMap[recID];
 
                 if (rockbarSetting.UseTcpIp && rockbarSetting.IpAddress.IndexOf("127.0.0.1") < 0)
                 {
@@ -2358,7 +2216,7 @@ namespace RockbarForEDCB
 
                 // 予約データの検索し、有無結果を格納
                 string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-                var hasData = reserveMap.TryGetValue(eventKey, out var reserveData);
+                var hasData = _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
 
                 // 録画の有効・無効切り替え (予約データが存在する場合)
                 if (hasData)
@@ -2380,7 +2238,7 @@ namespace RockbarForEDCB
                 if (string.IsNullOrWhiteSpace(serviceName))
                 {
                     string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-                    serviceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
+                    _epgDataManager.ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
                     serviceName = matchedService?.serviceInfo?.service_name ?? key;
                 }
 
@@ -2507,12 +2365,12 @@ namespace RockbarForEDCB
 
                 listContextMenuStrip.Items.Clear();
 
-                TunerReserveInfo tunerReserveInfo = tunerReserveInfos.Find((TunerReserveInfo x) => x.tunerID.ToString() == selected.Name);
+                TunerReserveInfo tunerReserveInfo = _epgDataManager.TunerReserveInfos.Find((TunerReserveInfo x) => x.tunerID.ToString() == selected.Name);
 
                 // TunerReserveInfoには予約IDしか入っていないので、ReserveDataから予約情報を取り直す
                 HashSet<uint> reserveIds = tunerReserveInfo.reserveList.ToHashSet();
 
-                var reserves = reserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID)).OrderBy(x => x.StartTime);
+                var reserves = _epgDataManager.ReserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID)).OrderBy(x => x.StartTime);
 
                 int i = 0;
 
@@ -2522,9 +2380,9 @@ namespace RockbarForEDCB
 
                     EpgEventInfo ev = null;
 
-                    if (allEventMap.ContainsKey(key))
+                    if (_epgDataManager.AllEventMap.ContainsKey(key))
                     {
-                        ev = allEventMap[key];
+                        ev = _epgDataManager.AllEventMap[key];
                     }
 
                     listContextMenuStrip.Items.Add(createEventToolStripMenuItem(ev, reserveData, true));
@@ -2569,7 +2427,7 @@ namespace RockbarForEDCB
                 // お気に入りサービスのキー(大した件数ではない想定なので毎秒計算し直しで良いものとする)
                 HashSet<string> favoriteServiceKeys = favoriteServiceList.Select(x => RockbarUtility.GetKey(x.Tsid, x.Sid)).ToHashSet();
 
-                foreach (var reserve in reserveDatas)
+                foreach (var reserve in _epgDataManager.ReserveDatas)
                 {
                     if (reserve.StartTime.Date == checkTime.Date && reserve.StartTime.Hour == checkTime.Hour && reserve.StartTime.Minute == checkTime.Minute)
                     {
@@ -2637,7 +2495,7 @@ namespace RockbarForEDCB
                 Dictionary<string, ReserveData> currentReserves = new Dictionary<string, ReserveData>();
 
                 // 現在放送中番組を抽出
-                foreach (var data in reserveDatas)
+                foreach (var data in _epgDataManager.ReserveDatas)
                 {
                     // 途中処理があまりに遅いと、タイマー開始時とNowでズレが生じる可能性あり。問題がでたら検討
                     if (data.StartTime < DateTime.Now && data.StartTime.AddSeconds(data.DurationSecond) > DateTime.Now)
