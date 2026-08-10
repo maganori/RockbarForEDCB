@@ -765,16 +765,16 @@ namespace RockbarForEDCB
                     EpgServiceEventInfo matchedService = null;
                     _epgDataManager.ServiceMap.TryGetValue(key, out matchedService);
 
-                    // CSVのチャンネル一覧で設定されているサービスタイプを最優先で使用する
-                    // サービスタイプ設定が無い場合はEDCBからのデータをもとに自動判別
-                    ServiceType serviceType = matchedService != null
-                        ? RockbarUtility.GetServiceType(service.Type, matchedService.serviceInfo.ONID)
-                        : RockbarUtility.GetServiceType(service.Type, null);
+                    // CSVのチャンネル一覧で設定されているネットワークタイプを最優先で使用する
+                    // ネットワークタイプ設定が無い場合はEDCBからのデータをもとに自動判別
+                    NetworkType networkType = matchedService != null
+                        ? RockbarUtility.GetNetworkType(service.TypeName, matchedService.serviceInfo.ONID)
+                        : RockbarUtility.GetNetworkType(service.TypeName, null);
 
                     // 選択中タブ（地デジ / BS / CS）と不一致のサービスは除外する
-                    if (selectedTab == dttvTabPage && serviceType != ServiceType.DTTV) continue;
-                    if (selectedTab == bsTabPage && serviceType != ServiceType.BS) continue;
-                    if (selectedTab == csTabPage && serviceType != ServiceType.CS) continue;
+                    if (selectedTab == dttvTabPage && networkType != NetworkType.DTTV) continue;
+                    if (selectedTab == bsTabPage && networkType != NetworkType.BS && networkType != NetworkType.BS4K) continue;
+                    if (selectedTab == csTabPage && networkType != NetworkType.CS && networkType != NetworkType.SPHD) continue;
 
                     // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
                     string serviceName = GetServiceName(ushort.Parse(service.Tsid), ushort.Parse(service.Sid));
@@ -1515,14 +1515,15 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// TVTest起動処理
-        /// TSID, SIDを指定してTVTestを起動する。地デジ・BS/CSで異なるオプションを使用する。
+        /// TSID, SIDを指定してTVTestを起動する。ネットワークタイプで異なるオプションを使用する。
+        /// TVTest起動オプションがあれば最優先で適用される
         /// </summary>
-        /// <param name="isDttv">地デジ？</param>
+        /// <param name="networkType">ネットワークタイプ</param>
         /// <param name="tsid">TSID</param>
         /// <param name="sid">SID</param>
         /// <param name="tvtestOption">TVTest起動オプション（オプション）</param>
         /// <returns>TVTestプロセス</returns>
-        private System.Diagnostics.Process startTvTest(bool isDttv, uint tsid, uint sid, string tvtestOption = null)
+        private System.Diagnostics.Process startTvTest(NetworkType networkType, uint tsid, uint sid, string tvtestOption = null)
         {
             System.Diagnostics.Process result = null;
 
@@ -1532,11 +1533,11 @@ namespace RockbarForEDCB
                 {
                     result = System.Diagnostics.Process.Start(rockbarSetting.TvtestPath, $"{tvtestOption} /tsid {tsid} /sid {sid}");
                 }
-                else if (isDttv)
+                else if (networkType == NetworkType.DTTV)
                 {
                     result = System.Diagnostics.Process.Start(rockbarSetting.TvtestPath, $"{rockbarSetting.TvtestDttvOption} /tsid {tsid} /sid {sid}");
                 }
-                else
+                else if (networkType == NetworkType.BS || networkType == NetworkType.CS)
                 {
                     result = System.Diagnostics.Process.Start(rockbarSetting.TvtestPath, $"{rockbarSetting.TvtestBscsOption} /tsid {tsid} /sid {sid}");
                 }
@@ -1747,20 +1748,11 @@ namespace RockbarForEDCB
                 uint tsid = uint.Parse(service.Tsid);
                 uint sid = uint.Parse(service.Sid);
 
-                ServiceType serviceType = sv != null
-                    ? RockbarUtility.GetServiceType(service.Type, sv.serviceInfo.ONID)
-                    : RockbarUtility.GetServiceType(service.Type, null);
+                NetworkType networkType = sv != null
+                    ? RockbarUtility.GetNetworkType(service.TypeName, sv.serviceInfo.ONID)
+                    : RockbarUtility.GetNetworkType(service.TypeName, null);
 
-                if (serviceType == ServiceType.DTTV)
-                {
-                    // 地上波
-                    startTvTest(true, tsid, sid, service.TvtestOption);
-                }
-                else
-                {
-                    // BS, CS
-                    startTvTest(false, tsid, sid, service.TvtestOption);
-                }
+                startTvTest(networkType, tsid, sid, service.TvtestOption);
             }
         }
 
@@ -2391,7 +2383,7 @@ namespace RockbarForEDCB
                 DateTime checkTime = timerTime.AddSeconds(59);
 
                 // お気に入りサービスのキー(大した件数ではない想定なので毎秒計算し直しで良いものとする)
-                HashSet<string> favoriteServiceKeys = favoriteServiceList.Select(x => RockbarUtility.GetKey(x.Tsid, x.Sid)).ToHashSet();
+                var favoriteServiceMap = favoriteServiceList.ToDictionary(x => RockbarUtility.GetKey(x.Tsid, x.Sid));
 
                 foreach (var reserve in _epgDataManager.ReserveDatas)
                 {
@@ -2405,28 +2397,23 @@ namespace RockbarForEDCB
                             continue;
                         }
 
-                        // お気に入りサービスオプションが設定されている場合、お気に入りサービスにキーが含まれていなかったらスキップ
-                        if (rockbarSetting.IsAutoOpenTvtestFavoriteService && ! favoriteServiceKeys.Contains(key)) 
+                        // お気に入りサービスに含まれているかチェックしつつ Service を取得
+                        bool isFavorite = favoriteServiceMap.TryGetValue(key, out Service service);
+
+                        // お気に入りサービスオプションが設定されている場合、お気に入りサービスに含まれていなかったらスキップ
+                        if (rockbarSetting.IsAutoOpenTvtestFavoriteService && !isFavorite)
                         {
                             continue;
                         }
 
-                        // 地上波
-                        if (RockbarUtility.GetServiceType(reserve.OriginalNetworkID) == ServiceType.DTTV && rockbarSetting.IsAutoOpenTvtestDttv)
-                        {
-                            Service service = allServiceList.FirstOrDefault(x => RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID) == key);
-                            var p = startTvTest(true, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
-                            tvtestProcesses.Add(key, p);
-                        }
-
-                        // BS, CS
+                        NetworkType networkType = RockbarUtility.GetNetworkType(service.TypeName, reserve.OriginalNetworkID);
                         if (
-                            RockbarUtility.GetServiceType(reserve.OriginalNetworkID) == ServiceType.BS && rockbarSetting.IsAutoOpenTvtestBs ||
-                            RockbarUtility.GetServiceType(reserve.OriginalNetworkID) == ServiceType.CS && rockbarSetting.IsAutoOpenTvtestCs
-                        )
+                           (networkType == NetworkType.DTTV && rockbarSetting.IsAutoOpenTvtestDttv) ||
+                           (networkType == NetworkType.BS || networkType == NetworkType.BS4K) && rockbarSetting.IsAutoOpenTvtestBs ||
+                           (networkType == NetworkType.CS || networkType == NetworkType.SPHD) && rockbarSetting.IsAutoOpenTvtestCs)
                         {
-                            Service service = allServiceList.FirstOrDefault(x => RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID) == key);
-                            var p = startTvTest(false, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
+                            
+                            var p = startTvTest(networkType, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
                             tvtestProcesses.Add(key, p);
                         }
                     }
