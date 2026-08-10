@@ -53,7 +53,7 @@ namespace RockbarForEDCB
             this.applyButton = new System.Windows.Forms.Button();
             this.allServiceListView = new System.Windows.Forms.ListView();
             this.allServiceMarkColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.allServiceTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.allServiceNetworkTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.allServiceNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.allServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.allServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -65,7 +65,7 @@ namespace RockbarForEDCB
             this.moveUpSelectedServiceButton = new System.Windows.Forms.Button();
             this.selectedServiceListView = new System.Windows.Forms.ListView();
             this.selectedServiceMarkColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.selectedServiceTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.selectedServiceNetworkTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedServiceNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -105,7 +105,7 @@ namespace RockbarForEDCB
             this.selectedServiceList2Label = new System.Windows.Forms.Label();
             this.selectedServiceListView2 = new System.Windows.Forms.ListView();
             this.selectedService2MarkColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.selectedService2TypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.selectedService2NetworkTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedService2NameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedService2TsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.selectedService2SidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -115,7 +115,7 @@ namespace RockbarForEDCB
             this.removeFavoriteServiceButton = new System.Windows.Forms.Button();
             this.favoriteServiceListView = new System.Windows.Forms.ListView();
             this.favoriteServiceMarkColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.favoriteServiceTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.favoriteServiceNetworkTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.favoriteServiceNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.favoriteServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.favoriteServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -268,7 +268,7 @@ namespace RockbarForEDCB
             // 
             this.allServiceListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.allServiceMarkColumnHeader,
-            this.allServiceTypeColumnHeader,
+            this.allServiceNetworkTypeColumnHeader,
             this.allServiceNameColumnHeader,
             this.allServiceTsidColumnHeader,
             this.allServiceSidColumnHeader});
@@ -287,10 +287,10 @@ namespace RockbarForEDCB
             this.allServiceMarkColumnHeader.Text = "";
             this.allServiceMarkColumnHeader.Width = 20;
             // 
-            // allServiceTypeColumnHeader
+            // allServiceNetworkTypeColumnHeader
             // 
-            this.allServiceTypeColumnHeader.Text = "種類";
-            this.allServiceTypeColumnHeader.Width = 40;
+            this.allServiceNetworkTypeColumnHeader.Text = "種類";
+            this.allServiceNetworkTypeColumnHeader.Width = 40;
             // 
             // allServiceNameColumnHeader
             // 
@@ -369,7 +369,7 @@ namespace RockbarForEDCB
             // 
             this.selectedServiceListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.selectedServiceMarkColumnHeader,
-            this.selectedServiceTypeColumnHeader,
+            this.selectedServiceNetworkTypeColumnHeader,
             this.selectedServiceNameColumnHeader,
             this.selectedServiceTsidColumnHeader,
             this.selectedServiceSidColumnHeader,
@@ -390,10 +390,10 @@ namespace RockbarForEDCB
             this.selectedServiceMarkColumnHeader.Text = "";
             this.selectedServiceMarkColumnHeader.Width = 20;
             // 
-            // selectedServiceTypeColumnHeader
+            // selectedServiceNetworkTypeColumnHeader
             // 
-            this.selectedServiceTypeColumnHeader.Text = "種類";
-            this.selectedServiceTypeColumnHeader.Width = 40;
+            this.selectedServiceNetworkTypeColumnHeader.Text = "種類";
+            this.selectedServiceNetworkTypeColumnHeader.Width = 40;
             // 
             // selectedServiceNameColumnHeader
             // 
@@ -767,7 +767,7 @@ namespace RockbarForEDCB
             // 
             this.selectedServiceListView2.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.selectedService2MarkColumnHeader,
-            this.selectedService2TypeColumnHeader,
+            this.selectedService2NetworkTypeColumnHeader,
             this.selectedService2NameColumnHeader,
             this.selectedService2TsidColumnHeader,
             this.selectedService2SidColumnHeader,
@@ -787,10 +787,10 @@ namespace RockbarForEDCB
             this.selectedService2MarkColumnHeader.Text = "";
             this.selectedService2MarkColumnHeader.Width = 20;
             // 
-            // selectedService2TypeColumnHeader
+            // selectedService2NetworkTypeColumnHeader
             // 
-            this.selectedService2TypeColumnHeader.Text = "種類";
-            this.selectedService2TypeColumnHeader.Width = 40;
+            this.selectedService2NetworkTypeColumnHeader.Text = "種類";
+            this.selectedService2NetworkTypeColumnHeader.Width = 40;
             // 
             // selectedService2NameColumnHeader
             // 
@@ -845,7 +845,7 @@ namespace RockbarForEDCB
             // 
             this.favoriteServiceListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.favoriteServiceMarkColumnHeader,
-            this.favoriteServiceTypeColumnHeader,
+            this.favoriteServiceNetworkTypeColumnHeader,
             this.favoriteServiceNameColumnHeader,
             this.favoriteServiceTsidColumnHeader,
             this.favoriteServiceSidColumnHeader,
@@ -865,10 +865,10 @@ namespace RockbarForEDCB
             this.favoriteServiceMarkColumnHeader.Text = "";
             this.favoriteServiceMarkColumnHeader.Width = 20;
             // 
-            // favoriteServiceTypeColumnHeader
+            // favoriteServiceNetworkTypeColumnHeader
             // 
-            this.favoriteServiceTypeColumnHeader.Text = "種類";
-            this.favoriteServiceTypeColumnHeader.Width = 40;
+            this.favoriteServiceNetworkTypeColumnHeader.Text = "種類";
+            this.favoriteServiceNetworkTypeColumnHeader.Width = 40;
             // 
             // favoriteServiceNameColumnHeader
             // 
@@ -2046,14 +2046,14 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Button removeSelectedServiceButton;
         private System.Windows.Forms.Button moveDownSelectedServiceButton;
         private System.Windows.Forms.Button moveUpSelectedServiceButton;
-        private System.Windows.Forms.ColumnHeader allServiceTypeColumnHeader;
+        private System.Windows.Forms.ColumnHeader allServiceNetworkTypeColumnHeader;
         private System.Windows.Forms.ColumnHeader allServiceNameColumnHeader;
         private System.Windows.Forms.ColumnHeader allServiceTsidColumnHeader;
         private System.Windows.Forms.ColumnHeader allServiceSidColumnHeader;
         private System.Windows.Forms.ColumnHeader allServiceMarkColumnHeader;
         private System.Windows.Forms.ListView selectedServiceListView;
         private System.Windows.Forms.ColumnHeader selectedServiceMarkColumnHeader;
-        private System.Windows.Forms.ColumnHeader selectedServiceTypeColumnHeader;
+        private System.Windows.Forms.ColumnHeader selectedServiceNetworkTypeColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceNameColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceTsidColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceSidColumnHeader;
@@ -2073,7 +2073,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.TabPage favoriteServiceTabPage;
         private System.Windows.Forms.ListView selectedServiceListView2;
         private System.Windows.Forms.ColumnHeader selectedService2MarkColumnHeader;
-        private System.Windows.Forms.ColumnHeader selectedService2TypeColumnHeader;
+        private System.Windows.Forms.ColumnHeader selectedService2NetworkTypeColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedService2NameColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedService2TsidColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedService2SidColumnHeader;
@@ -2083,7 +2083,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Button removeFavoriteServiceButton;
         private System.Windows.Forms.ListView favoriteServiceListView;
         private System.Windows.Forms.ColumnHeader favoriteServiceMarkColumnHeader;
-        private System.Windows.Forms.ColumnHeader favoriteServiceTypeColumnHeader;
+        private System.Windows.Forms.ColumnHeader favoriteServiceNetworkTypeColumnHeader;
         private System.Windows.Forms.ColumnHeader favoriteServiceNameColumnHeader;
         private System.Windows.Forms.ColumnHeader favoriteServiceTsidColumnHeader;
         private System.Windows.Forms.ColumnHeader favoriteServiceSidColumnHeader;

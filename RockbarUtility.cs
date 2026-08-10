@@ -14,16 +14,20 @@ using System.Threading.Tasks;
 namespace RockbarForEDCB
 {
     /// <summary>
-    /// サービス種類列挙型
+    /// ネットワーク種別列挙型
     /// </summary>
-    public enum ServiceType
+    public enum NetworkType
     {
+        // 地デジ(Digital Terrestrial Television)
+        DTTV,
         // BS (Broadcasting Satellite)
         BS,
         // CS (Communication Satellite)
         CS,
-        // 地デジ(Digital Terrestrial Television)
-        DTTV,                   
+        // SKY Perfect(advanced narrow-band CS digital broadcasting)
+        SPHD,
+        // BS4K (Broadcasting Satellite 4K)
+        BS4K,
     };
 
     /// <summary>
@@ -53,7 +57,7 @@ namespace RockbarForEDCB
         public string Tsid { get; set; }
         public string Sid { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; }
+        public string TypeName { get; set; }
         public string TvtestOption { get; set; }
     }
 
@@ -266,81 +270,118 @@ namespace RockbarForEDCB
 
             return results;
         }
-        
+
         /// <summary>
-        /// ONIDからサービスタイプ(BS/CS/地デジ)を返す
+        /// ONIDからネットワーク種別(BS/CS/地デジ)を返す
         /// </summary>
         /// <param name="originalNetworkId">ONID</param>
-        /// <returns>サービスタイプ</returns>
-        public static ServiceType GetServiceType(int originalNetworkId)
+        /// <returns>ネットワーク種別</returns>
+        public static NetworkType GetNetworkType(int originalNetworkId)
         {
+            // ref: https://github.com/tsukumijima/KonomiTV/blob/master/server/app/utils/TSInformation.py
+            // 以下は ARIB STD-B10 第2部 付録N より抜粋
+            // ref: https://web.archive.org/web/20140427183421/http://www.arib.or.jp/english/html/overview/doc/2-STD-B10v5_3.pdf#page=256
+            // ref: https://www.arib.or.jp/english/html/overview/doc/6-STD-B10v5_13-E1.pdf#page=273
+            // ref: https://www.arib.or.jp/english/html/overview/doc/6-STD-B10v5_13-E1.pdf#page=274
+
             switch (originalNetworkId)
             {
-                case 4:
-                    // BS
-                    return ServiceType.BS;
-                case 6:
-                case 7:
-                case 10:
-                    // CS
-                    return ServiceType.CS;
+                case 0x0004: // BSデジタル放送: 0x0004
+                    return NetworkType.BS;
+                case 0x0006: // CS1: 0x0006 (旧プラット・ワン系)
+                    return NetworkType.CS;
+                case 0x0007: // CS2: 0x0007 (旧スカイパーフェクTV!2系)
+                    return NetworkType.CS;
+                case 0x000A: // SPHD: 0x000A (スカパー！プレミアムサービス)
+                    return NetworkType.SPHD;
+                case 0x000B: // 高度BSデジタル放送: 0x000B (BS4K)
+                    return NetworkType.BS4K;
                 default:
-                    // 地デジ
-                    return ServiceType.DTTV;
+                    // 地上デジタルテレビジョン放送: 0x7880 - 0x7FE8
+
+                    // ケーブルテレビ (リマックス方式・トランスモジュレーション方式)
+                    // ケーブルテレビ独自のチャンネルのみで、地上波・BS の再送信は含まない
+                    // デジタル放送リマックス: 0xFFFE (HD・SD チャンネル (MPEG-2))
+                    // デジタル放送高度リマックス: 0xFFFA (ケーブル4Kチャンネル (H.264, H.265))
+                    // JC-HITSトランスモジュレーション: 0xFFFD (HD・SD チャンネル (MPEG-2))
+                    // 高度JC-HITSトランスモジュレーション: 0xFFF9 (ケーブル4Kチャンネル (H.264, H.265))
+                    // 高度ケーブル自主放送: 0xFFF7 (ケーブル4Kチャンネル (H.264, H.265))
+
+                    // 高度110度CSデジタル放送: 0x000C (CS4K: 運用終了)
+
+                    // 124/128度CSデジタル放送
+                    // SPSD-PerfecTV: 0x0001 (スターデジオ: 運用終了)
+                    // SPSD-SKY: 0x0003 (運用終了)
+
+                    return NetworkType.DTTV;
             }
         }
 
         /// <summary>
-        /// Type指定を優先し、未指定時のみONIDからサービスタイプを返す
+        /// ネットワーク種別指定を優先し、未指定時のみONIDからネットワーク種別を返す
         /// </summary>
-        /// <param name="typeText">Type文字列</param>
+        /// <param name="networkTypeText">ネットワーク種別</param>
         /// <param name="originalNetworkId">ONID</param>
-        /// <returns>サービスタイプ</returns>
-        public static ServiceType GetServiceType(string typeText, int? originalNetworkId)
+        /// <returns>放送種別</returns>
+        public static NetworkType GetNetworkType(string networkTypeText, int? originalNetworkId)
         {
-            if (!string.IsNullOrWhiteSpace(typeText))
+            if (!string.IsNullOrWhiteSpace(networkTypeText))
             {
-                string normalizedType = typeText.Trim().ToUpperInvariant();
+                string normalizedType = networkTypeText.Trim().ToUpperInvariant();
 
                 if (normalizedType == "BS")
                 {
-                    return ServiceType.BS;
+                    return NetworkType.BS;
                 }
 
                 else if (normalizedType == "CS")
                 {
-                    return ServiceType.CS;
+                    return NetworkType.CS;
+                }
+
+                else if (normalizedType == "SPHD")
+                {
+                    return NetworkType.SPHD;
+                }
+
+                else if (normalizedType == "BS4K")
+                {
+                    return NetworkType.BS4K;
                 }
 
                 else if (normalizedType == "地")
                 {
-                    return ServiceType.DTTV;
+                    return NetworkType.DTTV;
                 }
             }
 
             if (originalNetworkId.HasValue)
             {
-                return GetServiceType(originalNetworkId.Value);
+                return GetNetworkType(originalNetworkId.Value);
             }
 
-            return ServiceType.DTTV;
+            return NetworkType.DTTV;
         }
 
         /// <summary>
-        /// サービスタイプからサービス種類文字列(短)を返す
+        /// NetworkTypeからNetworkType名文字列(短)を返す
         /// </summary>
-        /// <param name="serviceType">サービスタイプ</param>
-        /// <returns>サービス種類文字列(短)</returns>
-        public static string GetShortServiceTypeName(ServiceType serviceType)
+        /// <param name="networkType">NetworkType</param>
+        /// <returns>NetworkType名文字列(短)</returns>
+        public static string GetShortNetworkTypeName(NetworkType networkType)
         {
-            switch (serviceType)
+            switch (networkType)
             {
-                case ServiceType.DTTV:
+                case NetworkType.DTTV:
                     return "地";
-                case ServiceType.BS:
+                case NetworkType.BS:
                     return "BS";
-                case ServiceType.CS:
+                case NetworkType.CS:
                     return "CS";
+                case NetworkType.SPHD:
+                    return "SPHD";
+                case NetworkType.BS4K:
+                    return "BS4K";
                 default:
                     return null;
             }
@@ -449,7 +490,7 @@ namespace RockbarForEDCB
                             Tsid = fields[0].Trim(),
                             Sid = fields[1].Trim(),
                             Name = fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null,
-                            Type = fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]) ? fields[3].Trim() : null,
+                            TypeName = fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]) ? fields[3].Trim() : null,
                             TvtestOption = fields.Length > 4 && !string.IsNullOrWhiteSpace(fields[4]) ? fields[4].Trim() : null
                         };
 
@@ -501,7 +542,7 @@ namespace RockbarForEDCB
                         service.Tsid ?? "",
                         service.Sid ?? "",
                         service.Name ?? "",
-                        service.Type ?? "",
+                        service.TypeName ?? "",
                         service.TvtestOption ?? ""
                     };
 
