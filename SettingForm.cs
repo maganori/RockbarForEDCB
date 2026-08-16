@@ -20,6 +20,9 @@ namespace RockbarForEDCB
     /// </summary>
     public partial class SettingForm : Form
     {
+        // 設定とサービスリスト
+        private ConfigManager _configManager;
+
         // ListViewのソーター。ListViewにセットすると自動整列解除できないため、適宜ListViewにセットする。
         private ListViewItemComparer allServiceListViewSorter = new ListViewItemComparer();
         private ListViewItemComparer selectedServiceListViewSorter = new ListViewItemComparer();
@@ -400,123 +403,125 @@ namespace RockbarForEDCB
             this.ctrlCmdUtil = ctrlCmdUtil;
 
             // セッティングを読み込んで画面表示
-            RockBarSetting setting = null;
+            //RockBarSetting setting = null;
+            //
+            //try
+            //{
+            //    setting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
+            //}
+            //catch (FileNotFoundException)
+            //{
+            //    // TOML設定ファイルが存在しない場合は準正常系として空設定で起動。それ以外の場合は例外を投げる
+            //    setting = new RockBarSetting();
+            //}
 
-            try
-            {
-                setting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
-            }
-            catch (FileNotFoundException)
-            {
-                // TOML設定ファイルが存在しない場合は準正常系として空設定で起動。それ以外の場合は例外を投げる
-                setting = new RockBarSetting();
-            }
+            _configManager = new ConfigManager();
 
-            useTcpIpCheckbox.Checked = setting.UseTcpIp;
-            ipAddressTextBox.Text = setting.IpAddress;
+            useTcpIpCheckbox.Checked = _configManager.RockbarSetting.UseTcpIp;
+            ipAddressTextBox.Text = _configManager.RockbarSetting.IpAddress;
 
             // 設定値異常の場合、下限にする
-            if (setting.PortNumber > portNumberNumericUpDown.Maximum || setting.PortNumber < portNumberNumericUpDown.Minimum) {
+            if (_configManager.RockbarSetting.PortNumber > portNumberNumericUpDown.Maximum || _configManager.RockbarSetting.PortNumber < portNumberNumericUpDown.Minimum) {
                 portNumberNumericUpDown.Value = portNumberNumericUpDown.Minimum;
             }
             else
             {
-                portNumberNumericUpDown.Value = setting.PortNumber;
+                portNumberNumericUpDown.Value = _configManager.RockbarSetting.PortNumber;
             }
             // 設定値異常の場合、デフォルトにする
-            if (setting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum || setting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum || _configManager.RockbarSetting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
             {
                 recListMaxCountNumericUpDown.Value = RockBarSetting.DEFAULT_REC_LIST_MAX_COUNT;
             }
             else
             {
-                recListMaxCountNumericUpDown.Value = setting.RecListMaxCount;
+                recListMaxCountNumericUpDown.Value = _configManager.RockbarSetting.RecListMaxCount;
             }
-            useWebLinkCheckBox.Checked = setting.UseWebLink;
-            webEPGUrlTextBox.Text = setting.WebEPGUrl;
-            webLinkUrlTextBox.Text = setting.WebLinkUrl;
-            recInfoWebLinkUrlTextBox.Text = setting.RecInfoWebLinkUrl;
+            useWebLinkCheckBox.Checked = _configManager.RockbarSetting.UseWebLink;
+            webEPGUrlTextBox.Text = _configManager.RockbarSetting.WebEPGUrl;
+            webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
+            recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
 
-            tvtestPathTextBox.Text = setting.TvtestPath;
-            tvtestBscsOptionTextBox.Text = setting.TvtestBscsOption;
-            tvtestDttvOptionTextBox.Text = setting.TvtestDttvOption;
-            tvtestTsFileOptionTextBox.Text = setting.TvtestTsFileOption;
-            useDoubleClickTvtestCheckBox.Checked = setting.UseDoubleClickTvtest;
-            isAutoOpenTvtestCheckBox.Checked = setting.IsAutoOpenTvtest;
-            isAutoOpenDttvCheckBox.Checked = setting.IsAutoOpenTvtestDttv;
-            isAutoOpenBsCheckBox.Checked = setting.IsAutoOpenTvtestBs;
-            isAutoOpenCsCheckBox.Checked = setting.IsAutoOpenTvtestCs;
-            isAutoOpenFavoriteServiceCheckBox.Checked = setting.IsAutoOpenTvtestFavoriteService;
-            showTaskTraiIconCheckBox.Checked = setting.ShowTaskTrayIcon;
-            storeTaskTrayByClosingCheckBox.Checked = setting.StoreTaskTrayByClosing;
-            toggleVisibleTaskTrayIconClickCheckBox.Checked = setting.ToggleVisibleTaskTrayIconClick;
-            isHorizontalSplitCheckBox.Checked = setting.IsHorizontalSplit;
-            fixNoRecToServiceOnlyCheckBox.Checked = setting.FixNoRecToServiceOnly;
-            fontTextBox.Text = setting.Font;
+            tvtestPathTextBox.Text = _configManager.RockbarSetting.TvtestPath;
+            tvtestBscsOptionTextBox.Text = _configManager.RockbarSetting.TvtestBscsOption;
+            tvtestDttvOptionTextBox.Text = _configManager.RockbarSetting.TvtestDttvOption;
+            tvtestTsFileOptionTextBox.Text = _configManager.RockbarSetting.TvtestTsFileOption;
+            useDoubleClickTvtestCheckBox.Checked = _configManager.RockbarSetting.UseDoubleClickTvtest;
+            isAutoOpenTvtestCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtest;
+            isAutoOpenDttvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestDttv;
+            isAutoOpenBsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs;
+            isAutoOpenCsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCs;
+            isAutoOpenFavoriteServiceCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService;
+            showTaskTraiIconCheckBox.Checked = _configManager.RockbarSetting.ShowTaskTrayIcon;
+            storeTaskTrayByClosingCheckBox.Checked = _configManager.RockbarSetting.StoreTaskTrayByClosing;
+            toggleVisibleTaskTrayIconClickCheckBox.Checked = _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick;
+            isHorizontalSplitCheckBox.Checked = _configManager.RockbarSetting.IsHorizontalSplit;
+            fixNoRecToServiceOnlyCheckBox.Checked = _configManager.RockbarSetting.FixNoRecToServiceOnly;
+            fontTextBox.Text = _configManager.RockbarSetting.Font;
 
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            previewListView.Font = (Font)fontConverter.ConvertFromString(setting.Font);
+            previewListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
 
-            formBackColorTextBox.Text = setting.FormBackColor;
-            listBackColorTextBox.Text = setting.ListBackColor;
-            okReserveListBackColorTextBox.Text = setting.OkReserveListBackColor;
-            partialReserveListBackColorTextBox.Text = setting.PartialReserveListBackColor;
-            ngReserveListBackColorTextBox.Text = setting.NgReserveListBackColor;
-            disabledReserveListBackColorTextBox.Text = setting.DisabledReserveListBackColor;
-            listHeaderForeColorTextBox.Text = setting.ListHeaderForeColor;
-            listHeaderBackColorTextBox.Text = setting.ListHeaderBackColor;
-            foreColorTextBox.Text = setting.ForeColor;
+            formBackColorTextBox.Text = _configManager.RockbarSetting.FormBackColor;
+            listBackColorTextBox.Text = _configManager.RockbarSetting.ListBackColor;
+            okReserveListBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveListBackColor;
+            partialReserveListBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveListBackColor;
+            ngReserveListBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveListBackColor;
+            disabledReserveListBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveListBackColor;
+            listHeaderForeColorTextBox.Text = _configManager.RockbarSetting.ListHeaderForeColor;
+            listHeaderBackColorTextBox.Text = _configManager.RockbarSetting.ListHeaderBackColor;
+            foreColorTextBox.Text = _configManager.RockbarSetting.ForeColor;
 
-            menuFontTextBox.Text = setting.MenuFont;
-            previewMenuListView.Font = (Font)fontConverter.ConvertFromString(setting.MenuFont);
+            menuFontTextBox.Text = _configManager.RockbarSetting.MenuFont;
+            previewMenuListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
 
-            menuBackColorTextBox.Text = setting.MenuBackColor;
-            okReserveMenuBackColorTextBox.Text = setting.OkReserveMenuBackColor;
-            partialReserveMenuBackColorTextBox.Text = setting.PartialReserveMenuBackColor;
-            ngReserveMenuBackColorTextBox.Text = setting.NgReserveMenuBackColor;
-            disabledReserveMenuBackColorTextBox.Text = setting.DisabledReserveMenuBackColor;
+            menuBackColorTextBox.Text = _configManager.RockbarSetting.MenuBackColor;
+            okReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveMenuBackColor;
+            partialReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveMenuBackColor;
+            ngReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveMenuBackColor;
+            disabledReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveMenuBackColor;
 
-            tabFontTextBox.Text = setting.TabFont;
-            buttonFontTextBox.Text = setting.ButtonFont;
-            labelFontTextBox.Text = setting.LabelFont;
-            textBoxFontTextBox.Text = setting.TextBoxFont;
+            tabFontTextBox.Text = _configManager.RockbarSetting.TabFont;
+            buttonFontTextBox.Text = _configManager.RockbarSetting.ButtonFont;
+            labelFontTextBox.Text = _configManager.RockbarSetting.LabelFont;
+            textBoxFontTextBox.Text = _configManager.RockbarSetting.TextBoxFont;
 
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
 
-            previewFormPanel.BackColor = (Color)colorConverter.ConvertFromString(setting.FormBackColor);
-            previewListView.BackColor = (Color)colorConverter.ConvertFromString(setting.ListBackColor);
-            previewListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(setting.OkReserveListBackColor);
-            previewListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(setting.PartialReserveListBackColor);
-            previewListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(setting.NgReserveListBackColor);
-            previewListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(setting.DisabledReserveListBackColor);
-            previewListView.Items[5].BackColor = (Color)colorConverter.ConvertFromString(setting.ListHeaderBackColor);
-            previewListView.ForeColor = (Color)colorConverter.ConvertFromString(setting.ForeColor);
-            previewListView.Items[5].ForeColor = (Color)colorConverter.ConvertFromString(setting.ListHeaderForeColor);
+            previewFormPanel.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
+            previewListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
+            previewListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveListBackColor);
+            previewListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveListBackColor);
+            previewListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
+            previewListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
+            previewListView.Items[5].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
+            previewListView.ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
+            previewListView.Items[5].ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
 
-            previewMenuListView.BackColor = (Color)colorConverter.ConvertFromString(setting.MenuBackColor);
-            previewMenuListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(setting.OkReserveMenuBackColor);
-            previewMenuListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(setting.PartialReserveMenuBackColor);
-            previewMenuListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(setting.NgReserveMenuBackColor);
-            previewMenuListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(setting.DisabledReserveMenuBackColor);
+            previewMenuListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
+            previewMenuListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveMenuBackColor);
+            previewMenuListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
+            previewMenuListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
+            previewMenuListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
 
             // 設定値異常の場合、下限にする
-            if (setting.AutoOpenMargin > autoOpenMarginNumericUpDown.Maximum || setting.AutoOpenMargin < autoOpenMarginNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.AutoOpenMargin > autoOpenMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoOpenMargin < autoOpenMarginNumericUpDown.Minimum)
             {
                 autoOpenMarginNumericUpDown.Value = autoOpenMarginNumericUpDown.Minimum;
             }
             else
             {
-                autoOpenMarginNumericUpDown.Value = setting.AutoOpenMargin;
+                autoOpenMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoOpenMargin;
             }
 
             // 設定値異常の場合、下限にする
-            if (setting.AutoCloseMargin > autoCloseMarginNumericUpDown.Maximum || setting.AutoCloseMargin < autoCloseMarginNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.AutoCloseMargin > autoCloseMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoCloseMargin < autoCloseMarginNumericUpDown.Minimum)
             {
                 autoCloseMarginNumericUpDown.Value = autoCloseMarginNumericUpDown.Minimum;
             }
             else
             {
-                autoCloseMarginNumericUpDown.Value = setting.AutoCloseMargin;
+                autoCloseMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoCloseMargin;
             }
 
             // サービス一覧取得
@@ -535,13 +540,13 @@ namespace RockbarForEDCB
                 if (!tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName)) {
                     String[] data = null;
 
-                    if (setting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
+                    if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
                     {
                         data = new []{
                             "",
                             (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
                             tunerReserveInfo.tunerName,
-                            setting.BonDriverNameToTunerName[tunerReserveInfo.tunerName]
+                            _configManager.RockbarSetting.BonDriverNameToTunerName[tunerReserveInfo.tunerName]
                         };
 
                     }
@@ -562,7 +567,7 @@ namespace RockbarForEDCB
             }
 
             // 取得したチューナに含まれず、設定にだけあるものを一応表示
-            foreach (var kv in setting.BonDriverNameToTunerName)
+            foreach (var kv in _configManager.RockbarSetting.BonDriverNameToTunerName)
             {
                 // ListView上になければ追加しておく
                 if (!tunerNameListView.Items.ContainsKey(kv.Key))
@@ -602,10 +607,11 @@ namespace RockbarForEDCB
             }
 
             // 設定ファイルの選択サービス一覧の表示
-            List<Service> selectedServices = RockbarUtility.GetAllServicesFromSetting();
+            //List<Service> selectedServices = _configManager.AllServiceList;
+
             List<ListViewItem> needCheckItems = new List<ListViewItem>();
 
-            foreach (Service service in selectedServices)
+            foreach (Service service in _configManager.AllServiceList)
             {
                 string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
 
@@ -661,9 +667,9 @@ namespace RockbarForEDCB
             needCheckItems.ForEach(x => checkServiceItem(x) );
 
             // 設定ファイルのお気に入りサービス一覧の仮表示
-            List<Service> favoriteServices = RockbarUtility.GetFavoriteServicesFromSetting();
+            //List<Service> favoriteServices = _configManager.FavoriteServiceList;
 
-            foreach (Service service in favoriteServices)
+            foreach (Service service in _configManager.FavoriteServiceList)
             {
                 // 1回キーとTSID, SIDだけで追加
                 String[] data = {
@@ -1073,11 +1079,13 @@ namespace RockbarForEDCB
         {
             // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
             // 選択チャンネル
-            List<Service> selectedServices = new List<Service>();
+            //List<Service> selectedServices = new List<Service>();
+            //List<Service> selectedServices = _configManager.AllServiceList;
+            _configManager.AllServiceList.Clear();
 
             foreach (ListViewItem item in selectedServiceListView.Items)
             {
-                selectedServices.Add(new Service {
+                _configManager.AllServiceList.Add(new Service {
                     Tsid = item.SubItems[selectedServiceTsidColumnHeader.Index].Text,
                     Sid = item.SubItems[selectedServiceSidColumnHeader.Index].Text,
                     Name = item.SubItems[selectedServiceNameColumnHeader.Index].Text,
@@ -1086,15 +1094,16 @@ namespace RockbarForEDCB
                 });
             }
 
-            RockbarUtility.SaveAllServicesToSetting(selectedServices);
-
+            //RockbarUtility.SaveAllServicesToSetting(selectedServices);
             // お気に入りチャンネル
             RefreshFavoriteService();
-            List<Service> favoriteServices = new List<Service>();
+            //List<Service> favoriteServices = new List<Service>();
+            //List<Service> favoriteServices = _configManager.FavoriteServiceList;
+            _configManager.FavoriteServiceList.Clear();
 
             foreach (ListViewItem item in favoriteServiceListView.Items)
             {
-                favoriteServices.Add(new Service {
+                _configManager.FavoriteServiceList.Add(new Service {
                     Tsid = item.SubItems[favoriteServiceTsidColumnHeader.Index].Text,
                     Sid = item.SubItems[favoriteServiceSidColumnHeader.Index].Text,
                     Name = item.SubItems[favoriteServiceNameColumnHeader.Index].Text,
@@ -1103,70 +1112,74 @@ namespace RockbarForEDCB
                 });
             }
 
-            RockbarUtility.SaveFavoriteServicesToSetting(favoriteServices);
+            //RockbarUtility.SaveFavoriteServicesToSetting(favoriteServices);
 
-            RockBarSetting rockbarSetting = new RockBarSetting();
-            rockbarSetting.UseTcpIp = useTcpIpCheckbox.Checked;
-            rockbarSetting.IpAddress = ipAddressTextBox.Text;
-            rockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
-            rockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
-            rockbarSetting.WebEPGUrl = webEPGUrlTextBox.Text;
-            rockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
-            rockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
 
-            rockbarSetting.TvtestPath = tvtestPathTextBox.Text;
-            rockbarSetting.TvtestBscsOption = tvtestBscsOptionTextBox.Text;
-            rockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;
-            rockbarSetting.TvtestTsFileOption = tvtestTsFileOptionTextBox.Text;
-            rockbarSetting.UseDoubleClickTvtest = useDoubleClickTvtestCheckBox.Checked;
-            rockbarSetting.IsAutoOpenTvtest = isAutoOpenTvtestCheckBox.Checked;
-            rockbarSetting.IsAutoOpenTvtestDttv = isAutoOpenDttvCheckBox.Checked;
-            rockbarSetting.IsAutoOpenTvtestBs = isAutoOpenBsCheckBox.Checked;
-            rockbarSetting.IsAutoOpenTvtestCs = isAutoOpenCsCheckBox.Checked;
-            rockbarSetting.IsAutoOpenTvtestFavoriteService = isAutoOpenFavoriteServiceCheckBox.Checked;
-            rockbarSetting.AutoOpenMargin = (uint) autoOpenMarginNumericUpDown.Value;
-            rockbarSetting.AutoCloseMargin = (uint) autoCloseMarginNumericUpDown.Value;
-            rockbarSetting.ShowTaskTrayIcon = showTaskTraiIconCheckBox.Checked;
-            rockbarSetting.StoreTaskTrayByClosing = storeTaskTrayByClosingCheckBox.Checked;
-            rockbarSetting.ToggleVisibleTaskTrayIconClick = toggleVisibleTaskTrayIconClickCheckBox.Checked;
-            rockbarSetting.IsHorizontalSplit = isHorizontalSplitCheckBox.Checked;
-            rockbarSetting.FixNoRecToServiceOnly = fixNoRecToServiceOnlyCheckBox.Checked;
-            rockbarSetting.RecListMaxCount = (int) recListMaxCountNumericUpDown.Value;
+            //RockBarSetting rockbarSetting = new RockBarSetting();
+            //RockBarSetting rockbarSetting = _configManager.RockbarSetting;
 
-            rockbarSetting.Font = fontTextBox.Text;
-            rockbarSetting.FormBackColor = formBackColorTextBox.Text;
-            rockbarSetting.ListBackColor = listBackColorTextBox.Text;
-            rockbarSetting.OkReserveListBackColor = okReserveListBackColorTextBox.Text;
-            rockbarSetting.PartialReserveListBackColor = partialReserveListBackColorTextBox.Text;
-            rockbarSetting.NgReserveListBackColor = ngReserveListBackColorTextBox.Text;
-            rockbarSetting.DisabledReserveListBackColor = disabledReserveListBackColorTextBox.Text;
-            rockbarSetting.ListHeaderForeColor = listHeaderForeColorTextBox.Text;
-            rockbarSetting.ListHeaderBackColor = listHeaderBackColorTextBox.Text;
-            rockbarSetting.ForeColor = foreColorTextBox.Text;
+            _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckbox.Checked;
+            _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
+            _configManager.RockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
+            _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
+            _configManager.RockbarSetting.WebEPGUrl = webEPGUrlTextBox.Text;
+            _configManager.RockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
+            _configManager.RockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
 
-            rockbarSetting.MenuFont = menuFontTextBox.Text;
-            rockbarSetting.MenuBackColor = menuBackColorTextBox.Text;
-            rockbarSetting.OkReserveMenuBackColor = okReserveMenuBackColorTextBox.Text;
-            rockbarSetting.PartialReserveMenuBackColor = partialReserveMenuBackColorTextBox.Text;
-            rockbarSetting.NgReserveMenuBackColor = ngReserveMenuBackColorTextBox.Text;
-            rockbarSetting.DisabledReserveMenuBackColor = disabledReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
+            _configManager.RockbarSetting.TvtestBscsOption = tvtestBscsOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestTsFileOption = tvtestTsFileOptionTextBox.Text;
+            _configManager.RockbarSetting.UseDoubleClickTvtest = useDoubleClickTvtestCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtest = isAutoOpenTvtestCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestDttv = isAutoOpenDttvCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestBs = isAutoOpenBsCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestCs = isAutoOpenCsCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService = isAutoOpenFavoriteServiceCheckBox.Checked;
+            _configManager.RockbarSetting.AutoOpenMargin = (uint) autoOpenMarginNumericUpDown.Value;
+            _configManager.RockbarSetting.AutoCloseMargin = (uint) autoCloseMarginNumericUpDown.Value;
+            _configManager.RockbarSetting.ShowTaskTrayIcon = showTaskTraiIconCheckBox.Checked;
+            _configManager.RockbarSetting.StoreTaskTrayByClosing = storeTaskTrayByClosingCheckBox.Checked;
+            _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick = toggleVisibleTaskTrayIconClickCheckBox.Checked;
+            _configManager.RockbarSetting.IsHorizontalSplit = isHorizontalSplitCheckBox.Checked;
+            _configManager.RockbarSetting.FixNoRecToServiceOnly = fixNoRecToServiceOnlyCheckBox.Checked;
+            _configManager.RockbarSetting.RecListMaxCount = (int) recListMaxCountNumericUpDown.Value;
 
-            rockbarSetting.TabFont = tabFontTextBox.Text;
-            rockbarSetting.ButtonFont = buttonFontTextBox.Text;
-            rockbarSetting.LabelFont = labelFontTextBox.Text;
-            rockbarSetting.TextBoxFont = textBoxFontTextBox.Text;
+            _configManager.RockbarSetting.Font = fontTextBox.Text;
+            _configManager.RockbarSetting.FormBackColor = formBackColorTextBox.Text;
+            _configManager.RockbarSetting.ListBackColor = listBackColorTextBox.Text;
+            _configManager.RockbarSetting.OkReserveListBackColor = okReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.PartialReserveListBackColor = partialReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.NgReserveListBackColor = ngReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.DisabledReserveListBackColor = disabledReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.ListHeaderForeColor = listHeaderForeColorTextBox.Text;
+            _configManager.RockbarSetting.ListHeaderBackColor = listHeaderBackColorTextBox.Text;
+            _configManager.RockbarSetting.ForeColor = foreColorTextBox.Text;
 
-            rockbarSetting.BonDriverNameToTunerName = new Dictionary<string, string>();
+            _configManager.RockbarSetting.MenuFont = menuFontTextBox.Text;
+            _configManager.RockbarSetting.MenuBackColor = menuBackColorTextBox.Text;
+            _configManager.RockbarSetting.OkReserveMenuBackColor = okReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.PartialReserveMenuBackColor = partialReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.NgReserveMenuBackColor = ngReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.DisabledReserveMenuBackColor = disabledReserveMenuBackColorTextBox.Text;
+
+            _configManager.RockbarSetting.TabFont = tabFontTextBox.Text;
+            _configManager.RockbarSetting.ButtonFont = buttonFontTextBox.Text;
+            _configManager.RockbarSetting.LabelFont = labelFontTextBox.Text;
+            _configManager.RockbarSetting.TextBoxFont = textBoxFontTextBox.Text;
+
+            _configManager.RockbarSetting.BonDriverNameToTunerName = new Dictionary<string, string>();
 
             foreach (ListViewItem item in tunerNameListView.Items)
             {
-                rockbarSetting.BonDriverNameToTunerName.Add(
+                _configManager.RockbarSetting.BonDriverNameToTunerName.Add(
                     item.SubItems[tunerNameBonDriverNameColumnHeader.Index].Text,
                     item.SubItems[tunerNameTunerNameColumnHeader.Index].Text
                 );
             }
 
-            Toml.WriteFile(rockbarSetting, RockbarUtility.GetTomlSettingFilePath());
+            //Toml.WriteFile(rockbarSetting, RockbarUtility.GetTomlSettingFilePath());
+            _configManager.Save();
 
             this.DialogResult = DialogResult.OK;
             this.Close();

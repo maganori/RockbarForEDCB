@@ -22,8 +22,8 @@ namespace RockbarForEDCB
     /// </summary>
     public partial class MainForm : Form
     {
-        // 設定情報
-        private RockBarSetting rockbarSetting = null;
+        // 設定とサービスリスト
+        private ConfigManager _configManager;
 
         // EpgTimerSrv通信とEPGデータ管理
         private EpgDataManager _epgDataManager;
@@ -32,8 +32,8 @@ namespace RockbarForEDCB
         private bool canConnect = true;
 
         // CSVサービスリストの格納
-        private List<Service> allServiceList = null;
-        private List<Service> favoriteServiceList = null;
+        //private List<Service> allServiceList = null;
+        //private List<Service> favoriteServiceList = null;
 
         // CtrlCmdUtil
         private CtrlCmdUtil ctrlCmdUtil = new CtrlCmdUtil();
@@ -92,40 +92,42 @@ namespace RockbarForEDCB
             mainListView.HideSelection = true;
             subListView.HideSelection = true;
 
-            try
-            {
-                rockbarSetting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
-            }
-            catch (FileNotFoundException)
-            {
-                // TOML設定ファイルが存在しない場合は準正常系として空設定で起動。それ以外の場合は例外を投げる
-                rockbarSetting = new RockBarSetting();
-            }
+            //try
+            //{
+            //    rockbarSetting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
+            //}
+            //catch (FileNotFoundException)
+            //{
+            //    // TOML設定ファイルが存在しない場合は準正常系として空設定で起動。それ以外の場合は例外を投げる
+            //    rockbarSetting = new RockBarSetting();
+            //}
+
+            _configManager = new ConfigManager();
 
             // コンフィグファイルにwidth, height指定時のみ前回位置・サイズ・スプリッタ位置で起動
-            if (rockbarSetting.Width != 0 && rockbarSetting.Height != 0)
+            if (_configManager.RockbarSetting.Width != 0 && _configManager.RockbarSetting.Height != 0)
             {
                 this.StartPosition = FormStartPosition.Manual;
-                this.Location = new Point(rockbarSetting.X, rockbarSetting.Y);
-                this.Size = new Size(rockbarSetting.Width, rockbarSetting.Height);
-                splitContainer.SplitterDistance = rockbarSetting.SplitterDistance;
+                this.Location = new Point(_configManager.RockbarSetting.X, _configManager.RockbarSetting.Y);
+                this.Size = new Size(_configManager.RockbarSetting.Width, _configManager.RockbarSetting.Height);
+                splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
             }
 
-            allServiceList = RockbarUtility.GetAllServicesFromSetting();
-            favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
+            //allServiceList = RockbarUtility.GetAllServicesFromSetting();
+            //favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
 
             _epgDataManager = new EpgDataManager(this.ctrlCmdUtil);
 
             // TVTestManagerの初期化
-            _tvtestManager = new TVTestManager(rockbarSetting, ctrlCmdUtil);
+            _tvtestManager = new TVTestManager(_configManager.RockbarSetting, ctrlCmdUtil);
 
             // 設定反映
             applySetting();
 
-            if (rockbarSetting.UseTcpIp) {
+            if (_configManager.RockbarSetting.UseTcpIp) {
                 // TCP/IP通信にする
                 ctrlCmdUtil.SetSendMode(true);
-                ctrlCmdUtil.SetNWSetting(rockbarSetting.IpAddress, rockbarSetting.PortNumber);
+                ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
             }
             else
             {
@@ -216,7 +218,7 @@ namespace RockbarForEDCB
         private void applySetting()
         {
             // タスクトレイアイコン常時表示
-            if (rockbarSetting.ShowTaskTrayIcon)
+            if (_configManager.RockbarSetting.ShowTaskTrayIcon)
             {
                 notifyIcon.Visible = true;
             }
@@ -227,7 +229,7 @@ namespace RockbarForEDCB
             }
 
             // 縦に並べて表示
-            if (rockbarSetting.IsHorizontalSplit)
+            if (_configManager.RockbarSetting.IsHorizontalSplit)
             {
                 splitContainer.Orientation = Orientation.Horizontal;
             }
@@ -238,12 +240,12 @@ namespace RockbarForEDCB
 
             // フォント
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            Font font = (Font) fontConverter.ConvertFromString(rockbarSetting.Font);
-            Font menuFont = (Font)fontConverter.ConvertFromString(rockbarSetting.MenuFont);
-            Font tabFont = (Font)fontConverter.ConvertFromString(rockbarSetting.TabFont);
-            Font buttonFont = (Font)fontConverter.ConvertFromString(rockbarSetting.ButtonFont);
-            Font labelFont = (Font)fontConverter.ConvertFromString(rockbarSetting.LabelFont);
-            Font textBoxFont = (Font)fontConverter.ConvertFromString(rockbarSetting.TextBoxFont);
+            Font font = (Font) fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
+            Font menuFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
+            Font tabFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TabFont);
+            Font buttonFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.ButtonFont);
+            Font labelFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.LabelFont);
+            Font textBoxFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TextBoxFont);
 
             mainListView.Font = font;
             subListView.Font = font;
@@ -261,23 +263,23 @@ namespace RockbarForEDCB
 
             // 色
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-            this.formBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.FormBackColor);
-            this.listBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.ListBackColor);
-            this.okReserveListBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.OkReserveListBackColor);
-            this.partialReserveListBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.PartialReserveListBackColor);
-            this.ngReserveListBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.NgReserveListBackColor);
-            this.disabledReserveListBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.DisabledReserveListBackColor);
-            this.listHeaderForeColor = (Color)colorConverter.ConvertFromString(rockbarSetting.ListHeaderForeColor);
-            this.listHeaderBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.ListHeaderBackColor);
-            this.foreColor = (Color)colorConverter.ConvertFromString(rockbarSetting.ForeColor);
+            this.formBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
+            this.listBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
+            this.okReserveListBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveListBackColor);
+            this.partialReserveListBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveListBackColor);
+            this.ngReserveListBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
+            this.disabledReserveListBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
+            this.listHeaderForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
+            this.listHeaderBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
+            this.foreColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
 
             this.BackColor = this.formBackColor;
 
-            this.menuBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.MenuBackColor);
-            this.okReserveMenuBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.OkReserveMenuBackColor);
-            this.partialReserveMenuBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.PartialReserveMenuBackColor);
-            this.ngReserveMenuBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.NgReserveMenuBackColor);
-            this.disabledReserveMenuBackColor = (Color)colorConverter.ConvertFromString(rockbarSetting.DisabledReserveMenuBackColor);
+            this.menuBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
+            this.okReserveMenuBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveMenuBackColor);
+            this.partialReserveMenuBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
+            this.ngReserveMenuBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
+            this.disabledReserveMenuBackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
 
             mainListView.BackColor = this.listBackColor;
             mainListView.ForeColor = this.foreColor;
@@ -288,10 +290,10 @@ namespace RockbarForEDCB
             listContextMenuStrip.BackColor = this.menuBackColor;
 
             // Web番組表機能を使用するときのみタスクトレイアイコンの右クリックメニューに「テレビ番組表」を表示
-            this.openWebEPGToolStripMenuItem.Visible = rockbarSetting.UseWebLink;
+            this.openWebEPGToolStripMenuItem.Visible = _configManager.RockbarSetting.UseWebLink;
 
             // 録画済み一覧の最大表示数
-            _epgDataManager.RecListMaxCount = this.rockbarSetting.RecListMaxCount;
+            _epgDataManager.RecListMaxCount = this._configManager.RockbarSetting.RecListMaxCount;
         }
 
         /// <summary>
@@ -652,7 +654,7 @@ namespace RockbarForEDCB
 
                     // サービス（チャンネル）の決定
                     string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-                    Service service = allServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                    Service service = _configManager.AllServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
                     if (service == null)
                     {
                         continue; // 登録チャンネル一覧にない場合は処理を飛ばす
@@ -757,8 +759,8 @@ namespace RockbarForEDCB
                 targetListView.Items.Clear();
 
                 List<Service> services = (selectedTab == favoriteTabPage)
-                     ? favoriteServiceList
-                     : allServiceList;
+                     ? _configManager.FavoriteServiceList
+                     : _configManager.AllServiceList;
 
                 // チャンネル表示
                 foreach (var service in services)
@@ -1031,9 +1033,9 @@ namespace RockbarForEDCB
         {
             int maxWidth = 0;
 
-            if (rockbarSetting?.BonDriverNameToTunerName != null)
+            if (_configManager.RockbarSetting?.BonDriverNameToTunerName != null)
             {
-                foreach (var name in rockbarSetting.BonDriverNameToTunerName.Values)
+                foreach (var name in _configManager.RockbarSetting.BonDriverNameToTunerName.Values)
                 {
                     if (string.IsNullOrEmpty(name))
                         continue;
@@ -1062,9 +1064,9 @@ namespace RockbarForEDCB
         {
             int maxWidth = 0;
 
-            if (allServiceList != null)
+            if (_configManager.AllServiceList != null)
             {
-                foreach (var service in allServiceList)
+                foreach (var service in _configManager.AllServiceList)
                 {
                     if (string.IsNullOrEmpty(service.Name))
                         continue;
@@ -1089,14 +1091,14 @@ namespace RockbarForEDCB
         /// <summary>
         /// 設定ファイルの再読み込み処理
         /// </summary>
-        private void ReloadSetting()
-        {
-            // 設定ファイルを書き込んだあとの読み込みなので基本的に例外は発生しないはず。発生した場合は例外を投げる
-            rockbarSetting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
+        //private void ReloadSetting()
+        //{
+        //    // 設定ファイルを書き込んだあとの読み込みなので基本的に例外は発生しないはず。発生した場合は例外を投げる
+        //    _configManager.RockbarSetting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
 
-            allServiceList = RockbarUtility.GetAllServicesFromSetting();
-            favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
-        }
+        //    allServiceList = RockbarUtility.GetAllServicesFromSetting();
+        //    favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
+        //}
 
         /// <summary>
         /// フィルタ文字列が検索対象の文字列群に含まれるか判定する
@@ -1191,13 +1193,13 @@ namespace RockbarForEDCB
         {
             if (reserve.RecSetting.IsNoRec())
             {
-                reserve.RecSetting.RecMode = rockbarSetting.FixNoRecToServiceOnly ? (byte)1 : reserve.RecSetting.GetRecMode();
+                reserve.RecSetting.RecMode = _configManager.RockbarSetting.FixNoRecToServiceOnly ? (byte)1 : reserve.RecSetting.GetRecMode();
             }
             else
             {
                 // 録画モード情報を維持して無効化
                 var recMode = reserve.RecSetting.RecMode;
-                reserve.RecSetting.RecMode = (byte)(rockbarSetting.FixNoRecToServiceOnly ? 5 : 5 + (recMode + 4) % 5);
+                reserve.RecSetting.RecMode = (byte)(_configManager.RockbarSetting.FixNoRecToServiceOnly ? 5 : 5 + (recMode + 4) % 5);
             }
 
             var err = ctrlCmdUtil.SendChgReserve(new List<ReserveData>() { reserve });
@@ -1293,7 +1295,7 @@ namespace RockbarForEDCB
             if (ev != null)
             {
                 // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
-                if (rockbarSetting.UseWebLink)
+                if (_configManager.RockbarSetting.UseWebLink)
                 {
                     item.DropDownItems.Add(">>");
                     item.DropDownItems[item.DropDownItems.Count - 1].Click += (s2, e2) => accessWebUrl(ev);
@@ -1417,7 +1419,7 @@ namespace RockbarForEDCB
         /// <param name="ev">番組情報</param>
         private void accessWebUrl(EpgEventInfo ev)
         {
-            string url = rockbarSetting.WebLinkUrl;
+            string url = _configManager.RockbarSetting.WebLinkUrl;
             url = url.Replace("{ONID}", ev.original_network_id.ToString());
             url = url.Replace("{TSID}", ev.transport_stream_id.ToString());
             url = url.Replace("{SID}", ev.service_id.ToString());
@@ -1445,7 +1447,7 @@ namespace RockbarForEDCB
         /// <param name="recFile">録画済み情報</param>
         private void accessWebUrl(RecFileInfo recFile)
         {
-            string url = rockbarSetting.RecInfoWebLinkUrl;
+            string url = _configManager.RockbarSetting.RecInfoWebLinkUrl;
             url = url.Replace("{RecID}", recFile.ID.ToString());
 
             try
@@ -1669,7 +1671,7 @@ namespace RockbarForEDCB
         private void serviceListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // TVTest使用時のみ
-            if (!rockbarSetting.UseDoubleClickTvtest)
+            if (!_configManager.RockbarSetting.UseDoubleClickTvtest)
             {
                 return;
             }
@@ -1730,7 +1732,7 @@ namespace RockbarForEDCB
                     EpgEventInfo ev = _epgDataManager.AllEventMap[selected.Name];
 
                     // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
-                    if (rockbarSetting.UseWebLink)
+                    if (_configManager.RockbarSetting.UseWebLink)
                     {
                         var item = listContextMenuStrip.Items.Add(">>");
                         item.Click += (s2, e2) => accessWebUrl(ev);
@@ -1886,7 +1888,7 @@ namespace RockbarForEDCB
         private void reserveListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // Web番組詳細使用時のみ
-            if (!rockbarSetting.UseWebLink)
+            if (!_configManager.RockbarSetting.UseWebLink)
             {
                 return;
             }
@@ -1952,7 +1954,7 @@ namespace RockbarForEDCB
                     RecFileInfo recFile = _epgDataManager.RecMap[recID];
 
                     // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
-                    if (rockbarSetting.UseWebLink)
+                    if (_configManager.RockbarSetting.UseWebLink)
                     {
                         var item = listContextMenuStrip.Items.Add(">>");
                         item.Click += (s2, e2) => accessWebUrl(recFile);
@@ -2037,7 +2039,7 @@ namespace RockbarForEDCB
         private void recListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // TVTest使用時のみ
-            if (!rockbarSetting.UseDoubleClickTvtest)
+            if (!_configManager.RockbarSetting.UseDoubleClickTvtest)
             {
                 return;
             }
@@ -2099,7 +2101,7 @@ namespace RockbarForEDCB
                 listContextMenuStrip.Items.Clear();
 
                 // Web番組詳細リンク (オプション有効時)
-                if (rockbarSetting.UseWebLink)
+                if (_configManager.RockbarSetting.UseWebLink)
                 {
                     var item = listContextMenuStrip.Items.Add(">> Web番組詳細を開く");
                     item.Click += (s2, e2) => accessWebUrl(ev);
@@ -2184,7 +2186,7 @@ namespace RockbarForEDCB
         private void newProgramListView_MouseDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             // Web番組詳細使用時のみ
-            if (!rockbarSetting.UseWebLink)
+            if (!_configManager.RockbarSetting.UseWebLink)
             {
                 return;
             }
@@ -2300,7 +2302,7 @@ namespace RockbarForEDCB
             }
             
             // TVTest自動起動、自動終了
-            _tvtestManager.AutoStartAndCloseTVTest(_epgDataManager.ReserveDatas, favoriteServiceList);
+            _tvtestManager.AutoStartAndCloseTVTest(_epgDataManager.ReserveDatas, _configManager.FavoriteServiceList);
         }
 
         /// <summary>
@@ -2322,7 +2324,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void closeButton_Click(object sender, EventArgs e)
         {
-            if (rockbarSetting.StoreTaskTrayByClosing)
+            if (_configManager.RockbarSetting.StoreTaskTrayByClosing)
             {
                 // 他のオプションにかかわらず、最小化(もどき)をする場合はタスクトレイにアイコンを表示する
                 notifyIcon.Visible = true;
@@ -2424,7 +2426,8 @@ namespace RockbarForEDCB
 
             if (result == DialogResult.OK)
             {
-                ReloadSetting();
+                //ReloadSetting();
+                _configManager.Load();
                 applySetting();
                 RefreshList(true, true, true);
             }
@@ -2438,13 +2441,14 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            rockbarSetting.X = this.Location.X;
-            rockbarSetting.Y = this.Location.Y;
-            rockbarSetting.Width = this.Size.Width;
-            rockbarSetting.Height = this.Size.Height;
-            rockbarSetting.SplitterDistance = splitContainer.SplitterDistance;
+            _configManager.RockbarSetting.X = this.Location.X;
+            _configManager.RockbarSetting.Y = this.Location.Y;
+            _configManager.RockbarSetting.Width = this.Size.Width;
+            _configManager.RockbarSetting.Height = this.Size.Height;
+            _configManager.RockbarSetting.SplitterDistance = splitContainer.SplitterDistance;
 
-            Toml.WriteFile(rockbarSetting, RockbarUtility.GetTomlSettingFilePath());
+            //Toml.WriteFile(_configManager.RockbarSetting, RockbarUtility.GetTomlSettingFilePath());
+            _configManager.Save();
         }
 
         /// <summary>
@@ -2531,7 +2535,7 @@ namespace RockbarForEDCB
             if (this.Visible)
             {
                 // フォーム表示時に左クリックした場合はオプションにより挙動切り替え
-                if (rockbarSetting.ToggleVisibleTaskTrayIconClick)
+                if (_configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick)
                 {
                     this.Visible = false;
                 }
@@ -2547,7 +2551,7 @@ namespace RockbarForEDCB
                 this.Activate();
 
                 // オプションによりタスクトレイアイコン表示を切り替え
-                if (!rockbarSetting.ShowTaskTrayIcon)
+                if (!_configManager.RockbarSetting.ShowTaskTrayIcon)
                 {
                     notifyIcon.Visible = false;
                 }
@@ -2569,7 +2573,7 @@ namespace RockbarForEDCB
         private void OpenWebEPG()
         {
             // Webリンク使用時のみ
-            if (rockbarSetting.UseWebLink)
+            if (_configManager.RockbarSetting.UseWebLink)
             {
                 // Webを開く
                 try
@@ -2577,7 +2581,7 @@ namespace RockbarForEDCB
                     // 設定内容のURLを開く
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = rockbarSetting.WebEPGUrl,
+                        FileName = _configManager.RockbarSetting.WebEPGUrl,
                         UseShellExecute = true
                     });
                 }
@@ -2630,7 +2634,7 @@ namespace RockbarForEDCB
             string key = RockbarUtility.GetKey(transportStreamId, serviceId);
 
             // 設定ファイルのチャンネル名を最優先
-            Service service = allServiceList?.FirstOrDefault(
+            Service service = _configManager.AllServiceList?.FirstOrDefault(
                 x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
 
             if (!string.IsNullOrWhiteSpace(service?.Name))
@@ -2656,9 +2660,9 @@ namespace RockbarForEDCB
             string tunerName;
 
             // 設定ファイルのチューナー名を最優先
-            if (rockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
+            if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
             {
-                tunerName = rockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
+                tunerName = _configManager.RockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
             }
             else
             {
