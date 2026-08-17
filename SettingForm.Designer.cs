@@ -73,7 +73,7 @@ namespace RockbarForEDCB
             this.settingTabControl = new System.Windows.Forms.TabControl();
             this.edcbLinkageTabPage = new System.Windows.Forms.TabPage();
             this.webEPGLabel = new System.Windows.Forms.Label();
-            this.webEPGUrlTextBox = new System.Windows.Forms.TextBox();
+            this.webEpgUrlTextBox = new System.Windows.Forms.TextBox();
             this.portNumberNoteLabel = new System.Windows.Forms.Label();
             this.portNumberNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
@@ -436,7 +436,7 @@ namespace RockbarForEDCB
             // edcbLinkageTabPage
             // 
             this.edcbLinkageTabPage.Controls.Add(this.webEPGLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.webEPGUrlTextBox);
+            this.edcbLinkageTabPage.Controls.Add(this.webEpgUrlTextBox);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNoteLabel);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNumericUpDown);
             this.edcbLinkageTabPage.Controls.Add(this.label3);
@@ -579,12 +579,12 @@ namespace RockbarForEDCB
             this.ipAddressTextBox.Size = new System.Drawing.Size(166, 19);
             this.ipAddressTextBox.TabIndex = 1;
             // 
-            // webEPGUrlTextBox
+            // webEpgUrlTextBox
             // 
-            this.webEPGUrlTextBox.Location = new System.Drawing.Point(122, 175);
-            this.webEPGUrlTextBox.Name = "webEPGUrlTextBox";
-            this.webEPGUrlTextBox.Size = new System.Drawing.Size(478, 19);
-            this.webEPGUrlTextBox.TabIndex = 17;
+            this.webEpgUrlTextBox.Location = new System.Drawing.Point(122, 175);
+            this.webEpgUrlTextBox.Name = "webEpgUrlTextBox";
+            this.webEpgUrlTextBox.Size = new System.Drawing.Size(478, 19);
+            this.webEpgUrlTextBox.TabIndex = 17;
             // 
             // webLinkUrlTextBox
             // 
@@ -2065,7 +2065,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label webLinkUrlExampleLabel;
         private System.Windows.Forms.CheckBox useWebLinkCheckBox;
         private System.Windows.Forms.Label webEPGLabel;
-        private System.Windows.Forms.TextBox webEPGUrlTextBox;
+        private System.Windows.Forms.TextBox webEpgUrlTextBox;
         private System.Windows.Forms.Label webLinkUrlLabel;
         private System.Windows.Forms.TextBox webLinkUrlTextBox;
         private System.Windows.Forms.Label recInfoWebLinkUrlLabel;

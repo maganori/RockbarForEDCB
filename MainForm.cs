@@ -31,8 +31,8 @@ namespace RockbarForEDCB
         // EpgTimerSrv接続可否
         private bool canConnect = true;
 
-        // CSVサービスリストの格納
-        //private List<Service> allServiceList = null;
+        // TSVサービスリストの格納
+        //private List<Service> selectedServiceList = null;
         //private List<Service> favoriteServiceList = null;
 
         // CtrlCmdUtil
@@ -113,8 +113,8 @@ namespace RockbarForEDCB
                 splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
             }
 
-            //allServiceList = RockbarUtility.GetAllServicesFromSetting();
-            //favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
+            //selectedServiceList = RockbarUtility.LoadSelectedServicesFromFile();
+            //favoriteServiceList = RockbarUtility.LoadFavoriteServicesFromFile();
 
             _epgDataManager = new EpgDataManager(this.ctrlCmdUtil);
 
@@ -654,7 +654,7 @@ namespace RockbarForEDCB
 
                     // サービス（チャンネル）の決定
                     string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-                    Service service = _configManager.AllServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
+                    Service service = _configManager.SelectedServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
                     if (service == null)
                     {
                         continue; // 登録チャンネル一覧にない場合は処理を飛ばす
@@ -760,7 +760,7 @@ namespace RockbarForEDCB
 
                 List<Service> services = (selectedTab == favoriteTabPage)
                      ? _configManager.FavoriteServiceList
-                     : _configManager.AllServiceList;
+                     : _configManager.SelectedServiceList;
 
                 // チャンネル表示
                 foreach (var service in services)
@@ -770,7 +770,7 @@ namespace RockbarForEDCB
                     EpgServiceEventInfo matchedService = null;
                     _epgDataManager.ServiceMap.TryGetValue(key, out matchedService);
 
-                    // CSVのチャンネル一覧で設定されているネットワークタイプを最優先で使用する
+                    // TSVのチャンネル一覧で設定されているネットワークタイプを最優先で使用する
                     // ネットワークタイプ設定が無い場合はEDCBからのデータをもとに自動判別
                     NetworkType networkType = matchedService != null
                         ? RockbarUtility.GetNetworkType(service.TypeName, matchedService.serviceInfo.ONID)
@@ -1058,15 +1058,15 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 設定ファイル内の全サービスリストから最長チャンネル名のピクセル幅を取得する
+        /// 選択サービスリストから最長チャンネル名のピクセル幅を取得する
         /// </summary>
         private int GetMaxServiceNameWidth(Font font)
         {
             int maxWidth = 0;
 
-            if (_configManager.AllServiceList != null)
+            if (_configManager.SelectedServiceList != null)
             {
-                foreach (var service in _configManager.AllServiceList)
+                foreach (var service in _configManager.SelectedServiceList)
                 {
                     if (string.IsNullOrEmpty(service.Name))
                         continue;
@@ -1096,8 +1096,8 @@ namespace RockbarForEDCB
         //    // 設定ファイルを書き込んだあとの読み込みなので基本的に例外は発生しないはず。発生した場合は例外を投げる
         //    _configManager.RockbarSetting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
 
-        //    allServiceList = RockbarUtility.GetAllServicesFromSetting();
-        //    favoriteServiceList = RockbarUtility.GetFavoriteServicesFromSetting();
+        //    selectedServiceList = RockbarUtility.LoadSelectedServicesFromFile();
+        //    favoriteServiceList = RockbarUtility.LoadFavoriteServicesFromFile();
         //}
 
         /// <summary>
@@ -2427,7 +2427,7 @@ namespace RockbarForEDCB
             if (result == DialogResult.OK)
             {
                 //ReloadSetting();
-                _configManager.Load();
+                _configManager.LoadFromFile();
                 applySetting();
                 RefreshList(true, true, true);
             }
@@ -2448,7 +2448,7 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.SplitterDistance = splitContainer.SplitterDistance;
 
             //Toml.WriteFile(_configManager.RockbarSetting, RockbarUtility.GetTomlSettingFilePath());
-            _configManager.Save();
+            _configManager.SaveFromFile();
         }
 
         /// <summary>
@@ -2581,7 +2581,7 @@ namespace RockbarForEDCB
                     // 設定内容のURLを開く
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
-                        FileName = _configManager.RockbarSetting.WebEPGUrl,
+                        FileName = _configManager.RockbarSetting.WebEpgUrl,
                         UseShellExecute = true
                     });
                 }
@@ -2634,7 +2634,7 @@ namespace RockbarForEDCB
             string key = RockbarUtility.GetKey(transportStreamId, serviceId);
 
             // 設定ファイルのチャンネル名を最優先
-            Service service = _configManager.AllServiceList?.FirstOrDefault(
+            Service service = _configManager.SelectedServiceList?.FirstOrDefault(
                 x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
 
             if (!string.IsNullOrWhiteSpace(service?.Name))
