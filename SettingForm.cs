@@ -438,7 +438,7 @@ namespace RockbarForEDCB
                 recListMaxCountNumericUpDown.Value = _configManager.RockbarSetting.RecListMaxCount;
             }
             useWebLinkCheckBox.Checked = _configManager.RockbarSetting.UseWebLink;
-            webEPGUrlTextBox.Text = _configManager.RockbarSetting.WebEPGUrl;
+            webEpgUrlTextBox.Text = _configManager.RockbarSetting.WebEpgUrl;
             webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
             recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
 
@@ -607,11 +607,11 @@ namespace RockbarForEDCB
             }
 
             // 設定ファイルの選択サービス一覧の表示
-            //List<Service> selectedServices = _configManager.AllServiceList;
+            //List<Service> selectedServices = _configManager.SelectedServiceList;
 
             List<ListViewItem> needCheckItems = new List<ListViewItem>();
 
-            foreach (Service service in _configManager.AllServiceList)
+            foreach (Service service in _configManager.SelectedServiceList)
             {
                 string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
 
@@ -1080,12 +1080,12 @@ namespace RockbarForEDCB
             // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
             // 選択チャンネル
             //List<Service> selectedServices = new List<Service>();
-            //List<Service> selectedServices = _configManager.AllServiceList;
-            _configManager.AllServiceList.Clear();
+            //List<Service> selectedServices = _configManager.SelectedServiceList;
+            _configManager.SelectedServiceList.Clear();
 
             foreach (ListViewItem item in selectedServiceListView.Items)
             {
-                _configManager.AllServiceList.Add(new Service {
+                _configManager.SelectedServiceList.Add(new Service {
                     Tsid = item.SubItems[selectedServiceTsidColumnHeader.Index].Text,
                     Sid = item.SubItems[selectedServiceSidColumnHeader.Index].Text,
                     Name = item.SubItems[selectedServiceNameColumnHeader.Index].Text,
@@ -1094,7 +1094,7 @@ namespace RockbarForEDCB
                 });
             }
 
-            //RockbarUtility.SaveAllServicesToSetting(selectedServices);
+            //RockbarUtility.SaveSelectedServicesToFile(selectedServices);
             // お気に入りチャンネル
             RefreshFavoriteService();
             //List<Service> favoriteServices = new List<Service>();
@@ -1112,7 +1112,7 @@ namespace RockbarForEDCB
                 });
             }
 
-            //RockbarUtility.SaveFavoriteServicesToSetting(favoriteServices);
+            //RockbarUtility.SaveFavoriteServicesToFile(favoriteServices);
 
 
             //RockBarSetting rockbarSetting = new RockBarSetting();
@@ -1122,7 +1122,7 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
             _configManager.RockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
             _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
-            _configManager.RockbarSetting.WebEPGUrl = webEPGUrlTextBox.Text;
+            _configManager.RockbarSetting.WebEpgUrl = webEpgUrlTextBox.Text;
             _configManager.RockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
             _configManager.RockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
 
@@ -1179,7 +1179,7 @@ namespace RockbarForEDCB
             }
 
             //Toml.WriteFile(rockbarSetting, RockbarUtility.GetTomlSettingFilePath());
-            _configManager.Save();
+            _configManager.SaveFromFile();
 
             this.DialogResult = DialogResult.OK;
             this.Close();
