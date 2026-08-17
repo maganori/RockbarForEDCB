@@ -40,7 +40,7 @@ namespace RockbarForEDCB
         public List<EpgServiceEventInfo> ServiceEvents => _serviceEvents;
         public List<TunerReserveInfo> TunerReserveInfos => _tunerReserveInfos;
         public List<ReserveData> ReserveDatas => _reserveDatas;
-        public List<RecFileInfo> RecFileInfos { get; private set; } = new List<RecFileInfo>(); // UpdateRecData内で再代入(GetRange)を行うためsetterを付ける
+        public List<RecFileInfo> RecFileInfos => _recFileInfos;
         public DateTime LastRecDataUpdateTime { get; private set; } = DateTime.MinValue;
 
         /// <summary>
@@ -146,21 +146,22 @@ namespace RockbarForEDCB
             RecMap.Clear();
             _ctrlCmdUtil.SendEnumRecInfoBasic(ref _recFileInfos);
 
-            if (RecListMaxCount > 0 && RecFileInfos.Count > RecListMaxCount)
+            // _recFileInfos を対象に条件判定および切り出しを行う
+            if (RecListMaxCount > 0 && _recFileInfos.Count > RecListMaxCount)
             {
-                RecFileInfos = RecFileInfos.GetRange(RecFileInfos.Count - RecListMaxCount, RecListMaxCount);
+                _recFileInfos = _recFileInfos.GetRange(_recFileInfos.Count - RecListMaxCount, RecListMaxCount);
             }
-            RecFileInfos.Reverse();
+            _recFileInfos.Reverse();
 
-            RecMap = RecFileInfos.ToDictionary(r => r.ID);
+            RecMap = _recFileInfos.ToDictionary(r => r.ID);
 
             // 更新時間として現在時刻を取得
             LastRecDataUpdateTime = DateTime.Now;
 
             // 録画済み情報の一覧の差分有無チェック
             // チェック対象：録画済みファイルの件数、各録画済みファイルの固有ID
-            string currentRecHash = $"{RecFileInfos.Count}_" +
-                string.Join(",", RecFileInfos.Select(r => r.ID));
+            string currentRecHash = $"{_recFileInfos.Count}_" +
+                    string.Join(",", _recFileInfos.Select(r => r.ID));
 
             bool isRecChanged = (currentRecHash != _prevRecHash);
             _prevRecHash = currentRecHash;
