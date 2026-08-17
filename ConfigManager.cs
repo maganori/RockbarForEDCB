@@ -16,7 +16,7 @@ namespace RockbarForEDCB
     {
         // 設定ファイル名はハードコーディングとする
         public static string TOML_CONFIG_FILENAME = "RockbarForEDCB.toml";
-        public static string TSV_ALL_SERVICE_FILENAME = "SelectedServices.tsv";
+        public static string TSV_SELECTED_SERVICE_FILENAME = "SelectedServices.tsv";
         public static string TSV_FAVORITE_SERVICE_FILENAME = "FavoriteServices.tsv";
 
         /// <summary>
@@ -25,9 +25,9 @@ namespace RockbarForEDCB
         public RockBarSetting RockbarSetting { get; private set; }
 
         /// <summary>
-        /// 全サービスリスト
+        /// 選択サービスリスト
         /// </summary>
-        public List<Service> AllServiceList { get; private set; }
+        public List<Service> SelectedServiceList { get; private set; }
 
         /// <summary>
         /// お気に入りサービスリスト
@@ -40,15 +40,15 @@ namespace RockbarForEDCB
         public ConfigManager()
         {
             RockbarSetting = new RockBarSetting();
-            AllServiceList = new List<Service>();
+            SelectedServiceList = new List<Service>();
             FavoriteServiceList = new List<Service>();
-            Load();
+            LoadFromFile();
         }
 
         /// <summary>
         /// TOML設定ファイルおよびTSVサービスリストを読み込み。
         /// </summary>
-        public void Load()
+        public void LoadFromFile()
         {
             // TOML設定ファイルの読み込み
             try
@@ -62,16 +62,16 @@ namespace RockbarForEDCB
             }
 
             // 選択サービス一覧（SelectedServices.tsv）の読み込み
-            AllServiceList = GetAllServicesFromSetting() ?? new List<Service>();
+            SelectedServiceList = LoadSelectedServicesFromFile() ?? new List<Service>();
 
             // お気に入りサービス一覧（FavoriteServices.tsv）の読み込み
-            FavoriteServiceList = GetFavoriteServicesFromSetting() ?? new List<Service>();
+            FavoriteServiceList = LoadFavoriteServicesFromFile() ?? new List<Service>();
         }
 
         /// <summary>
         /// 現在保持している設定およびサービス一覧をそれぞれのファイルに保存します。
         /// </summary>
-        public void Save()
+        public void SaveFromFile()
         {
             // TOML設定ファイルの保存
             if (RockbarSetting != null)
@@ -80,15 +80,15 @@ namespace RockbarForEDCB
             }
 
             // 選択サービス一覧の保存
-            if (AllServiceList != null)
+            if (SelectedServiceList != null)
             {
-                SaveAllServicesToSetting(AllServiceList);
+                SaveSelectedServicesToFile(SelectedServiceList);
             }
 
             // お気に入りサービス一覧の保存
             if (FavoriteServiceList != null)
             {
-                SaveFavoriteServicesToSetting(FavoriteServiceList);
+                SaveFavoriteServicesToFile(FavoriteServiceList);
             }
         }
 
@@ -97,7 +97,7 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="filename">TSVファイル名</param>
         /// <returns>サービスリスト</returns>
-        private List<Service> GetServicesFromSetting(string filename)
+        private List<Service> LoadServicesFromFile(string filename)
         {
             List<Service> result = new List<Service>();
 
@@ -141,21 +141,21 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// TSVファイルから全サービスリストを読み込んで返す
+        /// TSVファイルから選択サービスリストを読み込んで返す
         /// </summary>
-        /// <returns>全サービスリスト</returns>
-        private List<Service> GetAllServicesFromSetting()
+        /// <returns>選択サービスリスト</returns>
+        private List<Service> LoadSelectedServicesFromFile()
         {
-            return GetServicesFromSetting(GetTsvAllServiceFilePath());
+            return LoadServicesFromFile(GetTsvSelectedServicesFilePath());
         }
 
         /// <summary>
         /// TSVファイルからお気に入りサービスリストを読み込んで返す
         /// </summary>
         /// <returns>お気に入りサービスリスト</returns>
-        private List<Service> GetFavoriteServicesFromSetting()
+        private List<Service> LoadFavoriteServicesFromFile()
         {
-            return GetServicesFromSetting(GetTsvFavoriteServiceFilePath());
+            return LoadServicesFromFile(GetTsvFavoriteServicesFilePath());
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="services">サービスリスト</param>
         /// <param name="filename">ファイル名</param>
-        private void SaveServicesToSetting(List<Service> services, string filename)
+        private void SaveServicesToFile(List<Service> services, string filename)
         {
             using (var writer = new StreamWriter(filename))
             {
@@ -192,21 +192,21 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// TSVファイルに全サービスリストを書き込む
+        /// TSVファイルに選択サービスリストを書き込む
         /// </summary>
-        /// <param name="services">全サービスリスト</param>
-        private void SaveAllServicesToSetting(List<Service> services)
+        /// <param name="services">選択サービスリスト</param>
+        private void SaveSelectedServicesToFile(List<Service> services)
         {
-            SaveServicesToSetting(services, GetTsvAllServiceFilePath());
+            SaveServicesToFile(services, GetTsvSelectedServicesFilePath());
         }
 
         /// <summary>
         /// TSVファイルにお気に入りサービスリストを書き込む
         /// </summary>
         /// <param name="services">お気に入りサービスリスト</param>
-        private void SaveFavoriteServicesToSetting(List<Service> services)
+        private void SaveFavoriteServicesToFile(List<Service> services)
         {
-            SaveServicesToSetting(services, GetTsvFavoriteServiceFilePath());
+            SaveServicesToFile(services, GetTsvFavoriteServicesFilePath());
         }
 
         /// <summary>
@@ -220,20 +220,20 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// TSV全サービス設定ファイルのフルパスを返す
+        /// TSV選択サービス設定ファイルのフルパスを返す
         /// </summary>
-        /// <returns>TSV全サービス設定ファイルのフルパス</returns>
-        private string GetTsvAllServiceFilePath()
+        /// <returns>TSV選択サービス設定ファイルのフルパス</returns>
+        private string GetTsvSelectedServicesFilePath()
         {
             // フルパスを返す
-            return GetFullPath(TSV_ALL_SERVICE_FILENAME);
+            return GetFullPath(TSV_SELECTED_SERVICE_FILENAME);
         }
 
         /// <summary>
         /// TSVお気に入りサービス設定ファイルのフルパスを返す
         /// </summary>
         /// <returns>TSVお気に入りサービス設定ファイルのフルパス</returns>
-        private string GetTsvFavoriteServiceFilePath()
+        private string GetTsvFavoriteServicesFilePath()
         {
             // フルパスを返す
             return GetFullPath(TSV_FAVORITE_SERVICE_FILENAME);
@@ -266,7 +266,7 @@ namespace RockbarForEDCB
 
             this.PortNumber = 4510;
             this.UseWebLink = true;
-            this.WebEPGUrl = "http://localhost:5510/EMWUI/epg.html";
+            this.WebEpgUrl = "http://localhost:5510/EMWUI/epg.html";
             this.WebLinkUrl = "http://localhost:5510/EMWUI/epginfo.html?onid={ONID}&tsid={TSID}&sid={SID}&eid={EID}";
             this.RecInfoWebLinkUrl = "http://localhost:5510/EMWUI/recinfodesc.html?id={RecID}";
             this.AutoOpenMargin = 15;
@@ -323,7 +323,7 @@ namespace RockbarForEDCB
         // Web Link使用
         public bool UseWebLink { get; set; }
         // WebEPG URL
-        public string WebEPGUrl { get; set; }
+        public string WebEpgUrl { get; set; }
         // Web Link URL
         public string WebLinkUrl { get; set; }
         // Web Link URL(録画結果)
