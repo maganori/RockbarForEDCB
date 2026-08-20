@@ -252,6 +252,7 @@
   <ItemGroup>
     <Compile Include="ConfigManager.cs" />
     <Compile Include="EpgDataManager.cs" />
+    <Compile Include="ListViewBuilder.cs" />
     <Compile Include="RockbarUtility.cs" />
     <Compile Include="CtrlCmd.cs" />
     <Compile Include="CtrlCmdDef.cs" />

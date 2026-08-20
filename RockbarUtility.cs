@@ -50,6 +50,21 @@ namespace RockbarForEDCB
     };
 
     /// <summary>
+    /// タブの種別を表すEnumを定義
+    /// </summary>
+    public enum MainFormTabType
+    {
+        All,
+        DTTV,
+        BS,
+        CS,
+        Favorite,
+        NewProgram,
+        Reserve,
+        Rec,
+    }
+
+    /// <summary>
     /// サービスクラス
     /// </summary>
     public class Service
