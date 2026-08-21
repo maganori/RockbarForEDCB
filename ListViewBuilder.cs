@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -40,7 +41,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// 録画済み情報のツールチップテキスト作成デリゲート
         /// </summary>
-        public Func<RecFileInfo, string> CreateRecInfoTooltipTexts { get; set; }
+        //public Func<RecFileInfo, string> CreateRecInfoTooltipTexts { get; set; }
 
         public ListViewBuilder(ConfigManager configManager, EpgDataManager epgDataManager)
         {
@@ -489,7 +490,7 @@ namespace RockbarForEDCB
                     ListViewItem item = new ListViewItem(rowData)
                     {
                         Name = recFile.ID.ToString(),
-                        ToolTipText = CreateRecInfoTooltipTexts?.Invoke(recFile) ?? "",
+                        ToolTipText = CreateRecInfoTooltipTexts(recFile),
                         ForeColor = _foreColor
                     };
 
@@ -826,6 +827,86 @@ namespace RockbarForEDCB
             {
                 return _listBackColor;
             }
+        }
+
+        /// <summary>
+        /// 録画済み情報のテキスト生成処理
+        /// </summary>
+        /// <param name="recFile">録画済み情報</param>
+        public List<List<RecInfoDetailText>> CreateRecInfoDetailTexts(RecFileInfo recFile)
+        {
+            List<List<RecInfoDetailText>> detailTexts = new List<List<RecInfoDetailText>>();
+            {
+                var text = $"{recFile.StartTime.ToString("yyyy/MM/dd(ddd) HH:mm")}～{recFile.StartTime.AddSeconds(recFile.DurationSecond).ToString("HH:mm")}";
+                var dateTimes = new List<RecInfoDetailText>()
+                    {
+                        new RecInfoDetailText { Value = text, CopyText = text },
+                    };
+                detailTexts.Add(dateTimes);
+            }
+
+            // --- チャンネル名の取得 ---
+            // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
+            string serviceName = GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
+
+            var services = new List<RecInfoDetailText>()
+                {
+                    new RecInfoDetailText { Value = serviceName, CopyText = serviceName },
+                    new RecInfoDetailText { Value = recFile.Title, CopyText = recFile.Title },
+                };
+            detailTexts.Add(services);
+
+            {
+                var resultText = $"結果 : {recFile.Comment}";
+                var results = new List<RecInfoDetailText>()
+                    {
+                        new RecInfoDetailText { Value = resultText, CopyText = recFile.Comment },
+                    };
+                var pathTexts = RockbarUtility.BreakString($"録画ファイル : {recFile.RecFilePath}", 50);
+                results.AddRange(pathTexts.Select(t => new RecInfoDetailText { Value = t, CopyText = recFile.RecFilePath }));
+                detailTexts.Add(results);
+            }
+
+            {
+                var copyText = $"{recFile.OriginalNetworkID} (0x{recFile.OriginalNetworkID.ToString("X4")})";
+                var value = $"OriginalNetworkID : {copyText}";
+                var ids = new List<RecInfoDetailText>()
+                    {
+                        new RecInfoDetailText { Value = value, CopyText = copyText },
+                    };
+
+                copyText = $"{recFile.TransportStreamID} (0x{recFile.TransportStreamID.ToString("X4")})";
+                value = $"TransportStreamID : {copyText}";
+                ids.Add(new RecInfoDetailText { Value = value, CopyText = copyText });
+
+                copyText = $"{recFile.ServiceID} (0x{recFile.ServiceID.ToString("X4")})";
+                value = $"ServiceID : {copyText}";
+                ids.Add(new RecInfoDetailText { Value = value, CopyText = copyText });
+
+                copyText = $"{recFile.EventID} (0x{recFile.EventID.ToString("X4")})";
+                value = $"EventID : {copyText}";
+                ids.Add(new RecInfoDetailText { Value = value, CopyText = copyText });
+                detailTexts.Add(ids);
+            }
+
+            var scrambles = new List<RecInfoDetailText>()
+                {
+                    new RecInfoDetailText { Value = $"Drop : {recFile.Drops}", CopyText = recFile.Drops.ToString() },
+                    new RecInfoDetailText { Value = $"Scramble : {recFile.Scrambles}", CopyText = recFile.Scrambles.ToString() },
+                };
+            detailTexts.Add(scrambles);
+
+            return detailTexts;
+        }
+
+        /// <summary>
+        /// 録画済み情報のツールチップテキスト生成処理
+        /// </summary>
+        /// <param name="recFile">録画済み情報</param>
+        public string CreateRecInfoTooltipTexts(RecFileInfo recFile)
+        {
+            var detailTexts = CreateRecInfoDetailTexts(recFile);
+            return string.Join("\n\n", detailTexts.Select(d => string.Join("\n", d.Select(t => t.Value))));
         }
 
         /// <summary>
