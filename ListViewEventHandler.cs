@@ -1,11 +1,11 @@
-﻿using System;
+﻿using EpgTimer;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using EpgTimer;
 
 namespace RockbarForEDCB
 {
@@ -41,7 +41,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// serviceListViewマウスクリック処理
+        /// チャンネル一覧マウスクリック処理
         /// 右クリック時、直近30件の番組情報をコンテキストメニューに表示。
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -49,15 +49,15 @@ namespace RockbarForEDCB
         /// <param name="targetListView">対象のListView</param>
         public void HandleServiceClick(object sender, MouseEventArgs e, ListView targetListView)
         {
+            if (targetListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
             // 右クリック
             // 現在の番組を含め、今後の番組を30件までコンテキストメニューで表示(TVRockの仕様踏襲)
             if (e.Button == MouseButtons.Right)
             {
-                if (targetListView.SelectedItems.Count == 0)
-                {
-                    return;
-                }
-                
                 // クリックした箇所が自動選択されるので拾う
                 var selected = targetListView.SelectedItems[0];
 
@@ -73,10 +73,11 @@ namespace RockbarForEDCB
                 }
 
                 // 終了していないイベントのみ抽出して開始日時順にソート
-                var afterEventList = sv.eventList.FindAll(x => x.start_time.AddSeconds(x.durationSec) >= DateTime.Now).OrderBy(a => a.start_time);
+                var afterEventList = sv.eventList
+                    .FindAll(x => x.start_time.AddSeconds(x.durationSec) >= DateTime.Now)
+                    .OrderBy(a => a.start_time);
 
                 int i = 0;
-
                 foreach (var ev in afterEventList)
                 {
                     string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
@@ -90,7 +91,7 @@ namespace RockbarForEDCB
                     }
 
                     // コンテキストメニューに番組項目を追加
-                    _contextMenu.Items.Add(CreateEventToolStripMenuItem(ev, reserveData, false));
+                    _contextMenu.Items.Add(CreateProgramSummaryMenuItem(ev, reserveData, false));
 
                     i++;
                     if (i >= 30)
@@ -104,7 +105,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// serviceListViewマウスダブルクリック処理
+        /// チャンネル一覧マウスダブルクリック処理
         /// TVTest使用オプションがONの場合、カーソル箇所の番組を対象にTVTestを起動する。
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -112,8 +113,13 @@ namespace RockbarForEDCB
         /// <param name="targetListView">対象のListView</param>
         public void HandleServiceDoubleClick(object sender, MouseEventArgs e, ListView targetListView)
         {
+            if (targetListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
             // TVTest使用時のみ
-            if (!_configManager.RockbarSetting.UseDoubleClickTvtest || targetListView.SelectedItems.Count == 0)
+            if (!_configManager.RockbarSetting.UseDoubleClickTvtest)
             {
                 return;
             }
@@ -161,97 +167,29 @@ namespace RockbarForEDCB
                 return;
             }
 
-            if (e.Button != MouseButtons.Right)
+            //右クリック
+            if (e.Button == MouseButtons.Right)
             {
-                return;
-            }
+                // クリックした箇所が自動選択されるので拾う
+                var selected = targetListView.SelectedItems[0];
 
-            // クリックされた位置にあるアイテム（番組）を取得
-            var hitTest = targetListView.HitTest(e.Location);
-            var selectedItem = hitTest.Item;
-
-            if (selectedItem == null)
-            {
-                return;
-            }
-
-            // Tagに格納されているものがEpgEventInfoならevへ代入
-            if (selectedItem.Tag is EpgEventInfo ev)
-            {
-                _contextMenu.Items.Clear();
-
-                // Web番組詳細リンク (オプション有効時)
-                if (_configManager.RockbarSetting.UseWebLink)
+                if (selected == null)
                 {
-                    var item = _contextMenu.Items.Add(">> Web番組詳細を開く");
-                    item.Click += (s2, e2) => AccessWebUrl(ev);
-                    _contextMenu.Items.Add(new ToolStripSeparator());
+                    return;
                 }
 
-                // 予約データの検索し、有無結果を格納
-                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-                var hasData = _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
-
-                // 録画の有効・無効切り替え (予約データが存在する場合)
-                if (hasData)
+                // Tagに格納されているものがEpgEventInfoならevへ代入
+                if (selected.Tag is EpgEventInfo ev)
                 {
-                    var item = _contextMenu.Items.Add(reserveData.RecSetting.IsNoRec() ? "予約を有効にする" : "予約を無効にする");
-                    item.Click += (s2, e2) => ToggleRecMode(reserveData);
-                    _contextMenu.Items.Add(new ToolStripSeparator());
+                    _contextMenu.Items.Clear();
+
+                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
+
+                    CreateProgramDetailMenuItems(_contextMenu.Items, ev, reserveData);
+
+                    _contextMenu.Show((Control)sender, e.Location);
                 }
-
-                // 日時情報の表示
-                var dateTime = $"{ev.start_time:yyyy/MM/dd(ddd) HH:mm}～{ev.start_time.AddSeconds(ev.durationSec):HH:mm}";
-                var dateItem = _contextMenu.Items.Add(dateTime);
-                dateItem.Click += (s2, e2) => CopyText(dateTime);
-                dateItem.ToolTipText = "クリックで日時をコピー";
-
-                // チャンネル名
-                // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                string serviceName = _listViewBuilder.GetServiceName(ev.transport_stream_id, ev.service_id);
-
-                if (!string.IsNullOrEmpty(serviceName))
-                {
-                    var serviceItem = _contextMenu.Items.Add(serviceName);
-                    serviceItem.Click += (s2, e2) => CopyText(serviceName);
-                    serviceItem.ToolTipText = "クリックでチャンネル名をコピー";
-                }
-
-                // 番組名
-                string eventTitle = ev.ShortInfo?.event_name;
-                if (!string.IsNullOrEmpty(eventTitle))
-                {
-                    var titleItem = _contextMenu.Items.Add(eventTitle);
-                    titleItem.Click += (s2, e2) => CopyText(eventTitle);
-                    titleItem.ToolTipText = "クリックで番組名をコピー";
-                }
-
-                _contextMenu.Items.Add(new ToolStripSeparator());
-
-                // 短い番組説明
-                var shortStrs = RockbarUtility.BreakString(ev.ShortInfo?.text_char);
-                if (shortStrs != null)
-                {
-                    foreach (string str in shortStrs)
-                    {
-                        var item = _contextMenu.Items.Add(str);
-                        item.Enabled = false;
-                    }
-                }
-
-                // 詳細な番組説明
-                var longStrs = RockbarUtility.BreakString(ev.ExtInfo?.text_char);
-                if (longStrs != null && longStrs.Count > 0)
-                {
-                    _contextMenu.Items.Add(new ToolStripSeparator());
-                    foreach (string str in longStrs)
-                    {
-                        var item = _contextMenu.Items.Add(str);
-                        item.Enabled = false;
-                    }
-                }
-
-                _contextMenu.Show((Control)sender, e.Location);
             }
         }
 
@@ -308,7 +246,7 @@ namespace RockbarForEDCB
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
         /// <param name="targetListView">対象のListView</param>
-        public void HandleReserveClick(object sender, MouseEventArgs e, ListView targetListView, Action<string> onFilterRequest)
+        public void HandleReserveClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             if (targetListView.SelectedItems.Count == 0)
             {
@@ -326,126 +264,10 @@ namespace RockbarForEDCB
                     // クリックした箇所が自動選択されるので拾う
                     var selected = targetListView.SelectedItems[0];
 
-                    EpgEventInfo ev = _epgDataManager.AllEventMap[selected.Name];
+                    _epgDataManager.AllEventMap.TryGetValue(selected.Name, out var ev);
+                    _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserveData);
 
-                    // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
-                    if (_configManager.RockbarSetting.UseWebLink)
-                    {
-                        var item = _contextMenu.Items.Add(">>");
-                        item.Click += (s2, e2) => AccessWebUrl(ev);
-
-                        _contextMenu.Items.Add(new ToolStripSeparator());
-                    }
-
-                    // 予約有効/無効の切り替えメニュー
-                    var hasData = _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserveData);
-                    if (hasData)
-                    {
-                        var item = _contextMenu.Items.Add(reserveData.RecSetting.IsNoRec() ? "予約を有効にする" : "予約を無効にする");
-                        item.Click += (s2, e2) => ToggleRecMode(reserveData);
-                        _contextMenu.Items.Add(new ToolStripSeparator());
-                    }
-
-                    // 放送日時の表示・コピー
-                    var dateTime = $"{ev.start_time:yyyy/MM/dd(ddd) HH:mm}～{ev.start_time.AddSeconds(ev.durationSec):HH:mm}";
-                    var dateItem = _contextMenu.Items.Add(dateTime);
-                    dateItem.Click += (s2, e2) => CopyText(dateTime);
-                    _contextMenu.Items.Add(new ToolStripSeparator());
-
-                    // 予約情報をメニューに追加
-                    if (hasData)
-                    {
-                        const string copyCommandText = "テキストをコピー";
-                        const string copyCommandTooltipText = "クリックでテキストをコピー";
-                        const string filterCommandText = "フィルタリング";
-
-                        // --- チャンネル名の取得 ---
-                        // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
-                        string serviceName = _listViewBuilder.GetServiceName(reserveData.TransportStreamID, reserveData.ServiceID);
-
-                        // サービス名を追加
-                        if (!string.IsNullOrEmpty(serviceName))
-                        {
-                            var item = new ToolStripMenuItem(serviceName);
-                            _contextMenu.Items.Add(item);
-                            var subItem = item.DropDownItems.Add(copyCommandText);
-                            subItem.Click += (s2, e2) => CopyText(serviceName);
-                            subItem = item.DropDownItems.Add(filterCommandText);
-                            subItem.Click += (s2, e2) => onFilterRequest?.Invoke(serviceName);
-                        }
-
-                        // 予約番組名を追加
-                        if (!string.IsNullOrEmpty(reserveData.Title))
-                        {
-                            var item = new ToolStripMenuItem(reserveData.Title);
-                            _contextMenu.Items.Add(item);
-                            var subItem = item.DropDownItems.Add(copyCommandText);
-                            subItem.Click += (s2, e2) => CopyText(reserveData.Title);
-                            subItem = item.DropDownItems.Add(filterCommandText);
-                            subItem.Click += (s2, e2) => onFilterRequest?.Invoke(reserveData.Title);
-                            _contextMenu.Items.Add(new ToolStripSeparator());
-                        }
-
-                        // 予約コメントを追加
-                        if (!string.IsNullOrEmpty(reserveData.Comment))
-                        {
-                            var item = _contextMenu.Items.Add(reserveData.Comment);
-                            item.Click += (s2, e2) => CopyText(reserveData.Comment);
-                            item.ToolTipText = copyCommandTooltipText;
-                            _contextMenu.Items.Add(new ToolStripSeparator());
-                        }
-
-                        // 録画フォルダおよび指定ファイル名を追加
-                        if (reserveData.RecSetting.RecFolderList.Count > 0)
-                        {
-                            var recFolderList = reserveData.RecSetting.RecFolderList;
-                            foreach (var recInfo in recFolderList)
-                            {
-                                if (!string.IsNullOrEmpty(recInfo.RecFolder))
-                                {
-                                    var item = _contextMenu.Items.Add(recInfo.RecFolder);
-                                    item.Click += (s2, e2) => CopyText(recInfo.RecFolder);
-                                    item.ToolTipText = copyCommandTooltipText;
-                                }
-                            }
-                            foreach (var fileName in reserveData.RecFileNameList)
-                            {
-                                if (!string.IsNullOrEmpty(fileName))
-                                {
-                                    var item = _contextMenu.Items.Add(fileName);
-                                    item.Click += (s2, e2) => CopyText(fileName);
-                                    item.ToolTipText = copyCommandTooltipText;
-                                }
-                            }
-                            _contextMenu.Items.Add(new ToolStripSeparator());
-                        }
-                    }
-
-                    // 短い番組説明テキストの整形と追加
-                    var shortStrs = RockbarUtility.BreakString(ev.ShortInfo?.text_char);
-
-                    if (shortStrs != null)
-                    {
-                        foreach (string str in shortStrs)
-                        {
-                            var item = _contextMenu.Items.Add(str);
-                            item.Enabled = false;
-                        }
-                    }
-
-                    _contextMenu.Items.Add(new ToolStripSeparator());
-
-                    // 詳細番組説明テキストの整形と追加
-                    var longStrs = RockbarUtility.BreakString(ev.ExtInfo?.text_char);
-
-                    if (longStrs != null)
-                    {
-                        foreach (string str in longStrs)
-                        {
-                            var item = _contextMenu.Items.Add(str);
-                            item.Enabled = false;
-                        }
-                    }
+                    CreateProgramDetailMenuItems(_contextMenu.Items, ev, reserveData);
                 }
                 catch
                 {
@@ -525,7 +347,7 @@ namespace RockbarForEDCB
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
         /// <param name="targetListView">対象のListView</param>
-        public void HandleRecClick(object sender, MouseEventArgs e, ListView targetListView, Action<string> onFilterRequest)
+        public void HandleRecClick(object sender, MouseEventArgs e, ListView targetListView)
         {
             if (targetListView.SelectedItems.Count == 0)
             {
@@ -554,74 +376,89 @@ namespace RockbarForEDCB
                     // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
                     if (_configManager.RockbarSetting.UseWebLink)
                     {
-                        var item = _contextMenu.Items.Add(">>");
+                        var item = _contextMenu.Items.Add(">> Web番組詳細を開く");
                         item.Click += (s2, e2) => AccessWebUrl(recFile);
                         _contextMenu.Items.Add(new ToolStripSeparator());
                     }
 
-                    // 録画ファイル詳細情報のテキスト群を生成してメニューに追加
-                    var detailTexts = _listViewBuilder.CreateRecInfoDetailTexts(recFile);
-                    if (detailTexts.Count > 0)
+                    // 検索機能
+                    if (!string.IsNullOrEmpty(recFile.Title))
                     {
-                        const string copyCommandText = "テキストをコピー";
-                        const string copyCommandTooltipText = "クリックでテキストをコピー";
-                        const string filterCommandText = "フィルタリング";
-
-                        // 録画日時
-                        if (detailTexts[0].Count > 0)
-                        {
-                            foreach (var text in detailTexts[0])
-                            {
-                                var item = _contextMenu.Items.Add(text.Value);
-                                item.Click += (s2, e2) => CopyText(text.CopyText);
-                                item.ToolTipText = copyCommandTooltipText;
-                            }
-                            _contextMenu.Items.Add(new ToolStripSeparator());
-                        }
-
-                        // 録画サービス名・番組名（サブメニュー化してコピー/フィルタリング選択）
-                        if (detailTexts[1].Count > 0)
-                        {
-                            foreach (var text in detailTexts[1])
-                            {
-                                var item = new ToolStripMenuItem(text.Value);
-                                _contextMenu.Items.Add(item);
-                                var subItem = item.DropDownItems.Add(copyCommandText);
-                                subItem.Click += (s2, e2) => CopyText(text.CopyText);
-                                subItem = item.DropDownItems.Add(filterCommandText);
-                                subItem.Click += (s2, e2) => onFilterRequest?.Invoke(text.CopyText);
-                            }
-                            _contextMenu.Items.Add(new ToolStripSeparator());
-                        }
-
-                        // 結果・パス・各種ID群
-                        foreach (var texts in detailTexts.GetRange(2, detailTexts.Count - 3))
-                        {
-                            if (texts.Count == 0)
-                            {
-                                continue;
-                            }
-                            foreach (var text in texts)
-                            {
-                                var item = _contextMenu.Items.Add(text.Value);
-                                item.Click += (s2, e2) => CopyText(text.CopyText);
-                                item.ToolTipText = copyCommandTooltipText;
-                            }
-                            _contextMenu.Items.Add(new ToolStripSeparator());
-                        }
-
-                        // Drop・Scramble情報
-                        var lastTexts = detailTexts[detailTexts.Count - 1];
-                        if (lastTexts.Count > 0)
-                        {
-                            foreach (var text in lastTexts)
-                            {
-                                var item = _contextMenu.Items.Add(text.Value);
-                                item.Click += (s2, e2) => CopyText(text.CopyText);
-                                item.ToolTipText = copyCommandTooltipText;
-                            }
-                        }
+                        AddSearchMenuItems(_contextMenu.Items, recFile.Title);
+                        _contextMenu.Items.Add(new ToolStripSeparator());
                     }
+
+                    // 録画結果
+                    var resultItem = _contextMenu.Items.Add($"録画結果 : {recFile.Comment}");
+                    resultItem.Click += (s2, e2) => CopyText(recFile.Comment);
+                    resultItem.ToolTipText = "クリックで結果をコピー";
+
+                    var dropItem = _contextMenu.Items.Add($"  Drop : {recFile.Drops}");
+                    dropItem.Click += (s2, e2) => CopyText(recFile.Drops.ToString());
+                    dropItem.ToolTipText = "クリックでドロップ数をコピー";
+
+                    var scrambleItem = _contextMenu.Items.Add($"  Scramble : {recFile.Scrambles}");
+                    scrambleItem.Click += (s2, e2) => CopyText(recFile.Scrambles.ToString());
+                    scrambleItem.ToolTipText = "クリックでスクランブル数をコピー";
+
+                    // 録画ファイルパス
+                    if (!string.IsNullOrEmpty(recFile.RecFilePath))
+                    {
+                        AddBrokenTextMenuItems(_contextMenu.Items, "録画ファイル : ", recFile.RecFilePath, "録画ファイル", "クリックで録画ファイルをコピー");
+                    }
+
+                    _contextMenu.Items.Add(new ToolStripSeparator());
+
+                    // 放送日時 (録画日時)
+                    var dateTime = $"{recFile.StartTime:yyyy/MM/dd(ddd) HH:mm}～{recFile.StartTime.AddSeconds(recFile.DurationSecond):HH:mm}";
+                    var dateItem = _contextMenu.Items.Add(dateTime);
+                    dateItem.Click += (s2, e2) => CopyText(dateTime);
+                    dateItem.ToolTipText = "クリックで日時をコピー";
+
+                    // チャンネル名
+                    string serviceName = !string.IsNullOrEmpty(recFile.ServiceName)
+                        ? recFile.ServiceName
+                        : _listViewBuilder.GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
+
+                    if (!string.IsNullOrEmpty(serviceName))
+                    {
+                        AddBrokenTextMenuItems(_contextMenu.Items, "", serviceName, "チャンネル名", "クリックでチャンネル名をコピー");
+                    }
+
+                    // 番組名
+                    AddBrokenTextMenuItems(_contextMenu.Items, "", recFile.Title, "番組名", "クリックで番組名をコピー");
+
+                    // 録画ファイルのテキスト情報（.program.txt の内容表示）
+                    // 取得実績無いが残しておく
+                    //System.Diagnostics.Debug.WriteLine($"[Debug] ID: {recFile.ID}");
+                    //System.Diagnostics.Debug.WriteLine($"[Debug] Title: {recFile.Title}");
+                    //System.Diagnostics.Debug.WriteLine($"[Debug] _ProgramInfo Length: {recFile._ProgramInfo?.Length ?? 0}");
+                    //System.Diagnostics.Debug.WriteLine($"[Debug] _ProgramInfo Content:\n{recFile._ProgramInfo}");
+                    if (!string.IsNullOrEmpty(recFile._ProgramInfo))
+                    {
+                        _contextMenu.Items.Add(new ToolStripSeparator());
+                        AddBrokenTextMenuItems(_contextMenu.Items, "", recFile._ProgramInfo, "番組詳細", "クリックで番組詳細をコピー");
+                    }
+
+                    _contextMenu.Items.Add(new ToolStripSeparator());
+
+                    // 一括コピーメニュー
+                    AddCopyAllMenuItem(
+                        _contextMenu.Items,
+                        new[]
+                        {
+                            ($"録画結果 : {recFile.Comment}"),
+                            ($"  Drop : {recFile.Drops}"),
+                            ($"  Scramble : {recFile.Scrambles}"),
+                            ($"録画ファイル : {recFile.RecFilePath}\n"),
+                            dateTime,
+                            serviceName,
+                            !string.IsNullOrEmpty(recFile.Title) ? $"{recFile.Title}\n" : null,
+                            !string.IsNullOrEmpty(recFile._ProgramInfo) ? $"{recFile._ProgramInfo}\n" : null
+                         },
+                         ">> すべての録画情報をコピー",
+                         "すべての録画情報をまとめてコピー"
+                      );
                 }
                 catch
                 {
@@ -679,15 +516,15 @@ namespace RockbarForEDCB
         /// <param name="targetListView">対象のListView</param>
         public void HandleTunerClick(object sender, MouseEventArgs e, ListView targetListView)
         {
+            if (targetListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
             // 右クリック
             // 今後の予約を30件までコンテキストメニューで表示
             if (e.Button == MouseButtons.Right)
             {
-                if (targetListView.SelectedItems.Count == 0)
-                {
-                    return;
-                }
-
                 // クリックした箇所が自動選択されるので拾う
                 var selected = targetListView.SelectedItems[0];
 
@@ -702,7 +539,9 @@ namespace RockbarForEDCB
                 // TunerReserveInfoには予約IDしか入っていないので、ReserveDataから予約情報を取り直す
                 HashSet<uint> reserveIds = tunerReserveInfo.reserveList.ToHashSet();
 
-                var reserves = _epgDataManager.ReserveDatas.FindAll(x => reserveIds.Contains(x.ReserveID)).OrderBy(x => x.StartTime);
+                var reserves = _epgDataManager.ReserveDatas
+                    .FindAll(x => reserveIds.Contains(x.ReserveID))
+                    .OrderBy(x => x.StartTime);
 
                 int i = 0;
                 foreach (var reserveData in reserves)
@@ -716,7 +555,7 @@ namespace RockbarForEDCB
                     }
 
                     // チューナー予約一覧のコンテキストメニュー項目生成
-                    _contextMenu.Items.Add(CreateEventToolStripMenuItem(ev, reserveData, true));
+                    _contextMenu.Items.Add(CreateProgramSummaryMenuItem(ev, reserveData, true));
 
                     i++;
                     if (i >= 30)
@@ -730,10 +569,10 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 録画モード有効・無効の切り替え処理
-        /// 録画有効時は無効化、無効時は有効化する。
+        /// 録画予約モード有効・無効の切り替え処理
+        /// 予約有効時は無効化、無効時は有効化する。
         /// </summary>
-        public void ToggleRecMode(ReserveData reserve)
+        private void ToggleRecMode(ReserveData reserve)
         {
             if (reserve.RecSetting.IsNoRec())
             {
@@ -741,7 +580,7 @@ namespace RockbarForEDCB
             }
             else
             {
-                // 録画モード情報を維持して無効化
+                // 録画予約モード情報を維持して無効化
                 var recMode = reserve.RecSetting.RecMode;
                 reserve.RecSetting.RecMode = (byte)(_configManager.RockbarSetting.FixNoRecToServiceOnly ? 5 : 5 + (recMode + 4) % 5);
             }
@@ -749,7 +588,7 @@ namespace RockbarForEDCB
             var err = _ctrlCmdUtil.SendChgReserve(new List<ReserveData>() { reserve });
             if (err != ErrCode.CMD_SUCCESS)
             {
-                MessageBox.Show("予約変更でエラーが発生しました。", "予約変更エラー");
+                MessageBox.Show("録画予約変更でエラーが発生しました。", "録画予約変更エラー");
             }
             _refreshList?.Invoke(true, false, false);
         }
@@ -758,7 +597,7 @@ namespace RockbarForEDCB
         /// マウスクリック処理に応じてテキストのコピーをする
         /// </summary>
         /// <param name="text">対象テキスト</param>
-        public void CopyText(string text)
+        private void CopyText(string text)
         {
             if (!string.IsNullOrEmpty(text))
             {
@@ -769,7 +608,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// EpgEventInfo に基づいて Web番組詳細を表示
         /// </summary>
-        public void AccessWebUrl(EpgEventInfo ev)
+        private void AccessWebUrl(EpgEventInfo ev)
         {
             string url = _configManager.RockbarSetting.WebLinkUrl
                 .Replace("{ONID}", ev.original_network_id.ToString())
@@ -783,7 +622,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// RecFileInfo に基づいて Web録画詳細を表示
         /// </summary>
-        public void AccessWebUrl(RecFileInfo recFile)
+        private void AccessWebUrl(RecFileInfo recFile)
         {
             string url = _configManager.RockbarSetting.RecInfoWebLinkUrl
                 .Replace("{RecID}", recFile.ID.ToString());
@@ -816,7 +655,7 @@ namespace RockbarForEDCB
         /// <param name="reserve">予約情報</param>
         /// <param name="isTuner">チューナー一覧用？</param>
         /// <returns></returns>
-        public ToolStripMenuItem CreateEventToolStripMenuItem(EpgEventInfo ev, ReserveData reserve, bool isTuner)
+        private ToolStripMenuItem CreateProgramSummaryMenuItem(EpgEventInfo ev, ReserveData reserve, bool isTuner)
         {
             ReserveStatus reserveStatus = ReserveStatus.NONE;
 
@@ -884,44 +723,253 @@ namespace RockbarForEDCB
             }
 
             // 番組情報がある場合はサブメニューに番組情報を追加
-            if (ev != null)
+            if (ev != null || reserve != null)
             {
-                // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
-                if (_configManager.RockbarSetting.UseWebLink)
-                {
-                    item.DropDownItems.Add(">>");
-                    item.DropDownItems[item.DropDownItems.Count - 1].Click += (s2, e2) => AccessWebUrl(ev);
-                    item.DropDownItems.Add(new ToolStripSeparator());
-                }
-
-                // 基本情報をサブメニューに追加
-                var shortStrs = RockbarUtility.BreakString(ev.ShortInfo?.text_char);
-                if (shortStrs != null)
-                {
-                    foreach (string str in shortStrs)
-                    {
-                        item.DropDownItems.Add(str);
-                        item.DropDownItems[item.DropDownItems.Count - 1].Enabled = false;
-                    }
-                }
-
-                item.DropDownItems.Add(new ToolStripSeparator());
-
-                // 拡張情報をサブメニューに追加
-                var longStrs = RockbarUtility.BreakString(ev.ExtInfo?.text_char);
-
-                if (longStrs != null)
-                {
-                    foreach (string str in longStrs)
-                    {
-                        item.DropDownItems.Add(str);
-                        item.DropDownItems[item.DropDownItems.Count - 1].Enabled = false;
-                    }
-                }
+                CreateProgramDetailMenuItems(item.DropDownItems, ev, reserve);
             }
 
             return item;
         }
 
+        /// <summary>
+        /// 番組の右クリックコンテキストメニューItem作成処理
+        /// 番組情報・予約情報から詳細情報を追加する共通処理
+        /// </summary>
+        /// <param name="menuItems">メニュー項目を追加する対象コレクション</param>
+        /// <param name="ev">番組情報</param>
+        /// <param name="reserveData">予約情報</param>
+        /// <returns></returns>
+        private void CreateProgramDetailMenuItems(
+            ToolStripItemCollection menuItems,
+            EpgEventInfo ev,
+            ReserveData reserveData)
+        {
+            // Web番組詳細リンク (オプション有効時)
+            if (_configManager.RockbarSetting.UseWebLink && ev != null)
+            {
+                var item = menuItems.Add(">> Web番組詳細を開く");
+                item.Click += (s2, e2) => AccessWebUrl(ev);
+                menuItems.Add(new ToolStripSeparator());
+            }
+
+            // 検索機能 (番組名が存在する場合)
+            string title = ev?.ShortInfo?.event_name ?? reserveData?.Title;
+            if (!string.IsNullOrEmpty(title))
+            {
+                AddSearchMenuItems(menuItems, title);
+                menuItems.Add(new ToolStripSeparator());
+            }
+            // 予約データが存在する場合
+            if (reserveData != null)
+            {
+                // 予約の有効・無効切り替え 
+                var reserveItem = menuItems.Add(reserveData.RecSetting.IsNoRec() ? ">> 予約を有効にする" : ">> 予約を無効にする");
+                reserveItem.Click += (s2, e2) => ToggleRecMode(reserveData);
+                menuItems.Add(new ToolStripSeparator());
+
+                // 予約コメント
+                if (!string.IsNullOrEmpty(reserveData.Comment))
+                {
+                    var item = menuItems.Add($"予約コメント : {reserveData.Comment}");
+                    item.Click += (s2, e2) => CopyText(reserveData.Comment);
+                    item.ToolTipText = "クリックで予約コメントをコピー";
+                }
+
+                // 録画フォルダ（デフォルト以外が設定された場合に表示される）
+                if (reserveData.RecSetting.RecFolderList.Count > 0)
+                {
+                    foreach (var recInfo in reserveData.RecSetting.RecFolderList)
+                    {
+                        if (!string.IsNullOrEmpty(recInfo.RecFolder))
+                        {
+                            AddBrokenTextMenuItems(menuItems, "録画フォルダ : ", recInfo.RecFolder, "録画フォルダ", "クリックで録画フォルダをコピー");
+                        }
+                    }
+                }
+
+                //// 指定ファイル名 
+                //if (reserveData.RecFileNameList.Count > 0)
+                //{
+                //    foreach (var fileName in reserveData.RecFileNameList)
+                //    {
+                //        if (!string.IsNullOrEmpty(fileName))
+                //        {
+                //            AddBrokenTextMenuItems(menuItems, "ファイル名 : ", fileName, "ファイル名", "クリックで録画ファイル名をコピー");
+                //        }
+                //    }
+                //}
+
+                menuItems.Add(new ToolStripSeparator());
+            }
+
+            // 放送日時
+            string dateTime = null;
+
+            if (ev != null || reserveData != null)
+            {
+                DateTime startTime = ev?.start_time ?? reserveData.StartTime;
+                uint duration = ev?.durationSec ?? reserveData.DurationSecond;
+
+                dateTime = $"{startTime:yyyy/MM/dd(ddd) HH:mm}～{startTime.AddSeconds(duration):HH:mm}";
+                var dateItem = menuItems.Add(dateTime);
+                dateItem.Click += (s2, e2) => CopyText(dateTime);
+                dateItem.ToolTipText = "クリックで日時をコピー";
+            }
+
+            // チャンネル名
+            uint tsid = ev?.transport_stream_id ?? reserveData?.TransportStreamID ?? 0;
+            uint sid = ev?.service_id ?? reserveData?.ServiceID ?? 0;
+            string serviceName = (tsid != 0 || sid != 0) ? _listViewBuilder.GetServiceName((ushort)tsid, (ushort)sid) : null;
+
+            if (!string.IsNullOrEmpty(serviceName))
+            {
+                var item = menuItems.Add(serviceName);
+                item.Click += (s2, e2) => CopyText(serviceName);
+                item.ToolTipText = "クリックでチャンネル名をコピー";
+            }
+
+            // 番組名
+            if (!string.IsNullOrEmpty(title))
+            {
+                AddBrokenTextMenuItems(menuItems, "", title, "番組名", "クリックで番組名をコピー");
+            }
+
+            // 番組説明文（ShortInfo / ExtInfo）
+            string shortText = ev?.ShortInfo?.text_char?.Trim();
+            string longText = ev?.ExtInfo?.text_char?.Trim();
+            if (ev != null)
+            {
+                // 番組概要
+                if (!string.IsNullOrEmpty(shortText))
+                {
+                    menuItems.Add(new ToolStripSeparator());
+                    AddBrokenTextMenuItems(menuItems, "", shortText, "番組概要", "クリックで番組概要をコピー");
+                }
+
+                // 番組詳細
+                if (!string.IsNullOrEmpty(longText))
+                {
+                    menuItems.Add(new ToolStripSeparator());
+                    AddBrokenTextMenuItems(menuItems, "", longText, "番組詳細", "クリックで番組詳細をコピー");
+                }
+            }
+
+            menuItems.Add(new ToolStripSeparator());
+
+            // 一括コピーメニュー
+            AddCopyAllMenuItem(
+                menuItems,
+                new[]
+                {
+                    dateTime,
+                    serviceName,
+                    !string.IsNullOrEmpty(title) ? $"{title}\n" : null,
+                    !string.IsNullOrEmpty(shortText) ? $"{shortText}\n" : null,
+                    !string.IsNullOrEmpty(longText) ? $"{longText}\n" : null
+                },
+                ">> すべての番組情報をコピー",
+                "すべての番組情報をまとめてコピー"
+            );
+        }
+
+        /// <summary>
+        /// タイトル文字列から検索用メニュー（Google / Lucky）を構築して追加
+        /// </summary>
+        private void AddSearchMenuItems(ToolStripItemCollection menuItems, string rawTitle)
+        {
+            if (string.IsNullOrEmpty(rawTitle)) return;
+
+            // [新] [字] [再] などの角括弧囲みを除去
+            string searchKeyword = System.Text.RegularExpressions.Regex.Replace(rawTitle, @"\[.*?\]|【.*?】", "").Trim();
+            if (string.IsNullOrEmpty(searchKeyword)) return;
+
+            string encodedKeyword = Uri.EscapeDataString(searchKeyword);
+
+            // Google検索
+            var searchItem = menuItems.Add(">> 番組名をGoogleで検索");
+            searchItem.Click += (s, e) =>
+            {
+                string searchUrl = $"https://www.google.com/search?q={encodedKeyword}";
+                OpenBrowser(searchUrl);
+            };
+
+            // I'm Feeling Lucky 検索
+            var luckyItem = menuItems.Add(">> 番組名でI'm Feeling Lucky(DuckDuckGo)");
+            luckyItem.Click += (s, e) =>
+            {
+                //string luckyUrl = $"https://www.google.com/search?q={encodedKeyword}&btnI=1";
+                string luckyUrl = $"https://duckduckgo.com/?q=\\{encodedKeyword}";
+                OpenBrowser(luckyUrl);
+            };
+        }
+
+        /// <summary>
+        /// 長文テキストを分解し、行数に応じてサブメニュー化またはダイレクトにメニュー項目を追加
+        /// </summary>
+        /// <param name="menuItems">追加対象のメニューコレクション</param>
+        /// <param name="preText">表示・折り返し用の接頭辞（例: "録画ファイル : " や "予約コメント : "）</param>
+        /// <param name="rawText">本文（コピー対象のテキスト）</param>
+        /// <param name="menuTitle">サブメニュー化時の親メニュー表示名</param>
+        /// <param name="toolTipText">ツールチップ表示文字列</param>
+        private void AddBrokenTextMenuItems(
+            ToolStripItemCollection menuItems,
+            string preText,
+            string rawText,
+            string menuTitle,
+            string toolTipText)
+        {
+            if (string.IsNullOrEmpty(rawText)) return;
+
+            string trimmedText = rawText.Trim();
+
+            // 表示および折り返し計算には preText + rawText を使用
+            string fullDisplayText = (preText ?? "") + trimmedText;
+            var lines = RockbarUtility.BreakString(fullDisplayText);
+            if (lines == null || lines.Count == 0) return;
+
+            ToolStripItemCollection targetItems = menuItems;
+
+            // 番組詳細など行数が多い場合はサブメニュー化する
+            if (lines.Count >= 16)
+            {
+                // 親メニュー項目を作成（コピー対象は rawText のみ）
+                var parentItem = new ToolStripMenuItem(menuTitle);
+                parentItem.Click += (s, e) => CopyText(trimmedText);
+                menuItems.Add(parentItem);
+
+                // targetItems変数の参照先をサブメニューに変更する
+                targetItems = parentItem.DropDownItems;
+            }
+
+            // 分割した各行をtargetItemsに設定（コピー対象は rawText のみ）
+            foreach (string line in lines)
+            {
+                var item = targetItems.Add(line);
+                item.Click += (s, e) => CopyText(trimmedText);
+                item.ToolTipText = toolTipText;
+            }
+        }
+
+        /// <summary>
+        /// 収集したテキスト要素から一括コピー用のメニュー項目を作成して追加します
+        /// </summary>
+        /// <param name="menuItems">追加対象のメニューコレクション</param>
+        /// <param name="infoList">結合対象のテキストリスト</param>
+        /// <param name="menuTitle">メニュー項目名（例: ">> すべての番組情報をコピー"）</param>
+        /// <param name="toolTipText">ツールチップ表示文字列（例: "すべての番組情報をまとめてコピー"）</param>
+        private void AddCopyAllMenuItem(
+            ToolStripItemCollection menuItems,
+            IEnumerable<string> infoList,
+            string menuTitle,
+            string toolTipText)
+        {
+            var validList = infoList?.Where(x => !string.IsNullOrEmpty(x)).ToList();
+            if (validList == null || validList.Count == 0) return;
+
+            string fullProgramInfo = string.Join(Environment.NewLine, validList);
+            var copyAllItem = menuItems.Add(menuTitle);
+            copyAllItem.Click += (s, e) => CopyText(fullProgramInfo);
+            copyAllItem.ToolTipText = toolTipText;
+        }
     }
 }

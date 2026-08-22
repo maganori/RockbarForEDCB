@@ -99,7 +99,7 @@ namespace RockbarForEDCB
         /// <param name="input">入力文字列</param>
         /// <param name="lineCount">1行の文字数</param>
         /// <returns>文字列リスト(行毎)</returns>
-        public static List<string> BreakString(string input, int lineCount = 30)
+        public static List<string> BreakString(string input, int lineCount = 40)
         {
             if (input == null)
             {
