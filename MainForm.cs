@@ -400,12 +400,12 @@ namespace RockbarForEDCB
         {
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
-                _listViewEventHandler.HandleReserveClick(sender, e, mainListView, filterWith);
+                _listViewEventHandler.HandleReserveClick(sender, e, mainListView);
                 return;
             }
             else if (mainFormTabControl.SelectedTab == recTabPage)
             {
-                _listViewEventHandler.HandleRecClick(sender, e, mainListView, filterWith);
+                _listViewEventHandler.HandleRecClick(sender, e, mainListView);
                 return;
             }
             else if (mainFormTabControl.SelectedTab == newProgramTabPage)
