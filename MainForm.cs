@@ -86,10 +86,10 @@ namespace RockbarForEDCB
             // ListViewBuilderのインスタンス化およびデリゲートの初期化
             _listViewBuilder = new ListViewBuilder(_configManager, _epgDataManager);
 
-            // TVTestManagerの初期化
+            // TVTestManagerのインスタンス化
             _tvtestManager = new TVTestManager(_configManager.RockbarSetting, ctrlCmdUtil);
 
-            // ListViewEventHandler の初期化
+            // ListViewEventHandler のインスタンス化
             _listViewEventHandler = new ListViewEventHandler(
                 _configManager,
                 _epgDataManager,
@@ -251,7 +251,7 @@ namespace RockbarForEDCB
             _listViewBuilder.ApplySettings();
 
             // Web番組表機能を使用するときのみタスクトレイアイコンの右クリックメニューに「テレビ番組表」を表示
-            this.openWebEPGToolStripMenuItem.Visible = _configManager.RockbarSetting.UseWebLink;
+            this.openWebEpgTopToolStripMenuItem.Visible = _configManager.RockbarSetting.UseWebLink;
 
             // 録画済み一覧の最大表示数
             _epgDataManager.RecListMaxCount = this._configManager.RockbarSetting.RecListMaxCount;
@@ -629,7 +629,6 @@ namespace RockbarForEDCB
 
             if (result == DialogResult.OK)
             {
-                //ReloadSetting();
                 _configManager.LoadFromFile();
                 applySetting();
                 RefreshList(true, true, true);
@@ -650,7 +649,6 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.Height = this.Size.Height;
             _configManager.RockbarSetting.SplitterDistance = splitContainer.SplitterDistance;
 
-            //Toml.WriteFile(_configManager.RockbarSetting, RockbarUtility.GetTomlSettingFilePath());
             _configManager.SaveFromFile();
         }
 
@@ -671,9 +669,9 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void openWebEPGToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openWebEpgTopToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenWebEPG();
+            OpenWebEpgTop();
         }
 
         /// <summary>
@@ -767,31 +765,18 @@ namespace RockbarForEDCB
         /// </summary>
         private void notifyIconDoubleClickAction()
         {
-            OpenWebEPG();
+            OpenWebEpgTop();
         }
 
         /// <summary>
         /// テレビ番組表を開く処理
         /// </summary>
-        private void OpenWebEPG()
+        private void OpenWebEpgTop()
         {
             // Webリンク使用時のみ
             if (_configManager.RockbarSetting.UseWebLink)
             {
-                // Webを開く
-                try
-                {
-                    // 設定内容のURLを開く
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = _configManager.RockbarSetting.WebEpgUrl,
-                        UseShellExecute = true
-                    });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Webページを開けませんでした。\n{ex.Message}", "エラー");
-                }
+                RockbarUtility.OpenBrowser(_configManager.RockbarSetting.WebEpgUrl);
             }
         }
 

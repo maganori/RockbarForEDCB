@@ -984,37 +984,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 設定ファイル内のチューナー名定義から最長ピクセル幅を取得する
-        /// </summary>
-        private int GetMaxTunerNameWidth(Font font)
-        {
-            int maxWidth = 0;
-
-            if (_configManager.RockbarSetting?.BonDriverNameToTunerName != null)
-            {
-                foreach (var name in _configManager.RockbarSetting.BonDriverNameToTunerName.Values)
-                {
-                    if (string.IsNullOrEmpty(name))
-                        continue;
-
-                    int width = TextRenderer.MeasureText(name, font).Width;
-                    if (width > maxWidth)
-                    {
-                        maxWidth = width;
-                    }
-                }
-            }
-
-            if (maxWidth == 0)
-            {
-                maxWidth = TextRenderer.MeasureText("BS/CS1", font).Width;
-            }
-
-            _maxTunerNameWidth = maxWidth;
-            return _maxTunerNameWidth;
-        }
-
-        /// <summary>
         /// 選択サービスリストから最長チャンネル名のピクセル幅を取得する
         /// </summary>
         private int GetMaxServiceNameWidth(Font font)
@@ -1043,6 +1012,37 @@ namespace RockbarForEDCB
 
             _maxServiceNameWidth = maxWidth;
             return _maxServiceNameWidth;
+        }
+
+        /// <summary>
+        /// 設定ファイル内のチューナー名定義から最長ピクセル幅を取得する
+        /// </summary>
+        private int GetMaxTunerNameWidth(Font font)
+        {
+            int maxWidth = 0;
+
+            if (_configManager.RockbarSetting?.BonDriverNameToTunerName != null)
+            {
+                foreach (var name in _configManager.RockbarSetting.BonDriverNameToTunerName.Values)
+                {
+                    if (string.IsNullOrEmpty(name))
+                        continue;
+
+                    int width = TextRenderer.MeasureText(name, font).Width;
+                    if (width > maxWidth)
+                    {
+                        maxWidth = width;
+                    }
+                }
+            }
+
+            if (maxWidth == 0)
+            {
+                maxWidth = TextRenderer.MeasureText("BS/CS1", font).Width;
+            }
+
+            _maxTunerNameWidth = maxWidth;
+            return _maxTunerNameWidth;
         }
     }
 }

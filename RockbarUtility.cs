@@ -10,6 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace RockbarForEDCB
 {
@@ -338,5 +339,23 @@ namespace RockbarForEDCB
                 return "地デジ";
             }
         }
+
+        /// <summary>
+        /// URLをブラウザで開く処理
+        /// </summary>
+        public static void OpenBrowser(string url)
+        {
+            try
+            {
+                new Uri(url);
+                var startInfo = new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true };
+                System.Diagnostics.Process.Start(startInfo);
+            }
+            catch
+            {
+                MessageBox.Show($"Web番組詳細URLが不正です。Web番組詳細URLの設定を見直してください。\nURL: {url}", "ブラウザ起動エラー");
+            }
+        }
+
     }
 }

@@ -65,7 +65,7 @@
             this.settingButton = new System.Windows.Forms.Button();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
             this.taskTrayContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.openWebEPGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openWebEpgTopToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openSettingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
@@ -319,18 +319,18 @@
             // taskTrayContextMenuStrip
             // 
             this.taskTrayContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openWebEPGToolStripMenuItem,
+            this.openWebEpgTopToolStripMenuItem,
             this.openSettingToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.taskTrayContextMenuStrip.Name = "taskTrayContextMenuStrip";
             this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(152, 70);
             // 
-            // openWebEPGToolStripMenuItem
+            // openWebEpgTopToolStripMenuItem
             // 
-            this.openWebEPGToolStripMenuItem.Name = "openWebEPGToolStripMenuItem";
-            this.openWebEPGToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
-            this.openWebEPGToolStripMenuItem.Text = "テレビ番組表";
-            this.openWebEPGToolStripMenuItem.Click += new System.EventHandler(this.openWebEPGToolStripMenuItem_Click);
+            this.openWebEpgTopToolStripMenuItem.Name = "openWebEpgTopToolStripMenuItem";
+            this.openWebEpgTopToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.openWebEpgTopToolStripMenuItem.Text = "テレビ番組表";
+            this.openWebEpgTopToolStripMenuItem.Click += new System.EventHandler(this.openWebEpgTopToolStripMenuItem_Click);
             // 
             // openSettingToolStripMenuItem
             // 
@@ -431,7 +431,7 @@
         private System.Windows.Forms.NotifyIcon notifyIcon;
         private System.Windows.Forms.ContextMenuStrip taskTrayContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem openWebEPGToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openWebEpgTopToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openSettingToolStripMenuItem;
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.TabPage newProgramTabPage;
