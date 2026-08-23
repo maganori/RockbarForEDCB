@@ -225,7 +225,7 @@ namespace RockbarForEDCB
                     // Tag から EpgEventInfo を安全に取り出して Web ページを開く
                     if (selected.Tag is EpgEventInfo ev)
                     {
-                        AccessWebUrl(ev);
+                        OpenWebEpgInfo(ev);
                     }
                     else
                     {
@@ -331,7 +331,7 @@ namespace RockbarForEDCB
                     var selected = targetListView.SelectedItems[0];
 
                     EpgEventInfo ev = _epgDataManager.AllEventMap[selected.Name];
-                    AccessWebUrl(ev);
+                    OpenWebEpgInfo(ev);
                 }
                 catch
                 {
@@ -377,7 +377,7 @@ namespace RockbarForEDCB
                     if (_configManager.RockbarSetting.UseWebLink)
                     {
                         var item = _contextMenu.Items.Add(">> Web番組詳細を開く");
-                        item.Click += (s2, e2) => AccessWebUrl(recFile);
+                        item.Click += (s2, e2) => OpenWebRecInfo(recFile);
                         _contextMenu.Items.Add(new ToolStripSeparator());
                     }
 
@@ -608,7 +608,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// EpgEventInfo に基づいて Web番組詳細を表示
         /// </summary>
-        private void AccessWebUrl(EpgEventInfo ev)
+        private void OpenWebEpgInfo(EpgEventInfo ev)
         {
             string url = _configManager.RockbarSetting.WebLinkUrl
                 .Replace("{ONID}", ev.original_network_id.ToString())
@@ -616,35 +616,18 @@ namespace RockbarForEDCB
                 .Replace("{SID}", ev.service_id.ToString())
                 .Replace("{EID}", ev.event_id.ToString());
 
-            OpenBrowser(url);
+            RockbarUtility.OpenBrowser(url);
         }
 
         /// <summary>
         /// RecFileInfo に基づいて Web録画詳細を表示
         /// </summary>
-        private void AccessWebUrl(RecFileInfo recFile)
+        private void OpenWebRecInfo(RecFileInfo recFile)
         {
             string url = _configManager.RockbarSetting.RecInfoWebLinkUrl
                 .Replace("{RecID}", recFile.ID.ToString());
 
-            OpenBrowser(url);
-        }
-
-        /// <summary>
-        /// URLをブラウザで開く処理
-        /// </summary>
-        private void OpenBrowser(string url)
-        {
-            try
-            {
-                new Uri(url);
-                var startInfo = new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true };
-                System.Diagnostics.Process.Start(startInfo);
-            }
-            catch
-            {
-                MessageBox.Show($"Web番組詳細URLが不正です。Web番組詳細URLの設定を見直してください。\nURL: {url}", "ブラウザ起動エラー");
-            }
+            RockbarUtility.OpenBrowser(url);
         }
 
         /// <summary>
@@ -748,7 +731,7 @@ namespace RockbarForEDCB
             if (_configManager.RockbarSetting.UseWebLink && ev != null)
             {
                 var item = menuItems.Add(">> Web番組詳細を開く");
-                item.Click += (s2, e2) => AccessWebUrl(ev);
+                item.Click += (s2, e2) => OpenWebEpgInfo(ev);
                 menuItems.Add(new ToolStripSeparator());
             }
 
@@ -890,7 +873,7 @@ namespace RockbarForEDCB
             searchItem.Click += (s, e) =>
             {
                 string searchUrl = $"https://www.google.com/search?q={encodedKeyword}";
-                OpenBrowser(searchUrl);
+                RockbarUtility.OpenBrowser(searchUrl);
             };
 
             // I'm Feeling Lucky 検索
@@ -899,7 +882,7 @@ namespace RockbarForEDCB
             {
                 //string luckyUrl = $"https://www.google.com/search?q={encodedKeyword}&btnI=1";
                 string luckyUrl = $"https://duckduckgo.com/?q=\\{encodedKeyword}";
-                OpenBrowser(luckyUrl);
+                RockbarUtility.OpenBrowser(luckyUrl);
             };
         }
 
