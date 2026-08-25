@@ -45,7 +45,8 @@ namespace RockbarForEDCB
         private Point mousePoint;
 
         // マウスのシングルクリック、ダブルクリック判別用
-        private CancellationTokenSource _cts;
+        private CancellationTokenSource _leftCts;
+        private CancellationTokenSource _rightCts;
 
         // 次回の画面更新が必要になる最早時刻
         private DateTime nextMainListViewRefreshTime = DateTime.MinValue;
@@ -682,48 +683,113 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private async void notifyIcon_MouseDown(object sender, MouseEventArgs e)
         {
-            // 左クリック以外は無視
-            if (e.Button != MouseButtons.Left) return;
-
-            // 既に待機中のクリックがある場合（＝ダブルクリック成立）
-            if (_cts != null)
+            // ----- 左クリックの判定 -----
+            if (e.Button == MouseButtons.Left)
             {
-                // 1回目のシングルクリック待ち（Task.Delay）をキャンセルする
-                _cts.Cancel();
+                if (string.IsNullOrWhiteSpace(_configManager.RockbarSetting.TaskTrayIconLeftDoubleClick))
+                {
+                    Debug.WriteLine("左ダブルクリック設定無し");
+                    ExecuteTaskTrayIconClickAction(_configManager.RockbarSetting.TaskTrayIconLeftClick);
+                    return;
+                }
 
-                // ダブルクリック処理を実行
-                Debug.WriteLine("★ダブルクリック実行");
-                notifyIconDoubleClickAction();
-                return;
+                // 既に待機中のクリックがある場合（＝ダブルクリック成立）
+                if (_leftCts != null)
+                {
+                    _leftCts.Cancel();
+                    Debug.WriteLine("左ダブルクリック実行");
+                    ExecuteTaskTrayIconClickAction(_configManager.RockbarSetting.TaskTrayIconLeftDoubleClick);
+                    return;
+                }
+
+                // --- 1回目のクリック処理 ---
+                _leftCts = new CancellationTokenSource();
+                try
+                {
+                    // OS設定のダブルクリック時間だけ非同期で待機
+                    await Task.Delay(SystemInformation.DoubleClickTime, _leftCts.Token);
+
+                    // 時間内にキャンセルされなかった場合のみシングルクリック実行
+                    Debug.WriteLine("左シングルクリック実行");
+                    ExecuteTaskTrayIconClickAction(_configManager.RockbarSetting.TaskTrayIconLeftClick);
+                }
+                catch (OperationCanceledException) { }
+                finally
+                {
+                    _leftCts?.Dispose();
+                    _leftCts = null;
+                }
             }
+            // ----- 右クリックの判定 -----
+            else if (e.Button == MouseButtons.Right)
+            {
+                if (string.IsNullOrWhiteSpace(_configManager.RockbarSetting.TaskTrayIconRightDoubleClick))
+                {
+                    Debug.WriteLine("右ダブルクリック設定無し");
+                    ExecuteTaskTrayIconClickAction(_configManager.RockbarSetting.TaskTrayIconRightClick);
+                    return;
+                }
 
-            // --- 1回目のクリック処理 ---
-            _cts = new CancellationTokenSource();
+                // 既に待機中のクリックがある場合（＝ダブルクリック成立）
+                if (_rightCts != null)
+                {
+                    _rightCts.Cancel();
+                    Debug.WriteLine("右ダブルクリック実行");
+                    ExecuteTaskTrayIconClickAction(_configManager.RockbarSetting.TaskTrayIconRightDoubleClick);
+                    return;
+                }
 
-            try
-            {
-                // OS設定のダブルクリック時間だけ非同期で待機
-                await Task.Delay(SystemInformation.DoubleClickTime, _cts.Token);
+                // --- 1回目のクリック処理 ---
+                _rightCts = new CancellationTokenSource();
+                try
+                {
+                    // OS設定のダブルクリック時間だけ非同期で待機
+                    await Task.Delay(SystemInformation.DoubleClickTime, _rightCts.Token);
 
-                // 時間内にキャンセルされなかった場合のみシングルクリック実行
-                Debug.WriteLine("★シングルクリック実行");
-                notifyIconSingleClickAction();
+                    // 時間内にキャンセルされなかった場合のみシングルクリック実行
+                    Debug.WriteLine("右シングルクリック実行");
+                    ExecuteTaskTrayIconClickAction(_configManager.RockbarSetting.TaskTrayIconRightClick);
+                }
+                catch (OperationCanceledException) { }
+                finally
+                {
+                    _rightCts?.Dispose();
+                    _rightCts = null;
+                }
             }
-            catch (OperationCanceledException)
+        }
+
+        private void ExecuteTaskTrayIconClickAction(string settingValue)
+        {
+            switch (settingValue)
             {
-                // ダブルクリックによってキャンセルされた場合はここを通る（正常動作なので無視）
-                Debug.WriteLine("シングルクリック待機がキャンセルされました");
-            }
-            catch (Exception ex)
-            {
-                // その他の予期せぬエラー用ログ
-                Debug.WriteLine($"エラーが発生しました: {ex.Message}");
-            }
-            finally
-            {
-                // ダブルクリックの場合もここで後処理
-                _cts?.Dispose();
-                _cts = null;
+                case "テレビ番組表":
+                    OpenWebEpgTop();
+                    break;
+                case "Rockバー表示":
+                    ToggleRockbarVisibility();
+                    break;
+                case "メニュー":
+                    // 一時的に notifyIconにContextMenuStrip を割り当て
+                    this.notifyIcon.ContextMenuStrip = this.taskTrayContextMenuStrip;
+
+                    // .NET の NotifyIcon クラスに存在するOS 標準の ShowContextMenu メソッドを取得
+                    // (ShowContextMenuという名前 であり
+                    //  (1.インスタンスに属するメソッド かつ 2.publicではなく、private や protectedなもの の2条件を同時に満たすもの) )
+                    var method = typeof(NotifyIcon).GetMethod("ShowContextMenu",
+                        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+                    // 見つかれば発火
+                    method?.Invoke(this.notifyIcon, null);
+
+                    // 右クリックで呼び出されないように解除
+                    this.notifyIcon.ContextMenuStrip = null;
+
+                    break;
+                default:
+                    // 未設定（""）などの場合は何もしない
+                    break;
+
             }
         }
 
@@ -731,7 +797,7 @@ namespace RockbarForEDCB
         /// タスクトレイアイコンシングルクリック処理
         /// トグルオプションONの場合、表示・非表示切り替え＋アクティブ化。それ以外の場合アクテイブ化のみ
         /// </summary>
-        private void notifyIconSingleClickAction()
+        private void ToggleRockbarVisibility()
         {
             if (this.Visible)
             {
@@ -757,15 +823,6 @@ namespace RockbarForEDCB
                     notifyIcon.Visible = false;
                 }
             }
-        }
-
-        /// <summary>
-        /// タスクトレイアイコンダブルクリック処理
-        /// テレビ番組表を開く
-        /// </summary>
-        private void notifyIconDoubleClickAction()
-        {
-            OpenWebEpgTop();
         }
 
         /// <summary>

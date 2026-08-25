@@ -452,11 +452,17 @@ namespace RockbarForEDCB
             isAutoOpenBsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs;
             isAutoOpenCsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCs;
             isAutoOpenFavoriteServiceCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService;
-            showTaskTraiIconCheckBox.Checked = _configManager.RockbarSetting.ShowTaskTrayIcon;
+            showTaskTrayIconCheckBox.Checked = _configManager.RockbarSetting.ShowTaskTrayIcon;
             storeTaskTrayByClosingCheckBox.Checked = _configManager.RockbarSetting.StoreTaskTrayByClosing;
             toggleVisibleTaskTrayIconClickCheckBox.Checked = _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick;
             isHorizontalSplitCheckBox.Checked = _configManager.RockbarSetting.IsHorizontalSplit;
             fixNoRecToServiceOnlyCheckBox.Checked = _configManager.RockbarSetting.FixNoRecToServiceOnly;
+
+            taskTrayIconLeftClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconLeftClick;
+            taskTrayIconLeftDoubleClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick;
+            taskTrayIconRightClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconRightClick;
+            taskTrayIconRightDoubleClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconRightDoubleClick;
+
             fontTextBox.Text = _configManager.RockbarSetting.Font;
 
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
@@ -1138,12 +1144,17 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService = isAutoOpenFavoriteServiceCheckBox.Checked;
             _configManager.RockbarSetting.AutoOpenMargin = (uint) autoOpenMarginNumericUpDown.Value;
             _configManager.RockbarSetting.AutoCloseMargin = (uint) autoCloseMarginNumericUpDown.Value;
-            _configManager.RockbarSetting.ShowTaskTrayIcon = showTaskTraiIconCheckBox.Checked;
+            _configManager.RockbarSetting.ShowTaskTrayIcon = showTaskTrayIconCheckBox.Checked;
             _configManager.RockbarSetting.StoreTaskTrayByClosing = storeTaskTrayByClosingCheckBox.Checked;
             _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick = toggleVisibleTaskTrayIconClickCheckBox.Checked;
             _configManager.RockbarSetting.IsHorizontalSplit = isHorizontalSplitCheckBox.Checked;
             _configManager.RockbarSetting.FixNoRecToServiceOnly = fixNoRecToServiceOnlyCheckBox.Checked;
             _configManager.RockbarSetting.RecListMaxCount = (int) recListMaxCountNumericUpDown.Value;
+
+            _configManager.RockbarSetting.TaskTrayIconLeftClick = taskTrayIconLeftClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick = taskTrayIconLeftDoubleClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconRightClick = taskTrayIconRightClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString();
 
             _configManager.RockbarSetting.Font = fontTextBox.Text;
             _configManager.RockbarSetting.FormBackColor = formBackColorTextBox.Text;
