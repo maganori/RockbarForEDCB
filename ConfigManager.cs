@@ -273,6 +273,10 @@ namespace RockbarForEDCB
             this.AutoCloseMargin = 5;
             this.ShowTaskTrayIcon = true;
             this.RecListMaxCount = DEFAULT_REC_LIST_MAX_COUNT;
+            this.TaskTrayIconLeftClick = "Rockバー表示";
+            this.TaskTrayIconLeftDoubleClick = "";
+            this.TaskTrayIconRightClick = "メニュー";
+            this.TaskTrayIconRightDoubleClick = "";
 
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
             this.Font = fontConverter.ConvertToString(SystemFonts.DefaultFont);
@@ -358,6 +362,14 @@ namespace RockbarForEDCB
         public bool StoreTaskTrayByClosing { get; set; }
         // タスクトレイアイコンクリック時表示・非表示切り替え
         public bool ToggleVisibleTaskTrayIconClick { get; set; }
+        // タスクトレイアイコン左クリック時動作
+        public string TaskTrayIconLeftClick { get; set; }
+        // タスクトレイアイコン左ダブルクリック時動作
+        public string TaskTrayIconLeftDoubleClick { get; set; }
+        // タスクトレイアイコン右クリック時動作
+        public string TaskTrayIconRightClick { get; set; }
+        // タスクトレイアイコン右ダブルクリック時動作
+        public string TaskTrayIconRightDoubleClick { get; set; }
         // 水平分割
         public bool IsHorizontalSplit { get; set; }
         // 予約を無効にするとき、録画モードを「指定サービス」にする(EpgTimerSrvと同じ)

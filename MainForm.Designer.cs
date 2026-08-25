@@ -311,7 +311,6 @@
             // 
             // notifyIcon
             // 
-            this.notifyIcon.ContextMenuStrip = this.taskTrayContextMenuStrip;
             this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
             this.notifyIcon.Text = "Rockbar for EDCB";
             this.notifyIcon.MouseDown += new System.Windows.Forms.MouseEventHandler(this.notifyIcon_MouseDown);
