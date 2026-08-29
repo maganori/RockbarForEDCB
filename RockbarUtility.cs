@@ -25,6 +25,8 @@ namespace RockbarForEDCB
         BS,
         // CS (Communication Satellite)
         CS,
+        // CATV (Cable Television)
+        CATV,
         // SKY Perfect(advanced narrow-band CS digital broadcasting)
         SPHD,
         // BS4K (Broadcasting Satellite 4K)
@@ -143,26 +145,28 @@ namespace RockbarForEDCB
 
             switch (originalNetworkId)
             {
-                case 0x0004: // BSデジタル放送: 0x0004
+                case 0x0004: // BS  : 0x0004 (BSデジタル放送)
                     return NetworkType.BS;
-                case 0x0006: // CS1: 0x0006 (旧プラット・ワン系)
+                case 0x0006: // CS1 : 0x0006 (旧プラット・ワン系)
                     return NetworkType.CS;
-                case 0x0007: // CS2: 0x0007 (旧スカイパーフェクTV!2系)
+                case 0x0007: // CS2 : 0x0007 (旧スカイパーフェクTV!2系)
                     return NetworkType.CS;
                 case 0x000A: // SPHD: 0x000A (スカパー！プレミアムサービス)
                     return NetworkType.SPHD;
-                case 0x000B: // 高度BSデジタル放送: 0x000B (BS4K)
+                case 0x000B: // BS4K: 0x000B (高度BSデジタル放送)
                     return NetworkType.BS4K;
+                case 0xFFFE: // IH  : 0xFFFE (旧i-HITS系リマックス(HD・SD チャンネル (MPEG-2)))
+                    return NetworkType.CATV;
+                case 0xFFFD: // JH  : 0xFFFD (JC-HITSトランスモジュレーション(HD・SD チャンネル (MPEG-2)))
+                    return NetworkType.CATV;
+                case 0xFFFA: // IH4K: 0xFFFA (高度リマックス(ケーブル4Kチャンネル (H.264, H.265)))
+                    return NetworkType.CATV;
+                case 0xFFF9: // JH4K: 0xFFF9 (高度JC-HITSトランスモジュレーション(ケーブル4Kチャンネル (H.264, H.265)))
+                    return NetworkType.CATV;
+                case 0xFFF7: // xxxx: 0xFFF7 (高度ケーブル自主放送(ケーブル4Kチャンネル (H.264, H.265)))
+                    return NetworkType.CATV;
                 default:
                     // 地上デジタルテレビジョン放送: 0x7880 - 0x7FE8
-
-                    // ケーブルテレビ (リマックス方式・トランスモジュレーション方式)
-                    // ケーブルテレビ独自のチャンネルのみで、地上波・BS の再送信は含まない
-                    // デジタル放送リマックス: 0xFFFE (HD・SD チャンネル (MPEG-2))
-                    // デジタル放送高度リマックス: 0xFFFA (ケーブル4Kチャンネル (H.264, H.265))
-                    // JC-HITSトランスモジュレーション: 0xFFFD (HD・SD チャンネル (MPEG-2))
-                    // 高度JC-HITSトランスモジュレーション: 0xFFF9 (ケーブル4Kチャンネル (H.264, H.265))
-                    // 高度ケーブル自主放送: 0xFFF7 (ケーブル4Kチャンネル (H.264, H.265))
 
                     // 高度110度CSデジタル放送: 0x000C (CS4K: 運用終了)
 
@@ -186,29 +190,27 @@ namespace RockbarForEDCB
             {
                 string normalizedType = networkTypeText.Trim().ToUpperInvariant();
 
-                if (normalizedType == "BS")
+                switch (normalizedType)
                 {
-                    return NetworkType.BS;
-                }
+                    case "地":
+                        return NetworkType.DTTV;
 
-                else if (normalizedType == "CS")
-                {
-                    return NetworkType.CS;
-                }
+                    case "BS":
+                        return NetworkType.BS;
 
-                else if (normalizedType == "SPHD")
-                {
+                    case "CS":
+                        return NetworkType.CS;
+
+                    case "CATV":
+                        return NetworkType.CATV;
+
+                    case "SPHD":
                     return NetworkType.SPHD;
-                }
 
-                else if (normalizedType == "BS4K")
-                {
-                    return NetworkType.BS4K;
-                }
+                    case "BS4K":
+                        return NetworkType.BS4K;
 
-                else if (normalizedType == "地")
-                {
-                    return NetworkType.DTTV;
+                    //default: "自動判定"の場合はONIDから判定
                 }
             }
 
@@ -229,18 +231,18 @@ namespace RockbarForEDCB
         {
             switch (networkType)
             {
-                case NetworkType.DTTV:
-                    return "地";
                 case NetworkType.BS:
                     return "BS";
                 case NetworkType.CS:
                     return "CS";
+                case NetworkType.CATV:
+                    return "CATV";
                 case NetworkType.SPHD:
                     return "SPHD";
                 case NetworkType.BS4K:
                     return "BS4K";
                 default:
-                    return null;
+                    return "地";
             }
         }
 

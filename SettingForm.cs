@@ -169,7 +169,7 @@ namespace RockbarForEDCB
                 typeComboBox.Top = 104;
                 typeComboBox.Width = 200;
                 typeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-                typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "SPHD", "BS4K" });
+                typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
 
                 Label tvtestOptionLabel = new Label { Left = 16, Top = 138, Width = 100, Text = "TVTestオプション" };
                 tvtestOptionTextBox.Left = 120;
@@ -258,7 +258,7 @@ namespace RockbarForEDCB
                         nameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
                     }
                 }
-
+                
                 // 種別補正
                 // 種別指定が正しいか判定。誤りがあれば全チャンネル側の情報を使用
                 if (matchedService != null)
@@ -443,14 +443,20 @@ namespace RockbarForEDCB
             recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
 
             tvtestPathTextBox.Text = _configManager.RockbarSetting.TvtestPath;
-            tvtestBscsOptionTextBox.Text = _configManager.RockbarSetting.TvtestBscsOption;
             tvtestDttvOptionTextBox.Text = _configManager.RockbarSetting.TvtestDttvOption;
+            tvtestBscsOptionTextBox.Text = _configManager.RockbarSetting.TvtestBscsOption;
+            tvtestCatvOptionTextBox.Text = _configManager.RockbarSetting.TvtestCatvOption;
+            tvtestSphdOptionTextBox.Text = _configManager.RockbarSetting.TvtestSphdOption;
+            tvtestBs4kOptionTextBox.Text = _configManager.RockbarSetting.TvtestBs4kOption;
             tvtestTsFileOptionTextBox.Text = _configManager.RockbarSetting.TvtestTsFileOption;
             useDoubleClickTvtestCheckBox.Checked = _configManager.RockbarSetting.UseDoubleClickTvtest;
             isAutoOpenTvtestCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtest;
             isAutoOpenDttvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestDttv;
             isAutoOpenBsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs;
             isAutoOpenCsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCs;
+            isAutoOpenCatvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCatv;
+            isAutoOpenBs4kCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs4k;
+            isAutoOpenSphdCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestSphd;
             isAutoOpenFavoriteServiceCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService;
             showTaskTrayIconCheckBox.Checked = _configManager.RockbarSetting.ShowTaskTrayIcon;
             storeTaskTrayByClosingCheckBox.Checked = _configManager.RockbarSetting.StoreTaskTrayByClosing;
@@ -1133,14 +1139,20 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
 
             _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
-            _configManager.RockbarSetting.TvtestBscsOption = tvtestBscsOptionTextBox.Text;
             _configManager.RockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestBscsOption = tvtestBscsOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestCatvOption = tvtestCatvOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestSphdOption = tvtestSphdOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestBs4kOption = tvtestBs4kOptionTextBox.Text;
             _configManager.RockbarSetting.TvtestTsFileOption = tvtestTsFileOptionTextBox.Text;
             _configManager.RockbarSetting.UseDoubleClickTvtest = useDoubleClickTvtestCheckBox.Checked;
             _configManager.RockbarSetting.IsAutoOpenTvtest = isAutoOpenTvtestCheckBox.Checked;
             _configManager.RockbarSetting.IsAutoOpenTvtestDttv = isAutoOpenDttvCheckBox.Checked;
             _configManager.RockbarSetting.IsAutoOpenTvtestBs = isAutoOpenBsCheckBox.Checked;
             _configManager.RockbarSetting.IsAutoOpenTvtestCs = isAutoOpenCsCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestCatv = isAutoOpenCatvCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestBs4k = isAutoOpenBs4kCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestSphd = isAutoOpenSphdCheckBox.Checked;
             _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService = isAutoOpenFavoriteServiceCheckBox.Checked;
             _configManager.RockbarSetting.AutoOpenMargin = (uint) autoOpenMarginNumericUpDown.Value;
             _configManager.RockbarSetting.AutoCloseMargin = (uint) autoCloseMarginNumericUpDown.Value;
