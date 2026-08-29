@@ -403,18 +403,6 @@ namespace RockbarForEDCB
             this.ctrlCmdUtil = ctrlCmdUtil;
 
             // セッティングを読み込んで画面表示
-            //RockBarSetting setting = null;
-            //
-            //try
-            //{
-            //    setting = Toml.ReadFile<RockBarSetting>(RockbarUtility.GetTomlSettingFilePath());
-            //}
-            //catch (FileNotFoundException)
-            //{
-            //    // TOML設定ファイルが存在しない場合は準正常系として空設定で起動。それ以外の場合は例外を投げる
-            //    setting = new RockBarSetting();
-            //}
-
             _configManager = new ConfigManager();
 
             useTcpIpCheckbox.Checked = _configManager.RockbarSetting.UseTcpIp;
@@ -1091,8 +1079,6 @@ namespace RockbarForEDCB
         {
             // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
             // 選択チャンネル
-            //List<Service> selectedServices = new List<Service>();
-            //List<Service> selectedServices = _configManager.SelectedServiceList;
             _configManager.SelectedServiceList.Clear();
 
             foreach (ListViewItem item in selectedServiceListView.Items)
@@ -1106,11 +1092,9 @@ namespace RockbarForEDCB
                 });
             }
 
-            //RockbarUtility.SaveSelectedServicesToFile(selectedServices);
             // お気に入りチャンネル
             RefreshFavoriteService();
-            //List<Service> favoriteServices = new List<Service>();
-            //List<Service> favoriteServices = _configManager.FavoriteServiceList;
+
             _configManager.FavoriteServiceList.Clear();
 
             foreach (ListViewItem item in favoriteServiceListView.Items)
@@ -1124,12 +1108,7 @@ namespace RockbarForEDCB
                 });
             }
 
-            //RockbarUtility.SaveFavoriteServicesToFile(favoriteServices);
-
-
-            //RockBarSetting rockbarSetting = new RockBarSetting();
-            //RockBarSetting rockbarSetting = _configManager.RockbarSetting;
-
+            // その他TOML保存
             _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckbox.Checked;
             _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
             _configManager.RockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
@@ -1201,7 +1180,6 @@ namespace RockbarForEDCB
                 );
             }
 
-            //Toml.WriteFile(rockbarSetting, RockbarUtility.GetTomlSettingFilePath());
             _configManager.SaveFromFile();
 
             this.DialogResult = DialogResult.OK;
@@ -1209,7 +1187,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// TVTest開くボタン押下処理
+        /// TVTest参照ボタン押下処理
         /// ファイル選択ダイアログを開く。
         /// </summary>
         /// <param name="sender">イベントソース</param>
