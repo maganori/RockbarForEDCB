@@ -12,15 +12,15 @@ namespace RockbarForEDCB
     /// </summary>
     public class TVTestManager
     {
-        private readonly RockBarSetting _setting;
+        private readonly ConfigManager _configManager;
         private readonly CtrlCmdUtil _ctrlCmdUtil;
 
         // Rockbarから自動起動したTVTestのプロセス一覧
         private readonly Dictionary<string, Process> _tvtestProcesses = new Dictionary<string, Process>();
 
-        public TVTestManager(RockBarSetting setting, CtrlCmdUtil ctrlCmdUtil)
+        public TVTestManager(ConfigManager configManager, CtrlCmdUtil ctrlCmdUtil)
         {
-            _setting = setting ?? throw new ArgumentNullException(nameof(setting));
+            _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _ctrlCmdUtil = ctrlCmdUtil ?? throw new ArgumentNullException(nameof(ctrlCmdUtil));
         }
 
@@ -42,15 +42,27 @@ namespace RockbarForEDCB
             {
                 if (tvtestOption != null)
                 {
-                    result = Process.Start(_setting.TvtestPath, $"{tvtestOption} /tsid {tsid} /sid {sid}");
+                    result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{tvtestOption} /tsid {tsid} /sid {sid}");
                 }
                 else if (networkType == NetworkType.DTTV)
                 {
-                    result = Process.Start(_setting.TvtestPath, $"{_setting.TvtestDttvOption} /tsid {tsid} /sid {sid}");
+                    result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{_configManager.RockbarSetting.TvtestDttvOption} /tsid {tsid} /sid {sid}");
                 }
                 else if (networkType == NetworkType.BS || networkType == NetworkType.CS)
                 {
-                    result = Process.Start(_setting.TvtestPath, $"{_setting.TvtestBscsOption} /tsid {tsid} /sid {sid}");
+                    result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{_configManager.RockbarSetting.TvtestBscsOption} /tsid {tsid} /sid {sid}");
+                }
+                else if (networkType == NetworkType.CATV)
+                {
+                    result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{_configManager.RockbarSetting.TvtestCatvOption} /tsid {tsid} /sid {sid}");
+                }
+                else if (networkType == NetworkType.SPHD)
+                {
+                    result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{_configManager.RockbarSetting.TvtestSphdOption} /tsid {tsid} /sid {sid}");
+                }
+                else if (networkType == NetworkType.BS4K)
+                {
+                    result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{_configManager.RockbarSetting.TvtestBs4kOption} /tsid {tsid} /sid {sid}");
                 }
             }
             catch
@@ -72,7 +84,7 @@ namespace RockbarForEDCB
 
             try
             {
-                result = Process.Start(_setting.TvtestPath, $"{_setting.TvtestTsFileOption} \"{filePath}\"");
+                result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{_configManager.RockbarSetting.TvtestTsFileOption} \"{filePath}\"");
             }
             catch
             {
@@ -89,7 +101,7 @@ namespace RockbarForEDCB
         /// <returns>TVTestプロセス</returns>
         public Process PlayRecFile(RecFileInfo recFile)
         {
-            if (_setting.UseTcpIp && _setting.IpAddress.IndexOf("127.0.0.1") < 0)
+            if (_configManager.RockbarSetting.UseTcpIp && _configManager.RockbarSetting.IpAddress.IndexOf("127.0.0.1") < 0)
             {
                 string networkPath = "";
                 ErrCode errCode = _ctrlCmdUtil.SendGetRecFileNetworkPath(recFile.RecFilePath, ref networkPath);
@@ -113,7 +125,7 @@ namespace RockbarForEDCB
         /// <param name="favoriteServiceList">お気に入りサービスリスト</param>
         public void AutoStartAndCloseTVTest(List<ReserveData> reserveDatas, List<Service> favoriteServiceList)
         {
-            if (!_setting.IsAutoOpenTvtest)
+            if (!_configManager.RockbarSetting.IsAutoOpenTvtest)
             {
                 return;
             }
@@ -122,7 +134,7 @@ namespace RockbarForEDCB
 
             // TVTest自動起動
             // 実実装としては毎秒チェックするのではなく、毎分(59-マージン)秒タイミングで次の1分間に始まる番組をオープンする
-            if (timerTime.Second == (59 - _setting.AutoOpenMargin))
+            if (timerTime.Second == (59 - _configManager.RockbarSetting.AutoOpenMargin))
             {
                 // 0の場合はこの1分間なので59秒加算
                 DateTime checkTime = timerTime.AddSeconds(59);
@@ -150,15 +162,18 @@ namespace RockbarForEDCB
                         bool isFavorite = favoriteServiceMap.TryGetValue(key, out Service service);
 
                         // お気に入りサービスオプションが設定されている場合、お気に入りサービスに含まれていなかったらスキップ
-                        if (_setting.IsAutoOpenTvtestFavoriteService && !isFavorite)
+                        if (_configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService && !isFavorite)
                         {
                             continue;
                         }
 
                         NetworkType networkType = RockbarUtility.GetNetworkType(service?.TypeName, reserve.OriginalNetworkID);
-                        if ((networkType == NetworkType.DTTV && _setting.IsAutoOpenTvtestDttv) ||
-                            ((networkType == NetworkType.BS || networkType == NetworkType.BS4K) && _setting.IsAutoOpenTvtestBs) ||
-                            ((networkType == NetworkType.CS || networkType == NetworkType.SPHD) && _setting.IsAutoOpenTvtestCs))
+                        if ((networkType == NetworkType.DTTV && _configManager.RockbarSetting.IsAutoOpenTvtestDttv) ||
+                            ((networkType == NetworkType.BS) && _configManager.RockbarSetting.IsAutoOpenTvtestBs) ||
+                            ((networkType == NetworkType.CS) && _configManager.RockbarSetting.IsAutoOpenTvtestCs) ||
+                            ((networkType == NetworkType.CATV) && _configManager.RockbarSetting.IsAutoOpenTvtestCatv) ||
+                            ((networkType == NetworkType.BS4K) && _configManager.RockbarSetting.IsAutoOpenTvtestBs4k) ||
+                            ((networkType == NetworkType.SPHD) && _configManager.RockbarSetting.IsAutoOpenTvtestSphd) )
                         {
                             var p = StartTVTest(networkType, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
                             if (p != null)
@@ -173,7 +188,7 @@ namespace RockbarForEDCB
             // TVTest自動終了
             // 現時点のオプションにかかわらず、自身が開いたTVTestは予約終了時間でクローズ
             // 実実装としては毎秒チェックするのではなく、毎分マージン秒タイミングで現在放送してない番組をクローズ
-            if (timerTime.Second == _setting.AutoCloseMargin)
+            if (timerTime.Second == _configManager.RockbarSetting.AutoCloseMargin)
             {
                 // 閉じてるプロセスは取り除く
                 var keys = _tvtestProcesses.Keys.ToList();

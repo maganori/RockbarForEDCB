@@ -334,10 +334,17 @@ namespace RockbarForEDCB
         public string RecInfoWebLinkUrl { get; set; }
         // TVTest.exeパス
         public string TvtestPath { get; set; }
-        // TVTest BS/CSオプション
-        public string TvtestBscsOption { get; set; }
         // TVTest 地デジオプション
         public string TvtestDttvOption { get; set; }
+        // TVTest BS/CSオプション
+        public string TvtestBscsOption { get; set; }
+        // TVTest CATVオプション
+        public string TvtestCatvOption { get; set; }
+        // TVTest SPHDオプション
+        public string TvtestSphdOption { get; set; }
+        // TVTest BS4Kオプション
+        public string TvtestBs4kOption { get; set; }
+
         // TVTest TS再生オプション
         public string TvtestTsFileOption { get; set; }
         // TVTestダブルクリック起動使用
@@ -350,6 +357,12 @@ namespace RockbarForEDCB
         public bool IsAutoOpenTvtestBs { get; set; }
         // TVTest自動起動(CS)
         public bool IsAutoOpenTvtestCs { get; set; }
+        // TVTest自動起動(CATV)
+        public bool IsAutoOpenTvtestCatv { get; set; }
+        // TVTest自動起動(BS4K)
+        public bool IsAutoOpenTvtestBs4k { get; set; }
+        // TVTest自動起動(SPHD)
+        public bool IsAutoOpenTvtestSphd { get; set; }
         // TVTest自動起動(お気に入りサービス)
         public bool IsAutoOpenTvtestFavoriteService { get; set; }
         // TVTest自動起動開始マージン
