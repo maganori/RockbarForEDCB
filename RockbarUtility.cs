@@ -355,7 +355,7 @@ namespace RockbarForEDCB
             }
             catch
             {
-                MessageBox.Show($"Web番組詳細URLが不正です。Web番組詳細URLの設定を見直してください。\nURL: {url}", "ブラウザ起動エラー");
+                MessageBox.Show($"URLが不正です。URLの設定を見直してください。\nURL: {url}", "ブラウザ起動エラー");
             }
         }
 

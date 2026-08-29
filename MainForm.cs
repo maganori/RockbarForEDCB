@@ -29,30 +29,31 @@ namespace RockbarForEDCB
         private EpgDataManager _epgDataManager;
 
         // EpgTimerSrv接続可否
-        private bool canConnect = true;
+        private bool _canConnect = true;
 
         // ListViewアイテム作成
         private ListViewBuilder _listViewBuilder;
         private ListViewEventHandler _listViewEventHandler;
 
         // CtrlCmdUtil
-        private CtrlCmdUtil ctrlCmdUtil = new CtrlCmdUtil();
+        private CtrlCmdUtil _ctrlCmdUtil = new CtrlCmdUtil();
 
         // TVTest管理マネージャー
         private TVTestManager _tvtestManager;
 
         // マウスのクリック位置を記憶
-        private Point mousePoint;
+        private Point _mousePoint;
 
         // マウスのシングルクリック、ダブルクリック判別用
         private CancellationTokenSource _leftCts;
         private CancellationTokenSource _rightCts;
 
         // 次回の画面更新が必要になる最早時刻
-        private DateTime nextMainListViewRefreshTime = DateTime.MinValue;
-        private DateTime nextSubListViewRefreshTime = DateTime.MinValue;
+        private DateTime _nextMainListViewRefreshTime = DateTime.MinValue;
+        private DateTime _nextSubListViewRefreshTime = DateTime.MinValue;
 
-        private readonly TimeSpan dataUpdateInterval = TimeSpan.FromMinutes(1);
+        // 録画タブの更新インターバル(前回表示から1分以上経っていると再取得)
+        private readonly TimeSpan _recDataUpdateInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// コンストラクタ
@@ -61,9 +62,6 @@ namespace RockbarForEDCB
         public MainForm()
         {
             InitializeComponent();
-
-            // フォーム表示完了イベント
-            this.Shown += MainForm_Shown;
 
             // フォーカスが外れたときの強調表示反転防止
             mainListView.HideSelection = true;
@@ -82,13 +80,13 @@ namespace RockbarForEDCB
             }
 
             // EpgDataManagerのインスタンス化
-            _epgDataManager = new EpgDataManager(this.ctrlCmdUtil);
+            _epgDataManager = new EpgDataManager(_ctrlCmdUtil);
 
             // ListViewBuilderのインスタンス化およびデリゲートの初期化
             _listViewBuilder = new ListViewBuilder(_configManager, _epgDataManager);
 
             // TVTestManagerのインスタンス化
-            _tvtestManager = new TVTestManager(_configManager, ctrlCmdUtil);
+            _tvtestManager = new TVTestManager(_configManager, _ctrlCmdUtil);
 
             // ListViewEventHandler のインスタンス化
             _listViewEventHandler = new ListViewEventHandler(
@@ -96,29 +94,29 @@ namespace RockbarForEDCB
                 _epgDataManager,
                 _listViewBuilder,
                 _tvtestManager,
-                ctrlCmdUtil,
+                _ctrlCmdUtil,
                 listContextMenuStrip,
                 RefreshList
             );
 
             // 設定反映
-            applySetting();
+            ApplySetting();
 
             if (_configManager.RockbarSetting.UseTcpIp) {
                 // TCP/IP通信にする
-                ctrlCmdUtil.SetSendMode(true);
-                ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
+                _ctrlCmdUtil.SetSendMode(true);
+                _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
             }
             else
             {
                 // Pipe通信にする
-                ctrlCmdUtil.SetSendMode(false);
+                _ctrlCmdUtil.SetSendMode(false);
             }
 
             // 適当な通信を行って、通信可否を確認し問題があればメッセージを出す
             if (!_epgDataManager.CheckConnection(out ErrCode errCode))
             {
-                canConnect = false;
+                _canConnect = false;
                 MessageBox.Show(
                     $"EpgTimerSrvと接続できません。以降の通信を停止します。\nオプション設定を見直してアプリケーションを再起動してください。\n\nErrCode: {errCode}",
                     "EpgTimerSrv接続チェック失敗",
@@ -132,6 +130,10 @@ namespace RockbarForEDCB
 
             // タイマーを有効化
             timer.Enabled = true;
+
+            // フォーム表示完了イベント
+            // リストビューの列幅を再調整して水平スクロールバー表示を防ぐ。
+            this.Shown += MainForm_Shown;
         }
 
         /// <summary>
@@ -195,7 +197,7 @@ namespace RockbarForEDCB
         /// 設定反映処理
         /// 主に見た目部分の設定をフォームに反映する。初回起動時・設定変更時に実行
         /// </summary>
-        private void applySetting()
+        private void ApplySetting()
         {
             // タスクトレイアイコン常時表示
             if (_configManager.RockbarSetting.ShowTaskTrayIcon)
@@ -254,8 +256,8 @@ namespace RockbarForEDCB
             // Web番組表機能を使用するときのみタスクトレイアイコンの右クリックメニューに「テレビ番組表」を表示
             this.openWebEpgTopToolStripMenuItem.Visible = _configManager.RockbarSetting.UseWebLink;
 
-            // 録画済み一覧の最大表示数
-            _epgDataManager.RecListMaxCount = this._configManager.RockbarSetting.RecListMaxCount;
+            // 録画済み一覧の最大保持数(表示数)
+            _epgDataManager.RecListMaxCount = _configManager.RockbarSetting.RecListMaxCount;
         }
 
         /// <summary>
@@ -269,8 +271,8 @@ namespace RockbarForEDCB
         {
             DateTime now = DateTime.Now;
 
-            DateTime mainListRefreshTime = nextMainListViewRefreshTime;
-            DateTime subListRefreshTime = nextSubListViewRefreshTime;
+            DateTime mainListRefreshTime = _nextMainListViewRefreshTime;
+            DateTime subListRefreshTime = _nextSubListViewRefreshTime;
 
             bool isReserveChanged = false;
             bool isServiceChanged = false;
@@ -280,10 +282,10 @@ namespace RockbarForEDCB
             // 録画情報更新必要有無判定
             bool isRecDataUpdateRequired = 
                 mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いているか
-                DateTime.Now - _epgDataManager.LastRecDataUpdateTime >= dataUpdateInterval; //前回更新時間から時間経過しているか
+                DateTime.Now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval; //前回更新時間から時間経過しているか
 
             // EpgTimerSrvと通信する
-            if (canConnect)
+            if (_canConnect)
             {
                 // 定期更新など、通信が必要な場合
                 if (isTransmission)
@@ -308,7 +310,7 @@ namespace RockbarForEDCB
                 if (forceMainListRefresh || isReserveChanged || (now >= mainListRefreshTime))
                 {
                     DateTime nextTime = _listViewBuilder.BuildReserveList(mainListView);
-                    this.nextMainListViewRefreshTime = nextTime;
+                    _nextMainListViewRefreshTime = nextTime;
                 }
             }
             // 録画タブ
@@ -317,7 +319,7 @@ namespace RockbarForEDCB
                 if (forceMainListRefresh || isRecChanged)
                 {
                     _listViewBuilder.BuildRecList(mainListView);
-                    this.nextMainListViewRefreshTime = DateTime.MaxValue;
+                    _nextMainListViewRefreshTime = DateTime.MaxValue;
                 }
             }
             // 新番組タブ
@@ -326,7 +328,7 @@ namespace RockbarForEDCB
                 if (forceMainListRefresh || isServiceChanged || isReserveChanged || (now >= mainListRefreshTime))
                 {
                     DateTime nextTime = _listViewBuilder.BuildNewProgramList(mainListView);
-                    this.nextMainListViewRefreshTime = nextTime;
+                    _nextMainListViewRefreshTime = nextTime;
                 }
             }
             // チャンネルタブ
@@ -335,7 +337,7 @@ namespace RockbarForEDCB
                 if (forceMainListRefresh || isServiceChanged || isReserveChanged || (now >= mainListRefreshTime))
                 {
                     DateTime nextTime = _listViewBuilder.BuildServiceList(mainListView, GetCurrentMainFormTabType());
-                    this.nextMainListViewRefreshTime = nextTime;
+                    _nextMainListViewRefreshTime = nextTime;
                 }
             }
 
@@ -344,7 +346,7 @@ namespace RockbarForEDCB
             if (forceSubListRefresh || isTunerChanged || (now >= subListRefreshTime))
             {
                 DateTime nextTime = _listViewBuilder.BuildTunerList(subListView);
-                this.nextSubListViewRefreshTime = nextTime;
+                _nextSubListViewRefreshTime = nextTime;
             }
         }
 
@@ -367,53 +369,31 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フィルタのリセット処理
-        /// フィルタ文字列をクリアしフィルタ結果をリセットする。
-        /// </summary>
-        private void ResetFilter()
-        {
-            filterTextBox.Clear();
-            RefreshList(false, true, false);
-        }
-
-        /// <summary>
-        /// マウスクリック処理に応じてテキストでフィルタリングをする
-        /// </summary>
-        /// <param name="text">対象テキスト</param>
-        private void filterWith(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return;
-            }
-
-            filterTextBox.Text = text;
-            filterTextBox.Focus();
-            RefreshList(false, true, false);
-        }
-
-        /// <summary>
-        /// mainListViewマウスクリック時処理
+        /// mainListViewマウスクリック時処理(右クリック)
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
         private void mainListView_MouseClick(object sender, MouseEventArgs e)
         {
+            // 予約タブ
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
                 _listViewEventHandler.HandleReserveClick(sender, e, mainListView);
                 return;
             }
+            // 録画タブ
             else if (mainFormTabControl.SelectedTab == recTabPage)
             {
                 _listViewEventHandler.HandleRecClick(sender, e, mainListView);
                 return;
             }
+            // 新番組タブ
             else if (mainFormTabControl.SelectedTab == newProgramTabPage)
             {
                 _listViewEventHandler.HandleNewProgramClick(sender, e, mainListView);
                 return;
             }
+            // チャンネルタブ
             else
             {
                 _listViewEventHandler.HandleServiceClick(sender, e, mainListView);
@@ -429,6 +409,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void mainListView_MouseUp(object sender, MouseEventArgs e)
         {
+            // 予約タブ
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
                 _listViewEventHandler.HandleReserveMouseUp(sender, e, mainListView);
@@ -437,27 +418,31 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// mainListViewマウスダブルクリック処理
+        /// mainListViewマウスダブルクリック処理(左ダブルクリック)
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
         private void mainListView_MouseDoubleClick(object sender, MouseEventArgs e)
         {
+            // 予約タブ
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
                 _listViewEventHandler.HandleReserveDoubleClick(sender, e, mainListView);
                 return;
             }
+            // 録画タブ
             else if (mainFormTabControl.SelectedTab == recTabPage)
             {
                 _listViewEventHandler.HandleRecDoubleClick(sender, e, mainListView);
                 return;
             }
+            // 新番組タブ
             else if (mainFormTabControl.SelectedTab == newProgramTabPage)
             {
                 _listViewEventHandler.HandleNewProgramDoubleClick(sender, e, mainListView);
                 return;
             }
+            // チャンネルタブ
             else
             {
                 _listViewEventHandler.HandleServiceDoubleClick(sender, e, mainListView);
@@ -490,6 +475,45 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// フォーム初回表示完了時処理
+        /// </summary>
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            AdjustAllListViewColumns();
+        }
+
+        /// <summary>
+        /// フォームサイズ変更処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void MainForm_SizeChanged(object sender, EventArgs e)
+        {
+            AdjustAllListViewColumns();
+        }
+
+        /// <summary>
+        /// スプリッタ位置調整処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            AdjustAllListViewColumns();
+        }
+
+        /// <summary>
+        /// リストビューのカラム幅を調整する。
+        /// </summary>
+        private void AdjustAllListViewColumns()
+        {
+            if (_listViewBuilder == null) return;
+
+            _listViewBuilder.AdjustListViewColumns(mainListView);
+            _listViewBuilder.AdjustListViewColumns(subListView);
+        }
+
+        /// <summary>
         /// タイマー処理
         /// 毎分0秒のEpgTimerSrv通信と、TVTestの起動・終了を行う
         /// </summary>
@@ -499,10 +523,11 @@ namespace RockbarForEDCB
         {
             DateTime timerTime = DateTime.Now;
 
-            if (timerTime.Second == 0) {
+            if (timerTime.Second == 0)
+            {
                 RefreshList(true, false, false);
             }
-            
+
             // TVTest自動起動、自動終了
             _tvtestManager.AutoStartAndCloseTVTest(_epgDataManager.ReserveDatas, _configManager.FavoriteServiceList);
         }
@@ -519,26 +544,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// ✕ボタン押下処理
-        /// タスクトレイ格納オプションON時、タスクトレイに格納。そうでない場合、フォームを閉じる
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void closeButton_Click(object sender, EventArgs e)
-        {
-            if (_configManager.RockbarSetting.StoreTaskTrayByClosing)
-            {
-                // 他のオプションにかかわらず、最小化(もどき)をする場合はタスクトレイにアイコンを表示する
-                notifyIcon.Visible = true;
-                this.Visible = false;
-            }
-            else
-            {
-                this.Close();
-            }
-        }
-
-        /// <summary>
         /// メインフォームマウスボタン押下処理
         /// ドラッグ時の位置取得。
         /// </summary>
@@ -549,7 +554,7 @@ namespace RockbarForEDCB
             if ((e.Button & MouseButtons.Left) == MouseButtons.Left)
             {
                 //位置を記憶する
-                mousePoint = new Point(e.X, e.Y);
+                _mousePoint = new Point(e.X, e.Y);
             }
 
             // フォームと同様にドラッグしたいラベルはEnabled = falseにしておく
@@ -565,25 +570,25 @@ namespace RockbarForEDCB
         {
             if ((e.Button & MouseButtons.Left) == MouseButtons.Left)
             {
-                this.Left += e.X - mousePoint.X;
-                this.Top += e.Y - mousePoint.Y;
+                this.Left += e.X - _mousePoint.X;
+                this.Top += e.Y - _mousePoint.Y;
             }
         }
 
         /// <summary>
-        /// フィルタ入力欄キー押下処理
-        /// Esc入力時にフィルタをリセットする。
+        /// マウスクリック処理に応じてテキストでフィルタリングをする
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void filterTextBox_KeyDown(object sender, KeyEventArgs e)
+        /// <param name="text">対象テキスト</param>
+        private void FilterWith(string text)
         {
-            // Escキーが押されたらフィルタをリセットする
-            if (e.KeyCode == Keys.Escape)
+            if (string.IsNullOrWhiteSpace(text))
             {
-                ResetFilter();
-                e.SuppressKeyPress = true;  // ビープ音を抑止
+                return;
             }
+
+            filterTextBox.Text = text;
+            filterTextBox.Focus();
+            RefreshList(false, true, false);
         }
 
         /// <summary>
@@ -606,6 +611,22 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// フィルタ入力欄キー押下処理
+        /// Esc入力時にフィルタをリセットする。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void filterTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Escキーが押されたらフィルタをリセットする
+            if (e.KeyCode == Keys.Escape)
+            {
+                ResetFilter();
+                e.SuppressKeyPress = true;  // ビープ音を抑止
+            }
+        }
+
+        /// <summary>
         /// リセットボタン押下処理
         /// フィルタ文字列をクリアしフィルタ結果をリセットする。
         /// </summary>
@@ -617,6 +638,16 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// フィルタのリセット処理
+        /// フィルタ文字列をクリアしフィルタ結果をリセットする。
+        /// </summary>
+        private void ResetFilter()
+        {
+            filterTextBox.Clear();
+            RefreshList(false, true, false);
+        }
+
+        /// <summary>
         /// 設定ボタン押下処理
         /// 設定フォームを開き、設定変更があった場合は設定を再読込して画面をリフレッシュする。
         /// </summary>
@@ -624,15 +655,35 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void settingButton_Click(object sender, EventArgs e)
         {
-            SettingForm settingForm = new SettingForm(ctrlCmdUtil, canConnect);
+            SettingForm settingForm = new SettingForm(_ctrlCmdUtil, _canConnect);
             DialogResult result = settingForm.ShowDialog();
             settingForm.Dispose();
 
             if (result == DialogResult.OK)
             {
                 _configManager.LoadFromFile();
-                applySetting();
+                ApplySetting();
                 RefreshList(true, true, true);
+            }
+        }
+
+        /// <summary>
+        /// ✕ボタン押下処理
+        /// タスクトレイ格納オプションON時、タスクトレイに格納。そうでない場合、フォームを閉じる
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void closeButton_Click(object sender, EventArgs e)
+        {
+            if (_configManager.RockbarSetting.StoreTaskTrayByClosing)
+            {
+                // 他のオプションにかかわらず、最小化(もどき)をする場合はタスクトレイにアイコンを表示する
+                notifyIcon.Visible = true;
+                this.Visible = false;
+            }
+            else
+            {
+                this.Close();
             }
         }
 
@@ -786,10 +837,10 @@ namespace RockbarForEDCB
                     this.notifyIcon.ContextMenuStrip = null;
 
                     break;
+
                 default:
                     // 未設定（""）などの場合は何もしない
                     break;
-
             }
         }
 
@@ -836,49 +887,5 @@ namespace RockbarForEDCB
                 RockbarUtility.OpenBrowser(_configManager.RockbarSetting.WebEpgUrl);
             }
         }
-
-        /// <summary>
-        /// フォームサイズ変更処理
-        /// 左右のリストビューのカラム幅を調整する。
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void MainForm_SizeChanged(object sender, EventArgs e)
-        {
-            if (_listViewBuilder != null)
-            {
-                _listViewBuilder.AdjustListViewColumns(mainListView);
-                _listViewBuilder.AdjustListViewColumns(subListView);
-            }
-        }
-
-        /// <summary>
-        /// スプリッタ位置調整処理
-        /// 左右のリストビューのカラム幅を調整する。
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void splitContainer_SplitterMoved(object sender, SplitterEventArgs e)
-        {
-            if (_listViewBuilder != null)
-            {
-                _listViewBuilder.AdjustListViewColumns(mainListView);
-                _listViewBuilder.AdjustListViewColumns(subListView);
-            }
-        }
-
-        /// <summary>
-        /// フォーム初回表示完了時処理
-        /// 実際の画面描画サイズ確定後にリストビューの列幅を再調整して水平スクロールバーを防ぐ。
-        /// </summary>
-        private void MainForm_Shown(object sender, EventArgs e)
-        {
-            if (_listViewBuilder != null)
-            {
-                _listViewBuilder.AdjustListViewColumns(mainListView);
-                _listViewBuilder.AdjustListViewColumns(subListView);
-            }
-        }
-
     }
 }

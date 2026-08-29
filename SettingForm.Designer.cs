@@ -225,14 +225,6 @@ namespace RockbarForEDCB
             this.textBoxFontTextBox = new System.Windows.Forms.TextBox();
             this.selectTextBoxFontButton = new System.Windows.Forms.Button();
             this.otherTabPage = new System.Windows.Forms.TabPage();
-            this.taskTrayIconRightDoubleClickLabel = new System.Windows.Forms.Label();
-            this.taskTrayIconRightClickLabel = new System.Windows.Forms.Label();
-            this.taskTrayIconLeftDoubleClickLabel = new System.Windows.Forms.Label();
-            this.taskTrayIconLeftClickLabel = new System.Windows.Forms.Label();
-            this.taskTrayIconRightDoubleClickComboBox = new System.Windows.Forms.ComboBox();
-            this.taskTrayIconRightClickComboBox = new System.Windows.Forms.ComboBox();
-            this.taskTrayIconLeftDoubleClickComboBox = new System.Windows.Forms.ComboBox();
-            this.taskTrayIconLeftClickComboBox = new System.Windows.Forms.ComboBox();
             this.isHorizontalSplitCheckBox = new System.Windows.Forms.CheckBox();
             this.toggleVisibleTaskTrayIconClickCheckBox = new System.Windows.Forms.CheckBox();
             this.storeTaskTrayByClosingCheckBox = new System.Windows.Forms.CheckBox();
@@ -241,6 +233,14 @@ namespace RockbarForEDCB
             this.recListMaxCountLabel = new System.Windows.Forms.Label();
             this.recListMaxCountNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.taskTrayIconClickGroupBox = new System.Windows.Forms.GroupBox();
+            this.taskTrayIconRightDoubleClickLabel = new System.Windows.Forms.Label();
+            this.taskTrayIconRightClickLabel = new System.Windows.Forms.Label();
+            this.taskTrayIconLeftDoubleClickLabel = new System.Windows.Forms.Label();
+            this.taskTrayIconLeftClickLabel = new System.Windows.Forms.Label();
+            this.taskTrayIconRightDoubleClickComboBox = new System.Windows.Forms.ComboBox();
+            this.taskTrayIconRightClickComboBox = new System.Windows.Forms.ComboBox();
+            this.taskTrayIconLeftDoubleClickComboBox = new System.Windows.Forms.ComboBox();
+            this.taskTrayIconLeftClickComboBox = new System.Windows.Forms.ComboBox();
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
@@ -259,6 +259,7 @@ namespace RockbarForEDCB
             this.controlUiFontColorTabPage.SuspendLayout();
             this.otherTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).BeginInit();
+            this.taskTrayIconClickGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // cancelButton
@@ -1984,14 +1985,6 @@ namespace RockbarForEDCB
             // 
             // otherTabPage
             // 
-            this.otherTabPage.Controls.Add(this.taskTrayIconRightDoubleClickLabel);
-            this.otherTabPage.Controls.Add(this.taskTrayIconRightClickLabel);
-            this.otherTabPage.Controls.Add(this.taskTrayIconLeftDoubleClickLabel);
-            this.otherTabPage.Controls.Add(this.taskTrayIconLeftClickLabel);
-            this.otherTabPage.Controls.Add(this.taskTrayIconRightDoubleClickComboBox);
-            this.otherTabPage.Controls.Add(this.taskTrayIconRightClickComboBox);
-            this.otherTabPage.Controls.Add(this.taskTrayIconLeftDoubleClickComboBox);
-            this.otherTabPage.Controls.Add(this.taskTrayIconLeftClickComboBox);
             this.otherTabPage.Controls.Add(this.isHorizontalSplitCheckBox);
             this.otherTabPage.Controls.Add(this.toggleVisibleTaskTrayIconClickCheckBox);
             this.otherTabPage.Controls.Add(this.storeTaskTrayByClosingCheckBox);
@@ -2006,98 +1999,6 @@ namespace RockbarForEDCB
             this.otherTabPage.TabIndex = 4;
             this.otherTabPage.Text = "その他";
             this.otherTabPage.UseVisualStyleBackColor = true;
-            // 
-            // taskTrayIconRightDoubleClickLabel
-            // 
-            this.taskTrayIconRightDoubleClickLabel.AutoSize = true;
-            this.taskTrayIconRightDoubleClickLabel.Location = new System.Drawing.Point(432, 132);
-            this.taskTrayIconRightDoubleClickLabel.Name = "taskTrayIconRightDoubleClickLabel";
-            this.taskTrayIconRightDoubleClickLabel.Size = new System.Drawing.Size(75, 12);
-            this.taskTrayIconRightDoubleClickLabel.TabIndex = 26;
-            this.taskTrayIconRightDoubleClickLabel.Text = "右ダブルクリック";
-            // 
-            // taskTrayIconRightClickLabel
-            // 
-            this.taskTrayIconRightClickLabel.AutoSize = true;
-            this.taskTrayIconRightClickLabel.Location = new System.Drawing.Point(432, 104);
-            this.taskTrayIconRightClickLabel.Name = "taskTrayIconRightClickLabel";
-            this.taskTrayIconRightClickLabel.Size = new System.Drawing.Size(47, 12);
-            this.taskTrayIconRightClickLabel.TabIndex = 25;
-            this.taskTrayIconRightClickLabel.Text = "右クリック";
-            // 
-            // taskTrayIconLeftDoubleClickLabel
-            // 
-            this.taskTrayIconLeftDoubleClickLabel.AutoSize = true;
-            this.taskTrayIconLeftDoubleClickLabel.Location = new System.Drawing.Point(432, 77);
-            this.taskTrayIconLeftDoubleClickLabel.Name = "taskTrayIconLeftDoubleClickLabel";
-            this.taskTrayIconLeftDoubleClickLabel.Size = new System.Drawing.Size(75, 12);
-            this.taskTrayIconLeftDoubleClickLabel.TabIndex = 24;
-            this.taskTrayIconLeftDoubleClickLabel.Text = "左ダブルクリック";
-            // 
-            // taskTrayIconLeftClickLabel
-            // 
-            this.taskTrayIconLeftClickLabel.AutoSize = true;
-            this.taskTrayIconLeftClickLabel.Location = new System.Drawing.Point(432, 50);
-            this.taskTrayIconLeftClickLabel.Name = "taskTrayIconLeftClickLabel";
-            this.taskTrayIconLeftClickLabel.Size = new System.Drawing.Size(47, 12);
-            this.taskTrayIconLeftClickLabel.TabIndex = 23;
-            this.taskTrayIconLeftClickLabel.Text = "左クリック";
-            // 
-            // taskTrayIconRightDoubleClickComboBox
-            // 
-            this.taskTrayIconRightDoubleClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.taskTrayIconRightDoubleClickComboBox.FormattingEnabled = true;
-            this.taskTrayIconRightDoubleClickComboBox.Items.AddRange(new object[] {
-            "",
-            "メニュー",
-            "テレビ番組表",
-            "Rockバー表示"});
-            this.taskTrayIconRightDoubleClickComboBox.Location = new System.Drawing.Point(515, 128);
-            this.taskTrayIconRightDoubleClickComboBox.Name = "taskTrayIconRightDoubleClickComboBox";
-            this.taskTrayIconRightDoubleClickComboBox.Size = new System.Drawing.Size(121, 20);
-            this.taskTrayIconRightDoubleClickComboBox.TabIndex = 22;
-            // 
-            // taskTrayIconRightClickComboBox
-            // 
-            this.taskTrayIconRightClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.taskTrayIconRightClickComboBox.FormattingEnabled = true;
-            this.taskTrayIconRightClickComboBox.Items.AddRange(new object[] {
-            "",
-            "メニュー",
-            "テレビ番組表",
-            "Rockバー表示"});
-            this.taskTrayIconRightClickComboBox.Location = new System.Drawing.Point(515, 101);
-            this.taskTrayIconRightClickComboBox.Name = "taskTrayIconRightClickComboBox";
-            this.taskTrayIconRightClickComboBox.Size = new System.Drawing.Size(121, 20);
-            this.taskTrayIconRightClickComboBox.TabIndex = 21;
-            // 
-            // taskTrayIconLeftDoubleClickComboBox
-            // 
-            this.taskTrayIconLeftDoubleClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.taskTrayIconLeftDoubleClickComboBox.FormattingEnabled = true;
-            this.taskTrayIconLeftDoubleClickComboBox.Items.AddRange(new object[] {
-            "",
-            "メニュー",
-            "テレビ番組表",
-            "Rockバー表示"});
-            this.taskTrayIconLeftDoubleClickComboBox.Location = new System.Drawing.Point(515, 74);
-            this.taskTrayIconLeftDoubleClickComboBox.Name = "taskTrayIconLeftDoubleClickComboBox";
-            this.taskTrayIconLeftDoubleClickComboBox.Size = new System.Drawing.Size(121, 20);
-            this.taskTrayIconLeftDoubleClickComboBox.TabIndex = 20;
-            // 
-            // taskTrayIconLeftClickComboBox
-            // 
-            this.taskTrayIconLeftClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.taskTrayIconLeftClickComboBox.FormattingEnabled = true;
-            this.taskTrayIconLeftClickComboBox.Items.AddRange(new object[] {
-            "",
-            "メニュー",
-            "テレビ番組表",
-            "Rockバー表示"});
-            this.taskTrayIconLeftClickComboBox.Location = new System.Drawing.Point(515, 47);
-            this.taskTrayIconLeftClickComboBox.Name = "taskTrayIconLeftClickComboBox";
-            this.taskTrayIconLeftClickComboBox.Size = new System.Drawing.Size(121, 20);
-            this.taskTrayIconLeftClickComboBox.TabIndex = 19;
             // 
             // isHorizontalSplitCheckBox
             // 
@@ -2177,12 +2078,112 @@ namespace RockbarForEDCB
             // 
             // taskTrayIconClickGroupBox
             // 
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconRightDoubleClickLabel);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconRightClickLabel);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconLeftDoubleClickLabel);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconLeftClickLabel);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconRightDoubleClickComboBox);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconRightClickComboBox);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconLeftDoubleClickComboBox);
+            this.taskTrayIconClickGroupBox.Controls.Add(this.taskTrayIconLeftClickComboBox);
             this.taskTrayIconClickGroupBox.Location = new System.Drawing.Point(419, 30);
             this.taskTrayIconClickGroupBox.Name = "taskTrayIconClickGroupBox";
             this.taskTrayIconClickGroupBox.Size = new System.Drawing.Size(244, 128);
             this.taskTrayIconClickGroupBox.TabIndex = 27;
             this.taskTrayIconClickGroupBox.TabStop = false;
             this.taskTrayIconClickGroupBox.Text = "タスクトレイアイコン・マウス定義";
+            // 
+            // taskTrayIconRightDoubleClickLabel
+            // 
+            this.taskTrayIconRightDoubleClickLabel.AutoSize = true;
+            this.taskTrayIconRightDoubleClickLabel.Location = new System.Drawing.Point(19, 103);
+            this.taskTrayIconRightDoubleClickLabel.Name = "taskTrayIconRightDoubleClickLabel";
+            this.taskTrayIconRightDoubleClickLabel.Size = new System.Drawing.Size(75, 12);
+            this.taskTrayIconRightDoubleClickLabel.TabIndex = 26;
+            this.taskTrayIconRightDoubleClickLabel.Text = "右ダブルクリック";
+            // 
+            // taskTrayIconRightClickLabel
+            // 
+            this.taskTrayIconRightClickLabel.AutoSize = true;
+            this.taskTrayIconRightClickLabel.Location = new System.Drawing.Point(19, 75);
+            this.taskTrayIconRightClickLabel.Name = "taskTrayIconRightClickLabel";
+            this.taskTrayIconRightClickLabel.Size = new System.Drawing.Size(47, 12);
+            this.taskTrayIconRightClickLabel.TabIndex = 25;
+            this.taskTrayIconRightClickLabel.Text = "右クリック";
+            // 
+            // taskTrayIconLeftDoubleClickLabel
+            // 
+            this.taskTrayIconLeftDoubleClickLabel.AutoSize = true;
+            this.taskTrayIconLeftDoubleClickLabel.Location = new System.Drawing.Point(19, 48);
+            this.taskTrayIconLeftDoubleClickLabel.Name = "taskTrayIconLeftDoubleClickLabel";
+            this.taskTrayIconLeftDoubleClickLabel.Size = new System.Drawing.Size(75, 12);
+            this.taskTrayIconLeftDoubleClickLabel.TabIndex = 24;
+            this.taskTrayIconLeftDoubleClickLabel.Text = "左ダブルクリック";
+            // 
+            // taskTrayIconLeftClickLabel
+            // 
+            this.taskTrayIconLeftClickLabel.AutoSize = true;
+            this.taskTrayIconLeftClickLabel.Location = new System.Drawing.Point(19, 21);
+            this.taskTrayIconLeftClickLabel.Name = "taskTrayIconLeftClickLabel";
+            this.taskTrayIconLeftClickLabel.Size = new System.Drawing.Size(47, 12);
+            this.taskTrayIconLeftClickLabel.TabIndex = 23;
+            this.taskTrayIconLeftClickLabel.Text = "左クリック";
+            // 
+            // taskTrayIconRightDoubleClickComboBox
+            // 
+            this.taskTrayIconRightDoubleClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.taskTrayIconRightDoubleClickComboBox.FormattingEnabled = true;
+            this.taskTrayIconRightDoubleClickComboBox.Items.AddRange(new object[] {
+            "",
+            "メニュー",
+            "テレビ番組表",
+            "Rockバー表示"});
+            this.taskTrayIconRightDoubleClickComboBox.Location = new System.Drawing.Point(102, 99);
+            this.taskTrayIconRightDoubleClickComboBox.Name = "taskTrayIconRightDoubleClickComboBox";
+            this.taskTrayIconRightDoubleClickComboBox.Size = new System.Drawing.Size(121, 20);
+            this.taskTrayIconRightDoubleClickComboBox.TabIndex = 22;
+            // 
+            // taskTrayIconRightClickComboBox
+            // 
+            this.taskTrayIconRightClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.taskTrayIconRightClickComboBox.FormattingEnabled = true;
+            this.taskTrayIconRightClickComboBox.Items.AddRange(new object[] {
+            "",
+            "メニュー",
+            "テレビ番組表",
+            "Rockバー表示"});
+            this.taskTrayIconRightClickComboBox.Location = new System.Drawing.Point(102, 72);
+            this.taskTrayIconRightClickComboBox.Name = "taskTrayIconRightClickComboBox";
+            this.taskTrayIconRightClickComboBox.Size = new System.Drawing.Size(121, 20);
+            this.taskTrayIconRightClickComboBox.TabIndex = 21;
+            // 
+            // taskTrayIconLeftDoubleClickComboBox
+            // 
+            this.taskTrayIconLeftDoubleClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.taskTrayIconLeftDoubleClickComboBox.FormattingEnabled = true;
+            this.taskTrayIconLeftDoubleClickComboBox.Items.AddRange(new object[] {
+            "",
+            "メニュー",
+            "テレビ番組表",
+            "Rockバー表示"});
+            this.taskTrayIconLeftDoubleClickComboBox.Location = new System.Drawing.Point(102, 45);
+            this.taskTrayIconLeftDoubleClickComboBox.Name = "taskTrayIconLeftDoubleClickComboBox";
+            this.taskTrayIconLeftDoubleClickComboBox.Size = new System.Drawing.Size(121, 20);
+            this.taskTrayIconLeftDoubleClickComboBox.TabIndex = 20;
+            // 
+            // taskTrayIconLeftClickComboBox
+            // 
+            this.taskTrayIconLeftClickComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.taskTrayIconLeftClickComboBox.FormattingEnabled = true;
+            this.taskTrayIconLeftClickComboBox.Items.AddRange(new object[] {
+            "",
+            "メニュー",
+            "テレビ番組表",
+            "Rockバー表示"});
+            this.taskTrayIconLeftClickComboBox.Location = new System.Drawing.Point(102, 18);
+            this.taskTrayIconLeftClickComboBox.Name = "taskTrayIconLeftClickComboBox";
+            this.taskTrayIconLeftClickComboBox.Size = new System.Drawing.Size(121, 20);
+            this.taskTrayIconLeftClickComboBox.TabIndex = 19;
             // 
             // tvtestOpenFileDialog
             // 
@@ -2233,6 +2234,8 @@ namespace RockbarForEDCB
             this.otherTabPage.ResumeLayout(false);
             this.otherTabPage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).EndInit();
+            this.taskTrayIconClickGroupBox.ResumeLayout(false);
+            this.taskTrayIconClickGroupBox.PerformLayout();
             this.ResumeLayout(false);
 
         }
