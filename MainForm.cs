@@ -88,7 +88,7 @@ namespace RockbarForEDCB
             _listViewBuilder = new ListViewBuilder(_configManager, _epgDataManager);
 
             // TVTestManagerのインスタンス化
-            _tvtestManager = new TVTestManager(_configManager.RockbarSetting, ctrlCmdUtil);
+            _tvtestManager = new TVTestManager(_configManager, ctrlCmdUtil);
 
             // ListViewEventHandler のインスタンス化
             _listViewEventHandler = new ListViewEventHandler(

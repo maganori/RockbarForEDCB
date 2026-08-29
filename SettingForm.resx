@@ -127,6 +127,16 @@ http://localhost:5510/EMWUI/epginfo.html?onid={ONID}&amp;&amp;tsid={TSID}&amp;&a
 http://localhost:5510/legacy/epginfo.html?{ONID}-{TSID}-{SID}-{EID}
 </value>
   </data>
+  <data name="tvtestOptionExampleLabel.Text" xml:space="preserve">
+    <value>(例) /s /d BonDriver_PT3_T.dll
+/s : TVTestが既に起動している場合、複数起動しない
+/d : BonDriverの指定
+     地デジ : ISDB-Tチューナ
+     BS/CS : ISDB-Sチューナ
+     CATV : ISDB-Cチューナ
+     SPHD : DVB-S2チューナ
+     BS4K : ISDB-S3チューナ</value>
+  </data>
   <metadata name="tvtestOpenFileDialog.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>

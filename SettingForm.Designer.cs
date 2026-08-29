@@ -122,10 +122,18 @@ namespace RockbarForEDCB
             this.favoriteServiceTvtestOptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.addFavoriteServiceButton = new System.Windows.Forms.Button();
             this.tvtestLinkageTabPage = new System.Windows.Forms.TabPage();
-            this.tvtestDttvOptionExampleLabel = new System.Windows.Forms.Label();
-            this.tvtestBscsOptionExampleLabel = new System.Windows.Forms.Label();
+            this.tvtestBs4kOptionLabel = new System.Windows.Forms.Label();
+            this.tvtestSphdOptionLabel = new System.Windows.Forms.Label();
+            this.tvtestBs4kOptionTextBox = new System.Windows.Forms.TextBox();
+            this.tvtestSphdOptionTextBox = new System.Windows.Forms.TextBox();
+            this.tvtestCatvOptionTextBox = new System.Windows.Forms.TextBox();
+            this.tvtestCatvOptionLabel = new System.Windows.Forms.Label();
+            this.tvtestOptionExampleLabel = new System.Windows.Forms.Label();
             this.tvtestTsFileOptionExampleLabel = new System.Windows.Forms.Label();
             this.autoStartTargetGroupBox = new System.Windows.Forms.GroupBox();
+            this.isAutoOpenSphdCheckBox = new System.Windows.Forms.CheckBox();
+            this.isAutoOpenBs4kCheckBox = new System.Windows.Forms.CheckBox();
+            this.isAutoOpenCatvCheckBox = new System.Windows.Forms.CheckBox();
             this.isAutoOpenFavoriteServiceCheckBox = new System.Windows.Forms.CheckBox();
             this.isAutoOpenDttvCheckBox = new System.Windows.Forms.CheckBox();
             this.isAutoOpenCsCheckBox = new System.Windows.Forms.CheckBox();
@@ -299,7 +307,7 @@ namespace RockbarForEDCB
             // allServiceNetworkTypeColumnHeader
             // 
             this.allServiceNetworkTypeColumnHeader.Text = "種類";
-            this.allServiceNetworkTypeColumnHeader.Width = 40;
+            this.allServiceNetworkTypeColumnHeader.Width = 48;
             // 
             // allServiceNameColumnHeader
             // 
@@ -309,10 +317,12 @@ namespace RockbarForEDCB
             // allServiceTsidColumnHeader
             // 
             this.allServiceTsidColumnHeader.Text = "TSID";
+            this.allServiceTsidColumnHeader.Width = 57;
             // 
             // allServiceSidColumnHeader
             // 
             this.allServiceSidColumnHeader.Text = "SID";
+            this.allServiceSidColumnHeader.Width = 57;
             // 
             // addSelectedServiceButton
             // 
@@ -323,6 +333,26 @@ namespace RockbarForEDCB
             this.addSelectedServiceButton.Text = ">>";
             this.addSelectedServiceButton.UseVisualStyleBackColor = true;
             this.addSelectedServiceButton.Click += new System.EventHandler(this.addSelectedServiceButton_Click);
+            // 
+            // addNewServiceButton
+            // 
+            this.addNewServiceButton.Location = new System.Drawing.Point(744, 240);
+            this.addNewServiceButton.Name = "addNewServiceButton";
+            this.addNewServiceButton.Size = new System.Drawing.Size(40, 23);
+            this.addNewServiceButton.TabIndex = 6;
+            this.addNewServiceButton.Text = "追加";
+            this.addNewServiceButton.UseVisualStyleBackColor = true;
+            this.addNewServiceButton.Click += new System.EventHandler(this.addNewServiceButton_Click);
+            // 
+            // editServiceButton
+            // 
+            this.editServiceButton.Location = new System.Drawing.Point(744, 269);
+            this.editServiceButton.Name = "editServiceButton";
+            this.editServiceButton.Size = new System.Drawing.Size(40, 23);
+            this.editServiceButton.TabIndex = 7;
+            this.editServiceButton.Text = "編集";
+            this.editServiceButton.UseVisualStyleBackColor = true;
+            this.editServiceButton.Click += new System.EventHandler(this.editServiceButton_Click);
             // 
             // removeSelectedServiceButton
             // 
@@ -354,26 +384,6 @@ namespace RockbarForEDCB
             this.moveUpSelectedServiceButton.UseVisualStyleBackColor = true;
             this.moveUpSelectedServiceButton.Click += new System.EventHandler(this.moveUpSelectedServiceButton_Click);
             // 
-            // addNewServiceButton
-            // 
-            this.addNewServiceButton.Location = new System.Drawing.Point(744, 240);
-            this.addNewServiceButton.Name = "addNewServiceButton";
-            this.addNewServiceButton.Size = new System.Drawing.Size(40, 23);
-            this.addNewServiceButton.TabIndex = 6;
-            this.addNewServiceButton.Text = "追加";
-            this.addNewServiceButton.UseVisualStyleBackColor = true;
-            this.addNewServiceButton.Click += new System.EventHandler(this.addNewServiceButton_Click);
-            // 
-            // editServiceButton
-            // 
-            this.editServiceButton.Location = new System.Drawing.Point(744, 269);
-            this.editServiceButton.Name = "editServiceButton";
-            this.editServiceButton.Size = new System.Drawing.Size(40, 23);
-            this.editServiceButton.TabIndex = 7;
-            this.editServiceButton.Text = "編集";
-            this.editServiceButton.UseVisualStyleBackColor = true;
-            this.editServiceButton.Click += new System.EventHandler(this.editServiceButton_Click);
-            // 
             // selectedServiceListView
             // 
             this.selectedServiceListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -402,7 +412,7 @@ namespace RockbarForEDCB
             // selectedServiceNetworkTypeColumnHeader
             // 
             this.selectedServiceNetworkTypeColumnHeader.Text = "種類";
-            this.selectedServiceNetworkTypeColumnHeader.Width = 40;
+            this.selectedServiceNetworkTypeColumnHeader.Width = 48;
             // 
             // selectedServiceNameColumnHeader
             // 
@@ -466,6 +476,22 @@ namespace RockbarForEDCB
             this.edcbLinkageTabPage.TabIndex = 0;
             this.edcbLinkageTabPage.Text = "EDCB連携";
             this.edcbLinkageTabPage.UseVisualStyleBackColor = true;
+            // 
+            // webEPGLabel
+            // 
+            this.webEPGLabel.AutoSize = true;
+            this.webEPGLabel.Location = new System.Drawing.Point(35, 178);
+            this.webEPGLabel.Name = "webEPGLabel";
+            this.webEPGLabel.Size = new System.Drawing.Size(63, 12);
+            this.webEPGLabel.TabIndex = 18;
+            this.webEPGLabel.Text = "番組表URL";
+            // 
+            // webEpgUrlTextBox
+            // 
+            this.webEpgUrlTextBox.Location = new System.Drawing.Point(122, 175);
+            this.webEpgUrlTextBox.Name = "webEpgUrlTextBox";
+            this.webEpgUrlTextBox.Size = new System.Drawing.Size(478, 19);
+            this.webEpgUrlTextBox.TabIndex = 17;
             // 
             // portNumberNoteLabel
             // 
@@ -554,15 +580,6 @@ namespace RockbarForEDCB
             this.ipAddressLabel.TabIndex = 8;
             this.ipAddressLabel.Text = "IPアドレス";
             // 
-            // webEPGLabel
-            // 
-            this.webEPGLabel.AutoSize = true;
-            this.webEPGLabel.Location = new System.Drawing.Point(35, 178);
-            this.webEPGLabel.Name = "webEPGLabel";
-            this.webEPGLabel.Size = new System.Drawing.Size(63, 12);
-            this.webEPGLabel.TabIndex = 18;
-            this.webEPGLabel.Text = "番組表URL";
-            // 
             // webLinkUrlLabel
             // 
             this.webLinkUrlLabel.AutoSize = true;
@@ -587,13 +604,6 @@ namespace RockbarForEDCB
             this.ipAddressTextBox.Name = "ipAddressTextBox";
             this.ipAddressTextBox.Size = new System.Drawing.Size(166, 19);
             this.ipAddressTextBox.TabIndex = 1;
-            // 
-            // webEpgUrlTextBox
-            // 
-            this.webEpgUrlTextBox.Location = new System.Drawing.Point(122, 175);
-            this.webEpgUrlTextBox.Name = "webEpgUrlTextBox";
-            this.webEpgUrlTextBox.Size = new System.Drawing.Size(478, 19);
-            this.webEpgUrlTextBox.TabIndex = 17;
             // 
             // webLinkUrlTextBox
             // 
@@ -723,9 +733,9 @@ namespace RockbarForEDCB
             this.selectedServiceListLabel.AutoSize = true;
             this.selectedServiceListLabel.Location = new System.Drawing.Point(403, 10);
             this.selectedServiceListLabel.Name = "selectedServiceListLabel";
-            this.selectedServiceListLabel.Size = new System.Drawing.Size(75, 12);
+            this.selectedServiceListLabel.Size = new System.Drawing.Size(346, 12);
             this.selectedServiceListLabel.TabIndex = 9;
-            this.selectedServiceListLabel.Text = "選択チャンネル";
+            this.selectedServiceListLabel.Text = "選択チャンネル(\"種類\"が表示タブの決定などに使用されます。編集可。)";
             // 
             // allServiceListLabel
             // 
@@ -799,7 +809,7 @@ namespace RockbarForEDCB
             // selectedService2NetworkTypeColumnHeader
             // 
             this.selectedService2NetworkTypeColumnHeader.Text = "種類";
-            this.selectedService2NetworkTypeColumnHeader.Width = 40;
+            this.selectedService2NetworkTypeColumnHeader.Width = 48;
             // 
             // selectedService2NameColumnHeader
             // 
@@ -809,16 +819,17 @@ namespace RockbarForEDCB
             // selectedService2TsidColumnHeader
             // 
             this.selectedService2TsidColumnHeader.Text = "TSID";
+            this.selectedService2TsidColumnHeader.Width = 57;
             // 
             // selectedService2SidColumnHeader
             // 
             this.selectedService2SidColumnHeader.Text = "SID";
+            this.selectedService2SidColumnHeader.Width = 57;
             // 
             // selectedService2TvtestOptionColumnHeader
             // 
             this.selectedService2TvtestOptionColumnHeader.Text = "TVTestオプション";
             this.selectedService2TvtestOptionColumnHeader.Width = 0;
-
             // 
             // moveUpFavoriteServiceButton
             // 
@@ -877,7 +888,7 @@ namespace RockbarForEDCB
             // favoriteServiceNetworkTypeColumnHeader
             // 
             this.favoriteServiceNetworkTypeColumnHeader.Text = "種類";
-            this.favoriteServiceNetworkTypeColumnHeader.Width = 40;
+            this.favoriteServiceNetworkTypeColumnHeader.Width = 48;
             // 
             // favoriteServiceNameColumnHeader
             // 
@@ -911,8 +922,13 @@ namespace RockbarForEDCB
             // 
             // tvtestLinkageTabPage
             // 
-            this.tvtestLinkageTabPage.Controls.Add(this.tvtestDttvOptionExampleLabel);
-            this.tvtestLinkageTabPage.Controls.Add(this.tvtestBscsOptionExampleLabel);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestBs4kOptionLabel);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestSphdOptionLabel);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestBs4kOptionTextBox);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestSphdOptionTextBox);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestCatvOptionTextBox);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestCatvOptionLabel);
+            this.tvtestLinkageTabPage.Controls.Add(this.tvtestOptionExampleLabel);
             this.tvtestLinkageTabPage.Controls.Add(this.tvtestTsFileOptionExampleLabel);
             this.tvtestLinkageTabPage.Controls.Add(this.autoStartTargetGroupBox);
             this.tvtestLinkageTabPage.Controls.Add(this.autoCloseMarginNumericUpDown);
@@ -939,60 +955,132 @@ namespace RockbarForEDCB
             this.tvtestLinkageTabPage.Text = "TVTest連携";
             this.tvtestLinkageTabPage.UseVisualStyleBackColor = true;
             // 
-            // tvtestDttvOptionExampleLabel
+            // tvtestBs4kOptionLabel
             // 
-            this.tvtestDttvOptionExampleLabel.AutoSize = true;
-            this.tvtestDttvOptionExampleLabel.Location = new System.Drawing.Point(424, 89);
-            this.tvtestDttvOptionExampleLabel.Name = "tvtestDttvOptionExampleLabel";
-            this.tvtestDttvOptionExampleLabel.Size = new System.Drawing.Size(121, 24);
-            this.tvtestDttvOptionExampleLabel.TabIndex = 25;
-            this.tvtestDttvOptionExampleLabel.Text = "(例: 地デジ)\r\n/d BonDriver_PT3_T.dll";
+            this.tvtestBs4kOptionLabel.AutoSize = true;
+            this.tvtestBs4kOptionLabel.Location = new System.Drawing.Point(14, 147);
+            this.tvtestBs4kOptionLabel.Name = "tvtestBs4kOptionLabel";
+            this.tvtestBs4kOptionLabel.Size = new System.Drawing.Size(76, 12);
+            this.tvtestBs4kOptionLabel.TabIndex = 32;
+            this.tvtestBs4kOptionLabel.Text = "BS4Kオプション";
             // 
-            // tvtestBscsOptionExampleLabel
+            // tvtestSphdOptionLabel
             // 
-            this.tvtestBscsOptionExampleLabel.AutoSize = true;
-            this.tvtestBscsOptionExampleLabel.Location = new System.Drawing.Point(424, 52);
-            this.tvtestBscsOptionExampleLabel.Name = "tvtestBscsOptionExampleLabel";
-            this.tvtestBscsOptionExampleLabel.Size = new System.Drawing.Size(121, 24);
-            this.tvtestBscsOptionExampleLabel.TabIndex = 24;
-            this.tvtestBscsOptionExampleLabel.Text = "(例: BS/CS)\r\n/d BonDriver_PT3_S.dll";
+            this.tvtestSphdOptionLabel.AutoSize = true;
+            this.tvtestSphdOptionLabel.Location = new System.Drawing.Point(14, 122);
+            this.tvtestSphdOptionLabel.Name = "tvtestSphdOptionLabel";
+            this.tvtestSphdOptionLabel.Size = new System.Drawing.Size(78, 12);
+            this.tvtestSphdOptionLabel.TabIndex = 31;
+            this.tvtestSphdOptionLabel.Text = "SPHDオプション";
+            // 
+            // tvtestBs4kOptionTextBox
+            // 
+            this.tvtestBs4kOptionTextBox.Location = new System.Drawing.Point(102, 144);
+            this.tvtestBs4kOptionTextBox.Name = "tvtestBs4kOptionTextBox";
+            this.tvtestBs4kOptionTextBox.Size = new System.Drawing.Size(312, 19);
+            this.tvtestBs4kOptionTextBox.TabIndex = 30;
+            // 
+            // tvtestSphdOptionTextBox
+            // 
+            this.tvtestSphdOptionTextBox.Location = new System.Drawing.Point(102, 119);
+            this.tvtestSphdOptionTextBox.Name = "tvtestSphdOptionTextBox";
+            this.tvtestSphdOptionTextBox.Size = new System.Drawing.Size(312, 19);
+            this.tvtestSphdOptionTextBox.TabIndex = 29;
+            // 
+            // tvtestCatvOptionTextBox
+            // 
+            this.tvtestCatvOptionTextBox.Location = new System.Drawing.Point(102, 94);
+            this.tvtestCatvOptionTextBox.Name = "tvtestCatvOptionTextBox";
+            this.tvtestCatvOptionTextBox.Size = new System.Drawing.Size(312, 19);
+            this.tvtestCatvOptionTextBox.TabIndex = 28;
+            // 
+            // tvtestCatvOptionLabel
+            // 
+            this.tvtestCatvOptionLabel.AutoSize = true;
+            this.tvtestCatvOptionLabel.Location = new System.Drawing.Point(14, 97);
+            this.tvtestCatvOptionLabel.Name = "tvtestCatvOptionLabel";
+            this.tvtestCatvOptionLabel.Size = new System.Drawing.Size(79, 12);
+            this.tvtestCatvOptionLabel.TabIndex = 27;
+            this.tvtestCatvOptionLabel.Text = "CATVオプション";
+            // 
+            // tvtestOptionExampleLabel
+            // 
+            this.tvtestOptionExampleLabel.AutoSize = true;
+            this.tvtestOptionExampleLabel.Location = new System.Drawing.Point(424, 47);
+            this.tvtestOptionExampleLabel.Name = "tvtestOptionExampleLabel";
+            this.tvtestOptionExampleLabel.Size = new System.Drawing.Size(266, 96);
+            this.tvtestOptionExampleLabel.TabIndex = 25;
+            this.tvtestOptionExampleLabel.Text = resources.GetString("tvtestOptionExampleLabel.Text");
             // 
             // tvtestTsFileOptionExampleLabel
             // 
             this.tvtestTsFileOptionExampleLabel.AutoSize = true;
-            this.tvtestTsFileOptionExampleLabel.Location = new System.Drawing.Point(424, 126);
+            this.tvtestTsFileOptionExampleLabel.Location = new System.Drawing.Point(424, 151);
             this.tvtestTsFileOptionExampleLabel.Name = "tvtestTsFileOptionExampleLabel";
-            this.tvtestTsFileOptionExampleLabel.Size = new System.Drawing.Size(121, 24);
+            this.tvtestTsFileOptionExampleLabel.Size = new System.Drawing.Size(215, 36);
             this.tvtestTsFileOptionExampleLabel.TabIndex = 26;
-            this.tvtestTsFileOptionExampleLabel.Text = "(例: TS再生)\r\n/d BonDriver_Pipe.dll";
+            this.tvtestTsFileOptionExampleLabel.Text = "(例: TvtPlayでTS再生)\r\n/d BonDriver_Pipe.dll\r\n※TvtPlayの仕様上 /s は付けない方がよい";
             // 
             // autoStartTargetGroupBox
             // 
+            this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenSphdCheckBox);
+            this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenBs4kCheckBox);
+            this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenCatvCheckBox);
             this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenFavoriteServiceCheckBox);
             this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenDttvCheckBox);
             this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenCsCheckBox);
             this.autoStartTargetGroupBox.Controls.Add(this.isAutoOpenBsCheckBox);
-            this.autoStartTargetGroupBox.Location = new System.Drawing.Point(36, 291);
+            this.autoStartTargetGroupBox.Location = new System.Drawing.Point(36, 285);
             this.autoStartTargetGroupBox.Name = "autoStartTargetGroupBox";
             this.autoStartTargetGroupBox.Size = new System.Drawing.Size(229, 88);
             this.autoStartTargetGroupBox.TabIndex = 7;
             this.autoStartTargetGroupBox.TabStop = false;
-            this.autoStartTargetGroupBox.Text = "対象チャンネル";
+            this.autoStartTargetGroupBox.Text = "対象種別";
+            // 
+            // isAutoOpenSphdCheckBox
+            // 
+            this.isAutoOpenSphdCheckBox.AutoSize = true;
+            this.isAutoOpenSphdCheckBox.Location = new System.Drawing.Point(141, 36);
+            this.isAutoOpenSphdCheckBox.Name = "isAutoOpenSphdCheckBox";
+            this.isAutoOpenSphdCheckBox.Size = new System.Drawing.Size(54, 16);
+            this.isAutoOpenSphdCheckBox.TabIndex = 13;
+            this.isAutoOpenSphdCheckBox.Text = "SPHD";
+            this.isAutoOpenSphdCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // isAutoOpenBs4kCheckBox
+            // 
+            this.isAutoOpenBs4kCheckBox.AutoSize = true;
+            this.isAutoOpenBs4kCheckBox.Location = new System.Drawing.Point(79, 36);
+            this.isAutoOpenBs4kCheckBox.Name = "isAutoOpenBs4kCheckBox";
+            this.isAutoOpenBs4kCheckBox.Size = new System.Drawing.Size(52, 16);
+            this.isAutoOpenBs4kCheckBox.TabIndex = 12;
+            this.isAutoOpenBs4kCheckBox.Text = "BS4K";
+            this.isAutoOpenBs4kCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // isAutoOpenCatvCheckBox
+            // 
+            this.isAutoOpenCatvCheckBox.AutoSize = true;
+            this.isAutoOpenCatvCheckBox.Location = new System.Drawing.Point(7, 36);
+            this.isAutoOpenCatvCheckBox.Name = "isAutoOpenCatvCheckBox";
+            this.isAutoOpenCatvCheckBox.Size = new System.Drawing.Size(55, 16);
+            this.isAutoOpenCatvCheckBox.TabIndex = 11;
+            this.isAutoOpenCatvCheckBox.Text = "CATV";
+            this.isAutoOpenCatvCheckBox.UseVisualStyleBackColor = true;
             // 
             // isAutoOpenFavoriteServiceCheckBox
             // 
             this.isAutoOpenFavoriteServiceCheckBox.AutoSize = true;
-            this.isAutoOpenFavoriteServiceCheckBox.Location = new System.Drawing.Point(7, 49);
+            this.isAutoOpenFavoriteServiceCheckBox.Location = new System.Drawing.Point(7, 56);
             this.isAutoOpenFavoriteServiceCheckBox.Name = "isAutoOpenFavoriteServiceCheckBox";
-            this.isAutoOpenFavoriteServiceCheckBox.Size = new System.Drawing.Size(196, 28);
+            this.isAutoOpenFavoriteServiceCheckBox.Size = new System.Drawing.Size(158, 28);
             this.isAutoOpenFavoriteServiceCheckBox.TabIndex = 10;
-            this.isAutoOpenFavoriteServiceCheckBox.Text = "お気に入りサービスのみ\r\n(地デジ／BS／CS設定との積集合)";
+            this.isAutoOpenFavoriteServiceCheckBox.Text = "お気に入りチャンネルのみ\r\n(上記対象種別との積集合)";
             this.isAutoOpenFavoriteServiceCheckBox.UseVisualStyleBackColor = true;
             // 
             // isAutoOpenDttvCheckBox
             // 
             this.isAutoOpenDttvCheckBox.AutoSize = true;
-            this.isAutoOpenDttvCheckBox.Location = new System.Drawing.Point(7, 18);
+            this.isAutoOpenDttvCheckBox.Location = new System.Drawing.Point(7, 16);
             this.isAutoOpenDttvCheckBox.Name = "isAutoOpenDttvCheckBox";
             this.isAutoOpenDttvCheckBox.Size = new System.Drawing.Size(56, 16);
             this.isAutoOpenDttvCheckBox.TabIndex = 7;
@@ -1002,7 +1090,7 @@ namespace RockbarForEDCB
             // isAutoOpenCsCheckBox
             // 
             this.isAutoOpenCsCheckBox.AutoSize = true;
-            this.isAutoOpenCsCheckBox.Location = new System.Drawing.Point(141, 18);
+            this.isAutoOpenCsCheckBox.Location = new System.Drawing.Point(141, 16);
             this.isAutoOpenCsCheckBox.Name = "isAutoOpenCsCheckBox";
             this.isAutoOpenCsCheckBox.Size = new System.Drawing.Size(39, 16);
             this.isAutoOpenCsCheckBox.TabIndex = 9;
@@ -1012,7 +1100,7 @@ namespace RockbarForEDCB
             // isAutoOpenBsCheckBox
             // 
             this.isAutoOpenBsCheckBox.AutoSize = true;
-            this.isAutoOpenBsCheckBox.Location = new System.Drawing.Point(79, 18);
+            this.isAutoOpenBsCheckBox.Location = new System.Drawing.Point(79, 16);
             this.isAutoOpenBsCheckBox.Name = "isAutoOpenBsCheckBox";
             this.isAutoOpenBsCheckBox.Size = new System.Drawing.Size(39, 16);
             this.isAutoOpenBsCheckBox.TabIndex = 8;
@@ -1085,17 +1173,17 @@ namespace RockbarForEDCB
             // 
             this.tvTestNoteLabel.AutoSize = true;
             this.tvTestNoteLabel.ForeColor = System.Drawing.Color.Red;
-            this.tvTestNoteLabel.Location = new System.Drawing.Point(100, 153);
+            this.tvTestNoteLabel.Location = new System.Drawing.Point(100, 192);
             this.tvTestNoteLabel.Name = "tvTestNoteLabel";
-            this.tvTestNoteLabel.Size = new System.Drawing.Size(545, 48);
+            this.tvTestNoteLabel.Size = new System.Drawing.Size(545, 36);
             this.tvTestNoteLabel.TabIndex = 19;
-            this.tvTestNoteLabel.Text = "！！注意！！ \r\nチューナー共有前提です。\r\nチューナー共有していない場合、チューナーを占有してしまうことにより録画が失敗することがあるため注意してください。\r\n" +
-    "/TSID /SIDオプションは自動付与します。";
+            this.tvTestNoteLabel.Text = "/TSID /SIDオプションは自動付与します。\r\n！！注意！！ チューナー共有前提です。\r\nチューナー共有していない場合、チューナーを占有してしまうことにより録" +
+    "画が失敗することがあるため注意してください。";
             // 
             // useDoubleClickTvtestCheckBox
             // 
             this.useDoubleClickTvtestCheckBox.AutoSize = true;
-            this.useDoubleClickTvtestCheckBox.Location = new System.Drawing.Point(16, 231);
+            this.useDoubleClickTvtestCheckBox.Location = new System.Drawing.Point(16, 236);
             this.useDoubleClickTvtestCheckBox.Name = "useDoubleClickTvtestCheckBox";
             this.useDoubleClickTvtestCheckBox.Size = new System.Drawing.Size(209, 16);
             this.useDoubleClickTvtestCheckBox.TabIndex = 5;
@@ -1105,7 +1193,7 @@ namespace RockbarForEDCB
             // tvtestDttvOptionLabel
             // 
             this.tvtestDttvOptionLabel.AutoSize = true;
-            this.tvtestDttvOptionLabel.Location = new System.Drawing.Point(14, 92);
+            this.tvtestDttvOptionLabel.Location = new System.Drawing.Point(14, 47);
             this.tvtestDttvOptionLabel.Name = "tvtestDttvOptionLabel";
             this.tvtestDttvOptionLabel.Size = new System.Drawing.Size(80, 12);
             this.tvtestDttvOptionLabel.TabIndex = 17;
@@ -1113,7 +1201,7 @@ namespace RockbarForEDCB
             // 
             // tvtestDttvOptionTextBox
             // 
-            this.tvtestDttvOptionTextBox.Location = new System.Drawing.Point(102, 89);
+            this.tvtestDttvOptionTextBox.Location = new System.Drawing.Point(102, 44);
             this.tvtestDttvOptionTextBox.Name = "tvtestDttvOptionTextBox";
             this.tvtestDttvOptionTextBox.Size = new System.Drawing.Size(312, 19);
             this.tvtestDttvOptionTextBox.TabIndex = 3;
@@ -1121,7 +1209,7 @@ namespace RockbarForEDCB
             // tvtestBscsOptionLabel
             // 
             this.tvtestBscsOptionLabel.AutoSize = true;
-            this.tvtestBscsOptionLabel.Location = new System.Drawing.Point(14, 57);
+            this.tvtestBscsOptionLabel.Location = new System.Drawing.Point(14, 72);
             this.tvtestBscsOptionLabel.Name = "tvtestBscsOptionLabel";
             this.tvtestBscsOptionLabel.Size = new System.Drawing.Size(84, 12);
             this.tvtestBscsOptionLabel.TabIndex = 15;
@@ -1129,7 +1217,7 @@ namespace RockbarForEDCB
             // 
             // tvtestBscsOptionTextBox
             // 
-            this.tvtestBscsOptionTextBox.Location = new System.Drawing.Point(102, 54);
+            this.tvtestBscsOptionTextBox.Location = new System.Drawing.Point(102, 69);
             this.tvtestBscsOptionTextBox.Name = "tvtestBscsOptionTextBox";
             this.tvtestBscsOptionTextBox.Size = new System.Drawing.Size(312, 19);
             this.tvtestBscsOptionTextBox.TabIndex = 2;
@@ -1137,15 +1225,15 @@ namespace RockbarForEDCB
             // tvtestTsFileOptionLabel
             // 
             this.tvtestTsFileOptionLabel.AutoSize = true;
-            this.tvtestTsFileOptionLabel.Location = new System.Drawing.Point(11, 127);
+            this.tvtestTsFileOptionLabel.Location = new System.Drawing.Point(14, 172);
             this.tvtestTsFileOptionLabel.Name = "tvtestTsFileOptionLabel";
-            this.tvtestTsFileOptionLabel.Size = new System.Drawing.Size(80, 12);
+            this.tvtestTsFileOptionLabel.Size = new System.Drawing.Size(86, 12);
             this.tvtestTsFileOptionLabel.TabIndex = 18;
             this.tvtestTsFileOptionLabel.Text = "TS再生オプション";
             // 
             // tvtestTsFileOptionTextBox
             // 
-            this.tvtestTsFileOptionTextBox.Location = new System.Drawing.Point(102, 124);
+            this.tvtestTsFileOptionTextBox.Location = new System.Drawing.Point(102, 169);
             this.tvtestTsFileOptionTextBox.Name = "tvtestTsFileOptionTextBox";
             this.tvtestTsFileOptionTextBox.Size = new System.Drawing.Size(312, 19);
             this.tvtestTsFileOptionTextBox.TabIndex = 4;
@@ -1165,7 +1253,7 @@ namespace RockbarForEDCB
             this.tvtestOpenButton.Name = "tvtestOpenButton";
             this.tvtestOpenButton.Size = new System.Drawing.Size(75, 23);
             this.tvtestOpenButton.TabIndex = 1;
-            this.tvtestOpenButton.Text = "開く";
+            this.tvtestOpenButton.Text = "参照...";
             this.tvtestOpenButton.UseVisualStyleBackColor = true;
             this.tvtestOpenButton.Click += new System.EventHandler(this.tvtestOpenButton_Click);
             // 
@@ -1173,7 +1261,6 @@ namespace RockbarForEDCB
             // 
             this.tvtestPathTextBox.Location = new System.Drawing.Point(102, 19);
             this.tvtestPathTextBox.Name = "tvtestPathTextBox";
-            this.tvtestPathTextBox.ReadOnly = true;
             this.tvtestPathTextBox.Size = new System.Drawing.Size(312, 19);
             this.tvtestPathTextBox.TabIndex = 0;
             // 
@@ -2242,8 +2329,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox isAutoOpenFavoriteServiceCheckBox;
         private System.Windows.Forms.Label recListMaxCountLabel;
         private System.Windows.Forms.NumericUpDown recListMaxCountNumericUpDown;
-        private System.Windows.Forms.Label tvtestDttvOptionExampleLabel;
-        private System.Windows.Forms.Label tvtestBscsOptionExampleLabel;
+        private System.Windows.Forms.Label tvtestOptionExampleLabel;
         private System.Windows.Forms.Label tvtestTsFileOptionExampleLabel;
         private System.Windows.Forms.CheckBox toggleVisibleTaskTrayIconClickCheckBox;
         private System.Windows.Forms.CheckBox storeTaskTrayByClosingCheckBox;
@@ -2339,5 +2425,14 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label taskTrayIconLeftDoubleClickLabel;
         private System.Windows.Forms.Label taskTrayIconLeftClickLabel;
         private System.Windows.Forms.GroupBox taskTrayIconClickGroupBox;
+        private System.Windows.Forms.Label tvtestCatvOptionLabel;
+        private System.Windows.Forms.TextBox tvtestCatvOptionTextBox;
+        private System.Windows.Forms.Label tvtestSphdOptionLabel;
+        private System.Windows.Forms.TextBox tvtestBs4kOptionTextBox;
+        private System.Windows.Forms.TextBox tvtestSphdOptionTextBox;
+        private System.Windows.Forms.Label tvtestBs4kOptionLabel;
+        private System.Windows.Forms.CheckBox isAutoOpenCatvCheckBox;
+        private System.Windows.Forms.CheckBox isAutoOpenSphdCheckBox;
+        private System.Windows.Forms.CheckBox isAutoOpenBs4kCheckBox;
     }
 }

@@ -116,7 +116,7 @@ namespace RockbarForEDCB
                     // 選択中タブ（地デジ / BS / CS）と不一致のサービスは除外する
                     if (selectedTab == MainFormTabType.DTTV && networkType != NetworkType.DTTV) continue;
                     if (selectedTab == MainFormTabType.BS && (networkType != NetworkType.BS && networkType != NetworkType.BS4K)) continue;
-                    if (selectedTab == MainFormTabType.CS && (networkType != NetworkType.CS && networkType != NetworkType.SPHD)) continue;
+                    if (selectedTab == MainFormTabType.CS && (networkType != NetworkType.CS && networkType != NetworkType.CATV && networkType != NetworkType.SPHD)) continue;
 
                     // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
                     string serviceName = GetServiceName(ushort.Parse(service.Tsid), ushort.Parse(service.Sid));
