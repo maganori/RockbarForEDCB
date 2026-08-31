@@ -415,6 +415,24 @@ namespace RockbarForEDCB
                 _listViewEventHandler.HandleReserveMouseUp(sender, e, mainListView);
                 return;
             }
+            // 録画タブ
+            else if (mainFormTabControl.SelectedTab == recTabPage)
+            {
+                // 何もしない
+                return;
+            }
+            // 新番組タブ
+            else if (mainFormTabControl.SelectedTab == newProgramTabPage)
+            {
+                _listViewEventHandler.HandleNewProgramMouseUp(sender, e, mainListView);
+                return;
+            }
+            // チャンネルタブ
+            else
+            {
+                _listViewEventHandler.HandleServiceMouseUp(sender, e, mainListView);
+                return;
+            }
         }
 
         /// <summary>
