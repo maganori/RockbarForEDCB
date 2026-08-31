@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -63,8 +64,7 @@ namespace RockbarForEDCB
 
                 _contextMenu.Items.Clear();
 
-                EpgServiceEventInfo sv = null;
-                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out sv);
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo sv);
 
                 // EPG未取得チャンネルは処理を抜ける
                 if (sv == null)
@@ -101,6 +101,58 @@ namespace RockbarForEDCB
                 }
 
                 _contextMenu.Show((Control)sender, new Point(0, e.Y));
+            }
+        }
+
+        /// <summary>
+        /// チャンネル一覧のマウス中央クリック処理
+        /// 中央クリック時、対象の番組情報を予約追加か、予約有効・無効を切り替える。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        /// <param name="targetListView">対象のListView</param>
+        public void HandleServiceMouseUp(object sender, MouseEventArgs e, ListView targetListView)
+        {
+            //中央クリック
+            if (e.Button == MouseButtons.Middle)
+            {
+                // クリックした箇所が自動選択されるので拾う
+                var selected = targetListView.GetItemAt(e.Location.X, e.Location.Y); //フォーカスが当たっていなくても取得
+
+                if (selected == null)
+                {
+                    return;
+                }
+
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo sv);
+
+                // EPG未取得チャンネルは処理を抜ける
+                if (sv == null)
+                {
+                    return;
+                }
+
+                // 終了していないイベントのみ抽出して開始日時順にソート
+                var ev = sv.eventList
+                    .FindAll(x => x.start_time.AddSeconds(x.durationSec) >= DateTime.Now)
+                    .OrderBy(a => a.start_time)
+                    .FirstOrDefault();
+
+                if (ev == null)
+                {
+                    return;
+                }
+
+                // 既に予約済みであれば、予約の有効・無効を切り替える
+                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData))
+                {
+                    ToggleRecMode(reserveData);
+                    return;
+                }
+
+                // 予約がなければ予約を追加する
+                AddProgramReserve(ev);
             }
         }
 
@@ -189,6 +241,43 @@ namespace RockbarForEDCB
                     CreateProgramDetailMenuItems(_contextMenu.Items, ev, reserveData);
 
                     _contextMenu.Show((Control)sender, e.Location);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 新番組一覧のマウス中央クリック処理
+        /// 中央クリック時、対象の番組情報を予約追加か、予約有効・無効を切り替える。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        /// <param name="targetListView">対象のListView</param>
+        public void HandleNewProgramMouseUp(object sender, MouseEventArgs e, ListView targetListView)
+        {
+            //中央クリック
+            if (e.Button == MouseButtons.Middle)
+            {
+                // クリックした箇所が自動選択されるので拾う
+                var selected = targetListView.GetItemAt(e.Location.X, e.Location.Y); //フォーカスが当たっていなくても取得
+
+                if (selected == null)
+                {
+                    return;
+                }
+
+                // Tagに格納されているものがEpgEventInfoならevへ代入
+                if (selected.Tag is EpgEventInfo ev)
+                {
+                    // 既に予約済みであれば、予約の有効・無効を切り替える
+                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData))
+                    {
+                        ToggleRecMode(reserveData);
+                        return;
+                    }
+
+                    // 予約がなければ予約を追加する
+                    AddProgramReserve(ev);
                 }
             }
         }
@@ -384,7 +473,7 @@ namespace RockbarForEDCB
                     // 検索機能
                     if (!string.IsNullOrEmpty(recFile.Title))
                     {
-                        AddSearchMenuItems(_contextMenu.Items, recFile.Title);
+                        AddWebSearchMenuItems(_contextMenu.Items, recFile.Title);
                         _contextMenu.Items.Add(new ToolStripSeparator());
                     }
 
@@ -594,6 +683,72 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// 録画予約の追加処理
+        /// </summary>
+        private void AddProgramReserve(EpgEventInfo ev)
+        {
+            // 放送がない時間帯
+            if (ev.ShortInfo == null || ev.ShortInfo.event_name == null)
+            {
+                Debug.WriteLine("放送がない時間帯");
+                return;
+            }
+
+            // 重複予約になっていないかチェック
+            string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+            if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData))
+            {
+                //System.Diagnostics.Debug.WriteLine($"[Debug] Title: {reserveData.Title}");
+                return;
+            }
+
+            // EPGのサービス名を使用
+            string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
+            _epgDataManager.ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
+            string serviceName = matchedService.serviceInfo?.service_name;
+
+            // EpgEventInfo から基本情報とID群をセット
+            var reserve = new ReserveData
+            {
+                Title = ev.ShortInfo.event_name,
+                StartTime = ev.start_time,
+                DurationSecond = ev.durationSec,
+                StationName = serviceName,
+
+                OriginalNetworkID = ev.original_network_id,
+                TransportStreamID = ev.transport_stream_id,
+                ServiceID = ev.service_id,
+                EventID = ev.event_id,
+
+                Comment = "RockbarForEDCB予約",
+
+                ReserveID = 0, // 新規登録時は 0（自動採番）
+
+                ////UnusedRecWaitFlag = 0,
+                //OverlapMode = 0,
+                ////UnusedRecFilePath = "",
+                StartTimeEpg = ev.start_time, // EPG上の番組開始時刻
+                RecSetting = new RecSettingData
+                {
+                    RecMode = 1 // 0:全サービス, 1: 指定サービス（EDCBデフォルト）
+                },
+                //ReserveStatus = 0,
+                //RecFileNameList = new List<string>(), //未指定でよい
+                ////UnusedParam1 = 0,
+                //AutoAddInfo = new List<EpgAutoAddBasicInfo>(),
+
+            };
+
+            // サーバーへ予約追加コマンド送信
+            var err = _ctrlCmdUtil.SendAddReserve(new List<ReserveData> { reserve });
+            if (err != ErrCode.CMD_SUCCESS)
+            {
+                MessageBox.Show("録画予約登録でエラーが発生しました。", "録画予約登録エラー");
+            }
+            _refreshList?.Invoke(true, false, false);
+        }
+
+        /// <summary>
         /// マウスクリック処理に応じてテキストのコピーをする
         /// </summary>
         /// <param name="text">対象テキスト</param>
@@ -739,11 +894,21 @@ namespace RockbarForEDCB
             string title = ev?.ShortInfo?.event_name ?? reserveData?.Title;
             if (!string.IsNullOrEmpty(title))
             {
-                AddSearchMenuItems(menuItems, title);
+                AddWebSearchMenuItems(menuItems, title);
                 menuItems.Add(new ToolStripSeparator());
             }
+
+            // 予約データが存在しない場合
+            if (reserveData == null && ev != null)
+            {
+                // 予約の追加 
+                var item = menuItems.Add(">> 予約する");
+                item.Click += (s2, e2) => AddProgramReserve(ev);
+                menuItems.Add(new ToolStripSeparator());
+
+            }
             // 予約データが存在する場合
-            if (reserveData != null)
+            else if (reserveData != null)
             {
                 // 予約の有効・無効切り替え 
                 var reserveItem = menuItems.Add(reserveData.RecSetting.IsNoRec() ? ">> 予約を有効にする" : ">> 予約を無効にする");
@@ -751,12 +916,13 @@ namespace RockbarForEDCB
                 menuItems.Add(new ToolStripSeparator());
 
                 // 予約コメント
-                if (!string.IsNullOrEmpty(reserveData.Comment))
-                {
-                    var item = menuItems.Add($"予約コメント : {reserveData.Comment}");
-                    item.Click += (s2, e2) => CopyText(reserveData.Comment);
-                    item.ToolTipText = "クリックで予約コメントをコピー";
-                }
+                string displayText = !string.IsNullOrEmpty(reserveData.Comment)
+                    ? $"予約コメント : {reserveData.Comment}"
+                    : "予約コメントなし(EPG手動予約)";
+
+                var item = menuItems.Add(displayText);
+                item.Click += (s2, e2) => CopyText(reserveData.Comment);
+                item.ToolTipText = "クリックで予約コメントをコピー";
 
                 // 録画フォルダ（デフォルト以外が設定された場合に表示される）
                 if (reserveData.RecSetting.RecFolderList.Count > 0)
@@ -858,7 +1024,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// タイトル文字列から検索用メニュー（Google / Lucky）を構築して追加
         /// </summary>
-        private void AddSearchMenuItems(ToolStripItemCollection menuItems, string rawTitle)
+        private void AddWebSearchMenuItems(ToolStripItemCollection menuItems, string rawTitle)
         {
             if (string.IsNullOrEmpty(rawTitle)) return;
 
