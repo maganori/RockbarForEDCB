@@ -77,6 +77,57 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// スクロール位置と選択状態の保持、BeginUpdate/EndUpdate、Clear、列幅調整を一括で行うラッパー
+        /// </summary>
+        private DateTime BuildListWrapper(ListView listView, Func<DateTime> buildItemsAction)
+        {
+            // 再描画前の TopItem のキー と 選択項目のキー を保持
+            string topItemKey = listView.TopItem?.Name;
+            string selectedItemKey = listView.SelectedItems.Count > 0 ? listView.SelectedItems[0].Name : null;
+
+            DateTime nextRefreshTime = DateTime.MaxValue;
+
+            // 描画を一時停止して構築処理を実行
+            listView.BeginUpdate();
+            try
+            {
+                // 一覧を全件クリア
+                listView.Items.Clear();
+
+                // 一覧を呼び出し元メソッドで構築
+                nextRefreshTime = buildItemsAction();
+            }
+            finally
+            {
+                // 描画を再開
+                listView.EndUpdate();
+            }
+
+            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
+            AdjustListViewColumns(listView);
+
+            // スクロール位置 (TopItem) の復元
+            if (!string.IsNullOrEmpty(topItemKey) && listView.Items.ContainsKey(topItemKey))
+            {
+                if (listView.Items.Count > 0)
+                {
+                    listView.Items[listView.Items.Count - 1].EnsureVisible();
+                }
+                listView.Items[topItemKey].EnsureVisible();
+            }
+
+            // 選択状態およびフォーカスの復元
+            if (!string.IsNullOrEmpty(selectedItemKey) && listView.Items.ContainsKey(selectedItemKey))
+            {
+                listView.Items[selectedItemKey].Selected = true;
+                listView.Items[selectedItemKey].Focused = true;
+            }
+
+            // 次回更新候補時刻を呼び出しBuildListメソッドに返す
+            return nextRefreshTime;
+        }
+
+        /// <summary>
         /// チャンネル一覧の生成
         /// 全て、地デジ、BS、CS（ListView）の生成および描画を行い、次回画面更新が必要となる最速の時刻を取得します。
         /// </summary>
@@ -85,16 +136,11 @@ namespace RockbarForEDCB
         /// <returns>次回更新が必要になる時刻</returns>
         public DateTime BuildServiceList(ListView targetListView, MainFormTabType selectedTab)
         {
-            DateTime now = DateTime.Now;
-            DateTime minNextRefreshTime = DateTime.MaxValue;
-
-            // チラつきを抑えるため描画を停止
-            targetListView.BeginUpdate();
-
-            try
+            // 初期化処理と最終処理をラッパーメソッドで行う
+            return BuildListWrapper(targetListView, () =>
             {
-                // 一覧を全件クリア
-                targetListView.Items.Clear();
+                DateTime now = DateTime.Now;
+                DateTime minNextRefreshTime = DateTime.MaxValue;
 
                 List<Service> services = (selectedTab == MainFormTabType.Favorite)
                      ? _configManager.FavoriteServiceList
@@ -203,17 +249,10 @@ namespace RockbarForEDCB
                 // 列3: 番組名（残りの幅をすべて充当）
                 int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
                 targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
-            }
-            finally
-            {
-                // 描画を再開
-                targetListView.EndUpdate();
-            }
-            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            AdjustListViewColumns(targetListView);
 
-            // 次回更新候補時刻を返す
-            return minNextRefreshTime;
+                // 次回更新候補時刻をラッパーメソッドに渡し、ラッパーメソッドで残り処理を行う
+                return minNextRefreshTime;
+            });
         }
 
         /// <summary>
@@ -224,16 +263,11 @@ namespace RockbarForEDCB
         /// <returns>次回更新が必要になる時刻</returns>
         public DateTime BuildNewProgramList(ListView targetListView)
         {
-            DateTime now = DateTime.Now;
-            DateTime minNextRefreshTime = DateTime.MaxValue;
-
-            // チラつきを抑えるため描画を停止
-            targetListView.BeginUpdate();
-
-            try
+            // 初期化処理と最終処理をラッパーメソッドで行う
+            return BuildListWrapper(targetListView, () =>
             {
-                // 一覧を全件クリア
-                targetListView.Items.Clear();
+                DateTime now = DateTime.Now;
+                DateTime minNextRefreshTime = DateTime.MaxValue;
 
                 if (_epgDataManager.ServiceEvents == null) return DateTime.MinValue;
 
@@ -291,7 +325,7 @@ namespace RockbarForEDCB
                     // UI要素（ListViewItem）の生成
                     ListViewItem item = new ListViewItem(new[] { reserveString, timeText, serviceName, eventTitle })
                     {
-                        Name = key,
+                        Name = eventKey,
                         Tag = ev,
                         ToolTipText = ev.ShortInfo?.text_char ?? eventTitle,
                         ForeColor = _foreColor,
@@ -325,17 +359,10 @@ namespace RockbarForEDCB
                 // 列3: 番組名（残りの幅をすべて充当）
                 int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
                 targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
-            }
-            finally
-            {
-                // 描画再開
-                targetListView.EndUpdate();
-            }
-            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            AdjustListViewColumns(targetListView);
 
-            // 次回更新候補時刻を返す
-            return minNextRefreshTime;
+                // 次回更新候補時刻をラッパーメソッドに渡し、ラッパーメソッドで残り処理を行う
+                return minNextRefreshTime;
+            });
         }
 
         /// <summary>
@@ -345,16 +372,11 @@ namespace RockbarForEDCB
         /// <returns>次回更新が必要になる時刻</returns>
         public DateTime BuildReserveList(ListView targetListView)
         {
-            DateTime now = DateTime.Now;
-            DateTime minNextRefreshTime = DateTime.MaxValue;
-
-            // チラつきを抑えるため描画を停止
-            targetListView.BeginUpdate();
-
-            try
+            // 初期化処理と最終処理をラッパーメソッドで行う
+            return BuildListWrapper(targetListView, () =>
             {
-                // 一覧を全件クリア
-                targetListView.Items.Clear();
+                DateTime now = DateTime.Now;
+                DateTime minNextRefreshTime = DateTime.MaxValue;
 
                 foreach (var reserveData in _epgDataManager.ReserveDatas.OrderBy(r => r.StartTime))
                 {
@@ -437,17 +459,10 @@ namespace RockbarForEDCB
                 // 列3: 番組名（残りの幅をすべて充当）
                 int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
                 targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
-            }
-            finally
-            {
-                // 描画を再開
-                targetListView.EndUpdate();
-            }
-            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            AdjustListViewColumns(targetListView);
 
-            // 次回更新候補時刻を返す
-            return minNextRefreshTime;
+                // 次回更新候補時刻をラッパーメソッドに渡し、ラッパーメソッドで残り処理を行う
+                return minNextRefreshTime;
+            });
         }
 
         /// <summary>
@@ -456,13 +471,11 @@ namespace RockbarForEDCB
         /// <param name="targetListView">描画対象のListView</param>
         public void BuildRecList(ListView targetListView)
         {
-            // チラつきを抑えるため描画を停止
-            targetListView.BeginUpdate();
-
-            try
+            // 初期化処理と最終処理をラッパーメソッドで行う
+            BuildListWrapper(targetListView, () =>
             {
-                // 一覧を全件クリア
-                targetListView.Items.Clear();
+                // ラッパーメソッドにダミーのNextRefreshTimeを渡す用(処理共通化のため)
+                DateTime minNextRefreshTime = DateTime.MaxValue;
 
                 foreach (var recFile in _epgDataManager.RecFileInfos)
                 {
@@ -555,14 +568,10 @@ namespace RockbarForEDCB
                 // 列3: 番組名（残りの幅をすべて充当）
                 int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
                 targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
-            }
-            finally
-            {
-                // 描画を再開
-                targetListView.EndUpdate();
-            }
-            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            AdjustListViewColumns(targetListView);
+
+                // (ダミーの)次回更新候補時刻をラッパーメソッドに渡し、ラッパーメソッドで残り処理を行う
+                return minNextRefreshTime;
+            });
         }
 
         /// <summary>
@@ -572,17 +581,12 @@ namespace RockbarForEDCB
         /// <returns>次回更新が必要になる時刻</returns>
         public DateTime BuildTunerList(ListView targetListView)
         {
-            // チラつきを抑えるため描画を停止
-            targetListView.BeginUpdate();
-
-            // 次回更新時間判定用：現在時刻以降で最も近いイベント時刻（開始 or 終了）を保持
-            DateTime now = DateTime.Now;
-            DateTime minNextRefreshTime = DateTime.MaxValue;
-
-            try
+            // 初期化処理と最終処理をラッパーメソッドで行う
+            return BuildListWrapper(targetListView, () =>
             {
-                // 一覧を全件クリア
-                targetListView.Items.Clear();
+                // 次回更新時間判定用：現在時刻以降で最も近いイベント時刻（開始 or 終了）を保持
+                DateTime now = DateTime.Now;
+                DateTime minNextRefreshTime = DateTime.MaxValue;
 
                 // チューナー表示
                 foreach (var tuner in _epgDataManager.TunerReserveInfos)
@@ -686,17 +690,10 @@ namespace RockbarForEDCB
                 // 列3: 番組名（残りの幅をすべて充当）
                 int remainingWidth = targetListView.ClientSize.Width - (col0Width + col1Width + col2Width);
                 targetListView.Columns[3].Width = Math.Max(100, remainingWidth - 2);
-            }
-            finally
-            {
-                // 描画を再開
-                targetListView.EndUpdate();
-            }
-            // 前回垂直スクロールバーがない状態からある状態になると水平スクロールバーが出るため再調整
-            AdjustListViewColumns(targetListView);
 
-            // 次回更新候補時刻を返す
-            return minNextRefreshTime;
+                // 次回更新候補時刻をラッパーメソッドに渡し、ラッパーメソッドで残り処理を行う
+                return minNextRefreshTime;
+            });
         }
 
         /// <summary>
