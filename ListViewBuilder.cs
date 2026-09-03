@@ -33,6 +33,9 @@ namespace RockbarForEDCB
         private int _maxServiceNameWidth = -1;
         private int _maxTunerNameWidth = -1;
 
+        // 設定ファイルのサービス名辞書
+        private Dictionary<string, string> _serviceNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
         /// <summary>
         /// 検索フィルタ文字列
         /// </summary>
@@ -74,6 +77,28 @@ namespace RockbarForEDCB
             _columnPadding = GetColumnPadding(font);
             _maxServiceNameWidth = GetMaxServiceNameWidth(font);
             _maxTunerNameWidth = GetMaxTunerNameWidth(font);
+
+            // チャンネルキー -> サービス名 の辞書生成（キー重複対策に GroupBy を使用）
+            RebuildServiceCaches();
+        }
+
+        private void RebuildServiceCaches()
+        {
+            var services = _configManager.SelectedServiceList;
+            if (services == null)
+            {
+                _serviceNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                return;
+            }
+
+            // チャンネルキー -> サービス名 の辞書を1つだけ作成
+            _serviceNameCache = services
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .ToDictionary(
+                    x => RockbarUtility.GetKey(x.Tsid, x.Sid),
+                    x => x.Name,
+                    StringComparer.OrdinalIgnoreCase
+                );
         }
 
         /// <summary>
@@ -290,8 +315,7 @@ namespace RockbarForEDCB
 
                     // サービス（チャンネル）の決定
                     string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-                    Service service = _configManager.SelectedServiceList?.FirstOrDefault(x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-                    if (service == null)
+                    if (!_serviceNameCache.ContainsKey(key))
                     {
                         continue; // 登録チャンネル一覧にない場合は処理を飛ばす
                     }
@@ -723,13 +747,10 @@ namespace RockbarForEDCB
         {
             string key = RockbarUtility.GetKey(transportStreamId, serviceId);
 
-            // 設定ファイルのチャンネル名を最優先
-            Service service = _configManager.SelectedServiceList?.FirstOrDefault(
-                x => RockbarUtility.GetKey(x.Tsid, x.Sid) == key);
-
-            if (!string.IsNullOrWhiteSpace(service?.Name))
+            // 設定ファイルのチャンネル名を最優先(辞書化したものから検索)
+            if (_serviceNameCache.TryGetValue(key, out string cachedName))
             {
-                return service.Name;
+                return cachedName;
             }
 
             // 設定ファイルのチャンネル名がない場合はEPGのサービス名を使用
