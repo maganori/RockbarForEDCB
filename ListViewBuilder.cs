@@ -36,10 +36,58 @@ namespace RockbarForEDCB
         // 設定ファイルのサービス名辞書
         private Dictionary<string, string> _serviceNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        // 検索フィルタ文字列保持用
+        private string _filterText = string.Empty;
+
+        // 検索フィルタ文字列正規化版（分割+半角化）保持用
+        private string[] _normalizedIncludeWords = Array.Empty<string>();
+        private string[] _normalizedExcludeWords = Array.Empty<string>();
+
         /// <summary>
         /// 検索フィルタ文字列
         /// </summary>
-        public string FilterText { get; set; } = string.Empty;
+        public string FilterText
+        {
+            get => _filterText;
+            set
+            {
+                // 渡された値がnullだった場合、""を代入
+                _filterText = value ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(_filterText))
+                {
+                    _normalizedIncludeWords = Array.Empty<string>();
+                    _normalizedExcludeWords = Array.Empty<string>();
+                    return;
+                }
+
+                // フィルターテキストがセットされた時、分割＆半角化
+                var separators = new[] { ' ', '　' }; // 全角スペースも分割対象に含める
+                var rawWords = _filterText.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+                var includes = new List<string>();
+                var excludes = new List<string>();
+
+                foreach (var word in rawWords)
+                {
+                    // ハイフンから始まる場合は除外ワードへ（先頭の - を削る）
+                    if (word.StartsWith("-"))
+                    {
+                        string excludeWord = ToHankaku(word.TrimStart('-'));
+                        if (!string.IsNullOrEmpty(excludeWord))
+                        {
+                            excludes.Add(excludeWord);
+                        }
+                    }
+                    else
+                    {
+                        includes.Add(ToHankaku(word));
+                    }
+                }
+
+                _normalizedIncludeWords = includes.ToArray();
+                _normalizedExcludeWords = excludes.ToArray();
+            }
+        }
 
         /// <summary>
         /// 録画済み情報のツールチップテキスト作成デリゲート
@@ -932,33 +980,43 @@ namespace RockbarForEDCB
         /// </summary>
         private bool IsMatchFilter(params string[] targets)
         {
-            if (string.IsNullOrWhiteSpace(FilterText))
+            if (_normalizedIncludeWords.Length == 0 && _normalizedExcludeWords.Length == 0)
             {
                 return true;
             }
 
-            var separators = new char[] { ' ', ' ' };
-            var filterWords = FilterText.Split(separators, StringSplitOptions.RemoveEmptyEntries);
-
+            // 比較用にターゲット側を半角化
             var normalizedTargets = targets
                 .Where(t => !string.IsNullOrEmpty(t))
                 .Select(t => ToHankaku(t))
                 .ToList();
 
-            foreach (var word in filterWords)
+            // 【NOT判定】除外キーワードが1つでも含まれていたら不一致
+            foreach (var excludeWord in _normalizedExcludeWords)
             {
-                string normalizedWord = ToHankaku(word);
+                foreach (var target in normalizedTargets)
+                {
+                    if (target.IndexOf(excludeWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return false;
+                    }
+                }
+            }
 
+            // 【AND判定】通常キーワードがすべて含まれているかチェック
+            foreach (var includeWord in _normalizedIncludeWords)
+            {
                 bool wordMatched = false;
                 foreach (var target in normalizedTargets)
                 {
-                    if (target.IndexOf(normalizedWord, StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (target.IndexOf(includeWord, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         wordMatched = true;
                         break;
                     }
                 }
 
+                // 含まれていない通常キーワードがあれば不一致
                 if (!wordMatched)
                 {
                     return false;
