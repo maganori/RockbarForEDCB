@@ -82,12 +82,21 @@ namespace RockbarForEDCB
 
                 foreach (var ev in afterEventList)
                 {
+                    // 映像情報が無いものは含めない (他候補メモ：ShortInfo, AudioInfo)
+                    if (ev.ComponentInfo == null) continue;
+
                     // 該当イベントが予約済みであれば予約情報を取得
                     string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
                     _epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData);
 
                     // コンテキストメニューに番組項目を追加
                     _contextMenu.Items.Add(CreateProgramSummaryMenuItem(ev, reserveData, false));
+                }
+
+                // 追加された番組情報が0件だった場合の処理
+                if (_contextMenu.Items.Count == 0)
+                {
+                    _contextMenu.Items.Add(new ToolStripMenuItem("直近の30件で表示する番組情報はありません") { Enabled = false });
                 }
 
                 _contextMenu.Show((Control)sender, new Point(0, e.Y));
