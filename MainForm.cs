@@ -282,7 +282,7 @@ namespace RockbarForEDCB
             // 録画情報更新必要有無判定
             bool isRecDataUpdateRequired = 
                 mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いているか
-                DateTime.Now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval; //前回更新時間から時間経過しているか
+                now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval; //前回更新時間から時間経過しているか
 
             // EpgTimerSrvと通信する
             if (_canConnect)
@@ -539,9 +539,9 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void timer_Tick(object sender, EventArgs e)
         {
-            DateTime timerTime = DateTime.Now;
+            DateTime now = DateTime.Now;
 
-            if (timerTime.Second == 0)
+            if (now.Second == 0)
             {
                 RefreshList(true, false, false);
             }

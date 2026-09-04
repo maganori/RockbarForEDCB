@@ -130,14 +130,14 @@ namespace RockbarForEDCB
                 return;
             }
 
-            DateTime timerTime = DateTime.Now;
+            DateTime now = DateTime.Now;
 
             // TVTest自動起動
             // 実実装としては毎秒チェックするのではなく、毎分(59-マージン)秒タイミングで次の1分間に始まる番組をオープンする
-            if (timerTime.Second == (59 - _configManager.RockbarSetting.AutoOpenMargin))
+            if (now.Second == (59 - _configManager.RockbarSetting.AutoOpenMargin))
             {
                 // 0の場合はこの1分間なので59秒加算
-                DateTime checkTime = timerTime.AddSeconds(59);
+                DateTime checkTime = now.AddSeconds(59);
 
                 // お気に入りサービスのキー(大した件数ではない想定なので毎秒計算し直しで良いものとする)
                 var favoriteServiceMap = favoriteServiceList?
@@ -188,7 +188,7 @@ namespace RockbarForEDCB
             // TVTest自動終了
             // 現時点のオプションにかかわらず、自身が開いたTVTestは予約終了時間でクローズ
             // 実実装としては毎秒チェックするのではなく、毎分マージン秒タイミングで現在放送してない番組をクローズ
-            if (timerTime.Second == _configManager.RockbarSetting.AutoCloseMargin)
+            if (now.Second == _configManager.RockbarSetting.AutoCloseMargin)
             {
                 // 閉じてるプロセスは取り除く
                 var keys = _tvtestProcesses.Keys.ToList();
@@ -215,8 +215,7 @@ namespace RockbarForEDCB
                 // 現在放送中番組を抽出
                 foreach (var data in reserveDatas)
                 {
-                    // 途中処理があまりに遅いと、タイマー開始時とNowでズレが生じる可能性あり。問題がでたら検討
-                    if (data.StartTime < DateTime.Now && data.StartTime.AddSeconds(data.DurationSecond) > DateTime.Now)
+                    if (data.StartTime < now && data.StartTime.AddSeconds(data.DurationSecond) > now)
                     {
                         // 予約方法次第で同一番組が二重に登録されているケースあり
                         var key = RockbarUtility.GetKey(data.TransportStreamID, data.ServiceID);
