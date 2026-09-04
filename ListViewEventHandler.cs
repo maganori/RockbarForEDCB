@@ -658,6 +658,58 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// チューナー一覧のマウス中央クリック処理
+        /// 中央クリック時、対象の番組情報を予約追加か、予約有効・無効を切り替える。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        /// <param name="targetListView">対象のListView</param>
+        public void HandleTunerMouseUp(object sender, MouseEventArgs e, ListView targetListView)
+        {
+            //HandleServiceMouseUp(sender, e, targetListView);
+            ////中央クリック
+            if (e.Button == MouseButtons.Middle)
+            {
+                // クリックした箇所が自動選択されるので拾う
+                var selected = targetListView.GetItemAt(e.Location.X, e.Location.Y); //フォーカスが当たっていなくても取得
+
+                if (selected == null)
+                {
+                    return;
+                }
+
+                // selected.Name (tunerID.ToString()) から TunerReserveInfo を検索
+                TunerReserveInfo tunerReserveInfo = _epgDataManager.TunerReserveInfos
+                            .Find(x => x.tunerID.ToString() == selected.Name);
+
+                if (tunerReserveInfo == null || tunerReserveInfo.reserveList == null)
+                {
+                    return;
+                }
+
+                DateTime now = DateTime.Now;
+
+                // 対象チューナーに割り当てられた予約ID集合を取得
+                HashSet<uint> reserveIds = tunerReserveInfo.reserveList.ToHashSet();
+
+                // 現在時刻以降に終了する予約の中で、最も終了時刻が早いものを取得
+                var reserveData = _epgDataManager.ReserveDatas
+                    .FindAll(x => reserveIds.Contains(x.ReserveID))
+                    .Where(x => x.StartTime.AddSeconds(x.DurationSecond) > now)
+                    .OrderBy(x => x.StartTime.AddSeconds(x.DurationSecond))
+                    .FirstOrDefault();
+
+                if (reserveData == null)
+                {
+                    return;
+                }
+
+                // 既に予約済みのため、予約の有効・無効を切り替える
+                ToggleRecMode(reserveData);
+            }
+        }
+
+        /// <summary>
         /// 録画予約モード有効・無効の切り替え処理
         /// 予約有効時は無効化、無効時は有効化する。
         /// </summary>
