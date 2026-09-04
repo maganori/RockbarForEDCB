@@ -493,6 +493,17 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// subListViewマウスアップ時処理
+        /// 中央ボタンのクリック検出用。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void subListView_MouseUp(object sender, MouseEventArgs e)
+        {
+            _listViewEventHandler.HandleTunerMouseUp(sender, e, subListView);
+        }
+
+        /// <summary>
         /// フォーム初回表示完了時処理
         /// </summary>
         private void MainForm_Shown(object sender, EventArgs e)

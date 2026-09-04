@@ -263,6 +263,7 @@
             this.subListView.UseCompatibleStateImageBehavior = false;
             this.subListView.View = System.Windows.Forms.View.Details;
             this.subListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.subListView_MouseClick);
+            this.subListView.MouseUp += new System.Windows.Forms.MouseEventHandler(this.subListView_MouseUp);
             // 
             // columnHeader6
             // 
