@@ -242,8 +242,8 @@ namespace RockbarForEDCB
 
                     // 現在放送中の番組を取得
                     EpgEventInfo ev = matchedService?.eventList.Find(x =>
-                        x.start_time <= DateTime.Now &&
-                        x.start_time.AddSeconds(x.durationSec) >= DateTime.Now);
+                        x.start_time <= now &&
+                        x.start_time.AddSeconds(x.durationSec) >= now);
 
                     // EPG情報が無い場合と現在放送中の番組が無い場合のタイトル設定
                     string eventTitle = ev?.ShortInfo?.event_name ?? (matchedService == null ? "EPG未取得" : "");
@@ -285,7 +285,7 @@ namespace RockbarForEDCB
                     // 色変更
                     if (ev != null)
                     {
-                        item.BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec));
+                        item.BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec), now);
                     }
 
                     targetListView.Items.Add(item);
@@ -401,7 +401,7 @@ namespace RockbarForEDCB
                         Tag = ev,
                         ToolTipText = ev.ShortInfo?.text_char ?? eventTitle,
                         ForeColor = _foreColor,
-                        BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec))
+                        BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec), now)
                     };
 
                     targetListView.Items.Add(item);
@@ -456,7 +456,7 @@ namespace RockbarForEDCB
                     DateTime endTime = startTime.AddSeconds(reserveData.DurationSecond);
 
                     // 過去の予約（すでに終了しているもの）は表示しない
-                    if (endTime <= DateTime.Now)
+                    if (endTime <= now)
                     {
                         continue;
                     }
@@ -508,7 +508,7 @@ namespace RockbarForEDCB
                         Name = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID),
                         ToolTipText = $"{startTime:yyyy/MM/dd(ddd) HH:mm}～{endTime:HH:mm} {title}",
                         ForeColor = _foreColor,
-                        BackColor = GetReserveBackColor(reserveStatus, startTime, endTime)
+                        BackColor = GetReserveBackColor(reserveStatus, startTime, endTime, now)
                     };
 
                     targetListView.Items.Add(item);
@@ -688,7 +688,7 @@ namespace RockbarForEDCB
                         DateTime endTime = startTime.AddSeconds(nearestReserve.DurationSecond);
 
                         // 録画中判定
-                        isRecording = startTime <= DateTime.Now && endTime >= DateTime.Now;
+                        isRecording = startTime <= now && endTime >= now;
 
                         // --- チャンネル名の取得 ---
                         // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
@@ -862,7 +862,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// 予約ステータスと時刻から適切な背景色を取得します。
         /// </summary>
-        private Color GetReserveBackColor(ReserveStatus reserveStatus, DateTime startTime, DateTime endTime)
+        private Color GetReserveBackColor(ReserveStatus reserveStatus, DateTime startTime, DateTime endTime, DateTime now)
         {
             // 予約情報がない場合
             if (reserveStatus == ReserveStatus.NONE)
@@ -885,7 +885,7 @@ namespace RockbarForEDCB
                 return _ngReserveListBackColor;
             }
             // 現在録画中の場合、正常予約背景色で表示
-            else if (startTime <= DateTime.Now && endTime >= DateTime.Now)
+            else if (startTime <= now && endTime >= now)
             {
                 return _okReserveListBackColor;
             }
