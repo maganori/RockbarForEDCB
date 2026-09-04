@@ -62,7 +62,7 @@ namespace RockbarForEDCB
                 // クリックした箇所が自動選択されるので拾う
                 var selected = targetListView.SelectedItems[0];
 
-                _contextMenu.Items.Clear();
+                ClearContextMenu();
 
                 _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo sv);
 
@@ -72,32 +72,22 @@ namespace RockbarForEDCB
                     return;
                 }
 
+                DateTime now = DateTime.Now;
+
                 // 終了していないイベントのみ抽出して開始日時順にソート
                 var afterEventList = sv.eventList
-                    .FindAll(x => x.start_time.AddSeconds(x.durationSec) >= DateTime.Now)
-                    .OrderBy(a => a.start_time);
+                    .Where(x => x.start_time.AddSeconds(x.durationSec) >= now)
+                    .OrderBy(a => a.start_time)
+                    .Take(30);// 最大30件まで表示
 
-                int i = 0;
                 foreach (var ev in afterEventList)
                 {
+                    // 該当イベントが予約済みであれば予約情報を取得
                     string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-
-                    ReserveData reserveData = null;
-
-                    // 該当イベントが予約済みかどうか確認
-                    if (_epgDataManager.ReserveMap.ContainsKey(eventKey))
-                    {
-                        reserveData = _epgDataManager.ReserveMap[eventKey];
-                    }
+                    _epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData);
 
                     // コンテキストメニューに番組項目を追加
                     _contextMenu.Items.Add(CreateProgramSummaryMenuItem(ev, reserveData, false));
-
-                    i++;
-                    if (i >= 30)
-                    {
-                        break; // 最大30件まで表示
-                    }
                 }
 
                 _contextMenu.Show((Control)sender, new Point(0, e.Y));
@@ -132,9 +122,11 @@ namespace RockbarForEDCB
                     return;
                 }
 
+                DateTime now = DateTime.Now;
+
                 // 終了していないイベントのみ抽出して開始日時順にソート
                 var ev = sv.eventList
-                    .FindAll(x => x.start_time.AddSeconds(x.durationSec) >= DateTime.Now)
+                    .Where(x => x.start_time.AddSeconds(x.durationSec) >= now)
                     .OrderBy(a => a.start_time)
                     .FirstOrDefault();
 
@@ -233,7 +225,7 @@ namespace RockbarForEDCB
                 // Tagに格納されているものがEpgEventInfoならevへ代入
                 if (selected.Tag is EpgEventInfo ev)
                 {
-                    _contextMenu.Items.Clear();
+                    ClearContextMenu();
 
                     string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
                     _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
@@ -346,7 +338,7 @@ namespace RockbarForEDCB
             // 対象の番組情報をコンテキストメニューで表示
             if (e.Button == MouseButtons.Right)
             {
-                _contextMenu.Items.Clear();
+                ClearContextMenu();
 
                 try
                 {
@@ -419,7 +411,13 @@ namespace RockbarForEDCB
                     // クリックした箇所が自動選択されるので拾う
                     var selected = targetListView.SelectedItems[0];
 
-                    EpgEventInfo ev = _epgDataManager.AllEventMap[selected.Name];
+                    // 番組情報取得
+                    if (!_epgDataManager.AllEventMap.TryGetValue(selected.Name, out var ev))
+                    {
+                        MessageBox.Show("番組情報を取得できませんでした。", "ブラウザ起動エラー");
+                        return;
+                    }
+
                     OpenWebEpgInfo(ev);
                 }
                 catch
@@ -447,7 +445,7 @@ namespace RockbarForEDCB
             // 対象の番組情報をコンテキストメニューで表示
             if (e.Button == MouseButtons.Right)
             {
-                _contextMenu.Items.Clear();
+                ClearContextMenu();
 
                 try
                 {
@@ -460,7 +458,13 @@ namespace RockbarForEDCB
                         return;
                     }
 
-                    RecFileInfo recFile = _epgDataManager.RecMap[recID];
+                    // 録画情報取得
+                    if (!_epgDataManager.RecMap.TryGetValue(recID, out var recFile))
+                    {
+                        _contextMenu.Items.Add("録画情報を取得できませんでした");
+                        _contextMenu.Show((Control)sender, new Point(e.X, e.Y));
+                        return;
+                    }
 
                     // Webリンク使用時のみ1行目にWebリンク用のボタンを表示
                     if (_configManager.RockbarSetting.UseWebLink)
@@ -590,7 +594,12 @@ namespace RockbarForEDCB
                     return;
                 }
 
-                RecFileInfo recFile = _epgDataManager.RecMap[recID];
+                // 録画情報取得
+                if (!_epgDataManager.RecMap.TryGetValue(recID, out var recFile))
+                {
+                    MessageBox.Show("録画情報の取得に失敗しました。", "録画情報エラー");
+                    return;
+                }
 
                 _tvtestManager.PlayRecFile(recFile);
             }
@@ -617,7 +626,7 @@ namespace RockbarForEDCB
                 // クリックした箇所が自動選択されるので拾う
                 var selected = targetListView.SelectedItems[0];
 
-                _contextMenu.Items.Clear();
+                ClearContextMenu();
 
                 TunerReserveInfo tunerReserveInfo = _epgDataManager.TunerReserveInfos.Find(x => x.tunerID.ToString() == selected.Name);
                 if (tunerReserveInfo == null)
@@ -629,28 +638,19 @@ namespace RockbarForEDCB
                 HashSet<uint> reserveIds = tunerReserveInfo.reserveList.ToHashSet();
 
                 var reserves = _epgDataManager.ReserveDatas
-                    .FindAll(x => reserveIds.Contains(x.ReserveID))
-                    .OrderBy(x => x.StartTime);
+                    .Where(x => reserveIds.Contains(x.ReserveID))
+                    .OrderBy(x => x.StartTime)
+                    .Take(30); // 最大30件
 
-                int i = 0;
                 foreach (var reserveData in reserves)
                 {
                     string key = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
-                    EpgEventInfo ev = null;
 
-                    if (_epgDataManager.AllEventMap.ContainsKey(key))
-                    {
-                        ev = _epgDataManager.AllEventMap[key];
-                    }
+                    // 予約情報を取得
+                    _epgDataManager.AllEventMap.TryGetValue(key, out var ev);
 
                     // チューナー予約一覧のコンテキストメニュー項目生成
                     _contextMenu.Items.Add(CreateProgramSummaryMenuItem(ev, reserveData, true));
-
-                    i++;
-                    if (i >= 30)
-                    {
-                        break; // 最大30件
-                    }
                 }
 
                 _contextMenu.Show((Control)sender, new Point(0, e.Y));
@@ -666,7 +666,6 @@ namespace RockbarForEDCB
         /// <param name="targetListView">対象のListView</param>
         public void HandleTunerMouseUp(object sender, MouseEventArgs e, ListView targetListView)
         {
-            //HandleServiceMouseUp(sender, e, targetListView);
             ////中央クリック
             if (e.Button == MouseButtons.Middle)
             {
@@ -694,8 +693,7 @@ namespace RockbarForEDCB
 
                 // 現在時刻以降に終了する予約の中で、最も終了時刻が早いものを取得
                 var reserveData = _epgDataManager.ReserveDatas
-                    .FindAll(x => reserveIds.Contains(x.ReserveID))
-                    .Where(x => x.StartTime.AddSeconds(x.DurationSecond) > now)
+                    .Where(x => reserveIds.Contains(x.ReserveID) && x.StartTime.AddSeconds(x.DurationSecond) > now)
                     .OrderBy(x => x.StartTime.AddSeconds(x.DurationSecond))
                     .FirstOrDefault();
 
@@ -707,6 +705,18 @@ namespace RockbarForEDCB
                 // 既に予約済みのため、予約の有効・無効を切り替える
                 ToggleRecMode(reserveData);
             }
+        }
+
+        /// <summary>
+        /// コンテキストメニューおよびサブメニューの既存項目を破棄してクリア
+        /// </summary>
+        private void ClearContextMenu()
+        {
+            for (int i = _contextMenu.Items.Count - 1; i >= 0; i--)
+            {
+                _contextMenu.Items[i].Dispose();
+            }
+            _contextMenu.Items.Clear();
         }
 
         /// <summary>
