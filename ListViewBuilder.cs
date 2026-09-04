@@ -141,12 +141,13 @@ namespace RockbarForEDCB
 
             // チャンネルキー -> サービス名 の辞書を1つだけ作成
             _serviceNameCache = services
-                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-                .ToDictionary(
-                    x => RockbarUtility.GetKey(x.Tsid, x.Sid),
-                    x => x.Name,
-                    StringComparer.OrdinalIgnoreCase
-                );
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                    .GroupBy(x => RockbarUtility.GetKey(x.Tsid, x.Sid))
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.First().Name,
+                        StringComparer.OrdinalIgnoreCase
+                    );
         }
 
         /// <summary>
@@ -249,7 +250,7 @@ namespace RockbarForEDCB
                     string eventTitle = ev?.ShortInfo?.event_name ?? (matchedService == null ? "EPG未取得" : "");
 
                     // フィルタ条件チェック（チャンネル名・番組名の双方を対象とする）
-                    if (!IsMatchFilter(new[] { serviceName, eventTitle }))
+                    if (!IsMatchFilter(serviceName, eventTitle))
                     {
                         continue;
                     }
@@ -375,7 +376,7 @@ namespace RockbarForEDCB
                     string eventTitle = ev.ShortInfo?.event_name ?? "";
 
                     // フィルタ条件チェック（既存の検索テキストボックス用）
-                    if (!IsMatchFilter(new[] { serviceName, eventTitle }))
+                    if (!IsMatchFilter(serviceName, eventTitle))
                     {
                         continue;
                     }
@@ -986,16 +987,19 @@ namespace RockbarForEDCB
             }
 
             // 比較用にターゲット側を半角化
-            var normalizedTargets = targets
-                .Where(t => !string.IsNullOrEmpty(t))
-                .Select(t => ToHankaku(t))
-                .ToList();
+            var normalizedTargets = new string[targets.Length];
+            for (int i = 0; i < targets.Length; i++)
+            {
+                normalizedTargets[i] = string.IsNullOrEmpty(targets[i]) ? string.Empty : ToHankaku(targets[i]);
+            }
 
             // 【NOT判定】除外キーワードが1つでも含まれていたら不一致
             foreach (var excludeWord in _normalizedExcludeWords)
             {
                 foreach (var target in normalizedTargets)
                 {
+                    if (target.Length == 0) continue;
+
                     if (target.IndexOf(excludeWord, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         return false;
@@ -1009,6 +1013,8 @@ namespace RockbarForEDCB
                 bool wordMatched = false;
                 foreach (var target in normalizedTargets)
                 {
+                    if (target.Length == 0) continue;
+
                     if (target.IndexOf(includeWord, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         wordMatched = true;
@@ -1040,7 +1046,7 @@ namespace RockbarForEDCB
                 {
                     chars[i] = (char)(chars[i] - 0xfee0);
                 }
-                else if (chars[i] == ' ')
+                else if (chars[i] == '　')
                 {
                     chars[i] = ' ';
                 }
