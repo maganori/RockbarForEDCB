@@ -756,7 +756,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// 録画予約の追加処理
         /// </summary>
-        private void AddProgramReserve(EpgEventInfo ev)
+        private void AddProgramReserve(EpgEventInfo ev, bool? overridePrioritizeView = null)
         {
             // 放送がない時間帯
             if (ev.ShortInfo == null || ev.ShortInfo.event_name == null)
@@ -777,6 +777,47 @@ namespace RockbarForEDCB
             string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
             _epgDataManager.ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
             string serviceName = matchedService.serviceInfo?.service_name;
+
+            // RecSettingDataに入れるRecModeの値を生成するロジック
+            byte recMode = 0;
+            bool enableReserve = _configManager.RockbarSetting.EnableReserve;
+            // 引数で指定された場合はその値を優先し、null の場合は設定ファイル（RockbarSetting）の値を使用
+            bool prioritizeView = overridePrioritizeView ?? _configManager.RockbarSetting.prioritizeView;
+            byte settingRecMode = _configManager.RockbarSetting.RecMode;
+
+            if (enableReserve)
+            {
+                if (!prioritizeView)
+                {
+                    // EnableReserve: True(予約有効), prioritizeView: False(録画)
+                    recMode = settingRecMode;
+                }
+                else
+                {
+                    // EnableReserve: True(予約有効), prioritizeView: True(視聴)
+                    recMode = 4; // 視聴
+                }
+            }
+            else
+            {
+                if (!prioritizeView)
+                {
+                    // EnableReserve: False(予約無効), prioritizeView: False(録画)
+                    switch (settingRecMode)
+                    {
+                        case 0: recMode = 9; break; // 全サービス
+                        case 1: recMode = 5; break; // 指定サービス
+                        case 2: recMode = 6; break; // 全サービス(デコード処理なし)
+                        case 3: recMode = 7; break; // 指定サービス(デコード処理なし)
+                        default: recMode = settingRecMode; break;
+                    }
+                }
+                else
+                {
+                    // EnableReserve: False(予約無効), prioritizeView: True(視聴)
+                    recMode = 8; // 視聴
+                }
+            }
 
             // EpgEventInfo から基本情報とID群をセット
             var reserve = new ReserveData
@@ -799,9 +840,26 @@ namespace RockbarForEDCB
                 //OverlapMode = 0,
                 ////UnusedRecFilePath = "",
                 StartTimeEpg = ev.start_time, // EPG上の番組開始時刻
+
                 RecSetting = new RecSettingData
                 {
-                    RecMode = 1 // 0:全サービス, 1: 指定サービス（EDCBデフォルト）
+                    RecMode = recMode,
+                    Priority = (byte)(_configManager.RockbarSetting.RecPriority + 1), // 予約追加するときはなぜか+1したPriorityを渡す必要がある
+                    TuijyuuFlag = _configManager.RockbarSetting.RecTuijyuu ? (byte)1 : (byte)0,
+                    ServiceMode = _configManager.RockbarSetting.RecServiceMode,
+                    PittariFlag = _configManager.RockbarSetting.RecPittari ? (byte)1 : (byte)0,
+                    BatFilePath = _configManager.RockbarSetting.RecBatFilePath,
+                    RecTag = _configManager.RockbarSetting.RecTag,
+                    RecFolderList = _configManager.RockbarSetting.RecFolderList,
+                    SuspendMode = _configManager.RockbarSetting.SuspendModeAfterRec,
+                    RebootFlag = _configManager.RockbarSetting.RebootAfterReturn ? (byte)1 : (byte)0,
+                    UseMargineFlag = _configManager.RockbarSetting.UseDefaultRecMargin ? (byte)0 : (byte)1, // UseMargineFlagは個別にStart,EndMargineを使用するかFlag
+                    StartMargine = _configManager.RockbarSetting.StartRecMargin,
+                    EndMargine = _configManager.RockbarSetting.EndRecMargin,
+                    ContinueRecFlag = _configManager.RockbarSetting.ContinueRecSameFile ? (byte)1 : (byte)0,
+                    PartialRecFlag = _configManager.RockbarSetting.PartialRecSeparateFile ? (byte)1 : (byte)0,
+                    TunerID = _configManager.RockbarSetting.RecTunerID,
+                    PartialRecFolder = _configManager.RockbarSetting.PartialRecFolderList,
                 },
                 //ReserveStatus = 0,
                 //RecFileNameList = new List<string>(), //未指定でよい
@@ -973,8 +1031,10 @@ namespace RockbarForEDCB
             if (reserveData == null && ev != null)
             {
                 // 予約の追加 
-                var item = menuItems.Add(">> 予約する");
-                item.Click += (s2, e2) => AddProgramReserve(ev);
+                var item = menuItems.Add(">> 録画予約する");
+                item.Click += (s2, e2) => AddProgramReserve(ev, false);
+                item = menuItems.Add(">> 視聴予約する");
+                item.Click += (s2, e2) => AddProgramReserve(ev, true);
                 menuItems.Add(new ToolStripSeparator());
 
             }

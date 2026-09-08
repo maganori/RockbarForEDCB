@@ -284,6 +284,417 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// 録画フォルダ追加・編集用ダイアログクラス
+        /// </summary>
+        private class RecFolderEditDialog : Form
+        {
+            private readonly CheckBox partialCheckBox = new CheckBox();
+            private readonly TextBox recFolderTextBox = new TextBox();
+            private readonly ComboBox writePlugInComboBox = new ComboBox();
+            private readonly ComboBox fileNamePlugInComboBox = new ComboBox();
+            private readonly TextBox fileNamePlugInOptionTextBox = new TextBox();
+
+            public bool IsPartialRec => partialCheckBox.Checked;
+            public string RecFolderPath => recFolderTextBox.Text.Trim();
+            public string WritePlugIn => writePlugInComboBox.Text.Trim();
+            public string FileNamePlugIn => fileNamePlugInComboBox.Text.Trim();
+            public string FileNamePlugInOption => fileNamePlugInOptionTextBox.Text.Trim();
+
+            /// <summary>
+            /// コンストラクタ（プラグイン一覧を受け取る）
+            /// </summary>
+            public RecFolderEditDialog(List<string> writePlugIns, List<string> fileNamePlugIns)
+            {
+                this.Text = "録画フォルダ、使用PlugIn設定";
+                this.FormBorderStyle = FormBorderStyle.FixedDialog;
+                this.StartPosition = FormStartPosition.CenterParent;
+                this.MinimizeBox = false;
+                this.MaximizeBox = false;
+                this.ShowInTaskbar = false;
+                this.ClientSize = new Size(450, 210);
+
+                partialCheckBox.Text = "部分受信";
+                partialCheckBox.Location = new Point(16, 12);
+                partialCheckBox.AutoSize = true;
+
+                Label folderLabel = new Label { Left = 16, Top = 40, Width = 110, Text = "録画フォルダ" };
+                recFolderTextBox.Left = 130;
+                recFolderTextBox.Top = 36;
+                recFolderTextBox.Width = 230;
+
+                Button browseButton = new Button { Left = 365, Top = 34, Width = 70, Text = "開く" };
+                browseButton.Click += (s, e) =>
+                {
+                    using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+                    {
+                        if (fbd.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                        {
+                            recFolderTextBox.Text = fbd.SelectedPath;
+                        }
+                    }
+                };
+
+                Label writePlugInLabel = new Label { Left = 16, Top = 70, Width = 110, Text = "出力PlugIn" };
+                writePlugInComboBox.Left = 130;
+                writePlugInComboBox.Top = 66;
+                writePlugInComboBox.Width = 230;
+                writePlugInComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+
+                // 出力PlugIn の選択肢設定
+                if (writePlugIns != null && writePlugIns.Count > 0)
+                {
+                    writePlugInComboBox.Items.AddRange(writePlugIns.ToArray());
+                }
+                int defaultWriteIndex = writePlugInComboBox.FindStringExact("Write_Default.dll");
+                writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0 ? defaultWriteIndex : (writePlugInComboBox.Items.Count > 0 ? 0 : -1);
+
+                Label fileNamePlugInLabel = new Label { Left = 16, Top = 100, Width = 110, Text = "ファイル名PlugIn" };
+                fileNamePlugInComboBox.Left = 130;
+                fileNamePlugInComboBox.Top = 96;
+                fileNamePlugInComboBox.Width = 230;
+                fileNamePlugInComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+
+                // ファイル名PlugIn の選択肢設定（未指定 "" を選択可能にする）
+                fileNamePlugInComboBox.Items.Add("");
+                if (fileNamePlugIns != null && fileNamePlugIns.Count > 0)
+                {
+                    fileNamePlugInComboBox.Items.AddRange(fileNamePlugIns.ToArray());
+                }
+                fileNamePlugInComboBox.SelectedIndex = 0; // デフォルトは未指定 ("")
+
+                Label fileNameOptionLabel = new Label { Left = 16, Top = 130, Width = 130, Text = "ファイル名PlugInオプション" };
+                fileNamePlugInOptionTextBox.Left = 150;
+                fileNamePlugInOptionTextBox.Top = 126;
+                fileNamePlugInOptionTextBox.Width = 210;
+
+                Button okButton = new Button { Left = 235, Top = 170, Width = 80, Text = "OK", DialogResult = DialogResult.OK };
+                Button cancelButton = new Button { Left = 330, Top = 170, Width = 80, Text = "キャンセル", DialogResult = DialogResult.Cancel };
+
+                okButton.Click += okButton_Click;
+
+                this.Controls.AddRange(new Control[] {
+                    partialCheckBox, folderLabel, recFolderTextBox, browseButton,
+                    writePlugInLabel, writePlugInComboBox,
+                    fileNamePlugInLabel, fileNamePlugInComboBox,
+                    fileNameOptionLabel, fileNamePlugInOptionTextBox,
+                    okButton, cancelButton
+                });
+
+                this.AcceptButton = okButton;
+                this.CancelButton = cancelButton;
+            }
+
+            /// <summary>
+            /// 編集用コンストラクタ（既存の設定値を初期値としてセット）
+            /// </summary>
+            public RecFolderEditDialog(List<string> writePlugIns, List<string> fileNamePlugIns, bool isPartial, string folderPath, string writePlugIn, string fileNamePlugIn, string fileNamePlugInOption)
+                : this(writePlugIns, fileNamePlugIns)
+            {
+                this.Text = "録画フォルダの変更";
+                this.partialCheckBox.Checked = isPartial;
+                this.recFolderTextBox.Text = folderPath;
+
+                // 出力PlugIn の選択肢合わせ
+                if (!string.IsNullOrEmpty(writePlugIn))
+                {
+                    int writeIndex = this.writePlugInComboBox.FindStringExact(writePlugIn);
+                    if (writeIndex >= 0)
+                    {
+                        this.writePlugInComboBox.SelectedIndex = writeIndex;
+                    }
+                    else
+                    {
+                        this.writePlugInComboBox.Items.Add(writePlugIn);
+                        this.writePlugInComboBox.SelectedItem = writePlugIn;
+                    }
+                }
+                else
+                {
+                    int defaultWriteIndex = this.writePlugInComboBox.FindStringExact("Write_Default.dll");
+                    this.writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0 ? defaultWriteIndex : (this.writePlugInComboBox.Items.Count > 0 ? 0 : -1);
+                }
+
+                // ファイル名PlugIn の選択肢合わせ
+                int fileNameIndex = this.fileNamePlugInComboBox.FindStringExact(fileNamePlugIn ?? "");
+                if (fileNameIndex >= 0)
+                {
+                    this.fileNamePlugInComboBox.SelectedIndex = fileNameIndex;
+                }
+                else
+                {
+                    this.fileNamePlugInComboBox.Items.Add(fileNamePlugIn);
+                    this.fileNamePlugInComboBox.SelectedItem = fileNamePlugIn;
+                }
+
+                this.fileNamePlugInOptionTextBox.Text = fileNamePlugInOption;
+            }
+
+            private void okButton_Click(object sender, EventArgs e)
+            {
+                //if (string.IsNullOrWhiteSpace(recFolderTextBox.Text))
+                //{
+                //    MessageBox.Show("録画フォルダを指定してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                //    this.DialogResult = DialogResult.None;
+                //}
+            }
+        }
+
+        /// <summary>
+        /// チューナーComboBox表示用アイテムクラス
+        /// </summary>
+        public class TunerSelectItem
+        {
+            public string DisplayText { get; set; }
+            public uint TunerID { get; set; }
+
+            public TunerSelectItem(string displayText, uint tunerID)
+            {
+                DisplayText = displayText;
+                TunerID = tunerID;
+            }
+
+            public override string ToString()
+            {
+                return DisplayText;
+            }
+        }
+
+        /// <summary>
+        /// 録画フォルダ追加処理
+        /// </summary>
+        private void addRecFolderButton_Click(object sender, EventArgs e)
+        {
+            ShowRecFolderEditDialog(null);
+        }
+
+        /// <summary>
+        /// 録画フォルダ変更処理
+        /// </summary>
+        private void editRecFolderButton_Click(object sender, EventArgs e)
+        {
+            if (recFolderListView.SelectedItems.Count > 0)
+            {
+                ShowRecFolderEditDialog(recFolderListView.SelectedItems[0]);
+            }
+        }
+
+        /// <summary>
+        /// 録画フォルダの追加・編集ダイアログ表示共通処理
+        /// </summary>
+        private void ShowRecFolderEditDialog(ListViewItem targetItem)
+        {
+            // PlugIn 一覧の取得
+            var writePlugIns = new List<string>();
+            var fileNamePlugIns = new List<string>();
+            if (ctrlCmdUtil != null)
+            {
+                ctrlCmdUtil.SendEnumPlugIn(2, ref writePlugIns);
+                ctrlCmdUtil.SendEnumPlugIn(1, ref fileNamePlugIns);
+            }
+
+            // 編集時は対象アイテムからデータを取り出す（新規の場合は初期値）
+            bool isPartial = targetItem?.SubItems[0].Text == "はい";
+            string folderPath = targetItem?.SubItems.Count > 1 ? targetItem.SubItems[1].Text : "";
+            string writePlugIn = targetItem?.SubItems.Count > 2 ? targetItem.SubItems[2].Text : "";
+
+            string combinedFileName = targetItem?.SubItems.Count > 3 ? targetItem.SubItems[3].Text : "";
+            string[] nameParts = combinedFileName.Split(new[] { '?' }, 2);
+            string fileNamePlugIn = nameParts.Length > 0 ? nameParts[0] : "";
+            string fileNamePlugInOption = nameParts.Length > 1 ? nameParts[1] : "";
+
+            using (var dialog = targetItem == null
+                ? new RecFolderEditDialog(writePlugIns, fileNamePlugIns)
+                : new RecFolderEditDialog(writePlugIns, fileNamePlugIns, isPartial, folderPath, writePlugIn, fileNamePlugIn, fileNamePlugInOption))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+                // FileNamePlugIn や FileNamePlugInOption の有無で結合方法を制御
+                string fileNamePlugInCombined;
+                if (string.IsNullOrWhiteSpace(dialog.FileNamePlugIn))
+                {
+                    fileNamePlugInCombined = "";
+                }
+                else if (string.IsNullOrWhiteSpace(dialog.FileNamePlugInOption))
+                {
+                    fileNamePlugInCombined = dialog.FileNamePlugIn;
+                }
+                else
+                {
+                    fileNamePlugInCombined = $"{dialog.FileNamePlugIn}?{dialog.FileNamePlugInOption}";
+                }
+
+                string[] subItemTexts = {
+                    dialog.IsPartialRec ? "はい" : "いいえ",
+                    dialog.RecFolderPath,
+                    dialog.WritePlugIn,
+                    fileNamePlugInCombined
+                };
+
+                if (targetItem == null)
+                {
+                    // 新規追加
+                    recFolderListView.Items.Add(new ListViewItem(subItemTexts));
+                }
+                else
+                {
+                    // 既存更新
+                    for (int i = 0; i < subItemTexts.Length; i++)
+                    {
+                        if (i < targetItem.SubItems.Count)
+                            targetItem.SubItems[i].Text = subItemTexts[i];
+                        else
+                            targetItem.SubItems.Add(subItemTexts[i]);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 録画フォルダコピー処理
+        /// </summary>
+        private void copyRecFolderButton_Click(object sender, EventArgs e)
+        {
+            // リストで項目が選択されていない場合は何もしない
+            if (recFolderListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            // 選択中の行のデータを取得
+            ListViewItem selectedItem = recFolderListView.SelectedItems[0];
+
+            // 取得したデータで新しい ListViewItem を複製してリストに追加
+            ListViewItem newItem = (ListViewItem)selectedItem.Clone();
+            recFolderListView.Items.Add(newItem);
+
+            // コピーされた新しい項目を選択状態にする（任意）
+            newItem.Selected = true;
+            recFolderListView.EnsureVisible(newItem.Index);
+        }
+
+        /// <summary>
+        /// 録画フォルダ削除処理
+        /// </summary>
+        private void delRecFolderButton_Click(object sender, EventArgs e)
+        {
+            // リストで項目が選択されていない場合は何もしない
+            if (recFolderListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            // 選択中の行を削除
+            ListViewItem selectedItem = recFolderListView.SelectedItems[0];
+            recFolderListView.Items.Remove(selectedItem);
+        }
+
+        /// <summary>
+        /// バッチファイル参照ボタン処理
+        /// </summary>
+        private void browseBatFileButton_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                // 選択可能な拡張子のフィルタを設定
+                ofd.Filter = "実行可能スクリプト (*.bat;*.ps1;*.lua)|*.bat;*.ps1;*.lua" +
+                             "|Batchファイル (*.bat)|*.bat" +
+                             "|PowerShellスクリプト (*.ps1)|*.ps1" +
+                             "|Luaスクリプト (*.lua)|*.lua" +
+                             "|すべてのファイル (*.*)|*.*";
+
+                ofd.FilterIndex = 1; // デフォルトで最初のフィルタを選択
+                ofd.Title = "バッチ/スクリプトファイルの選択";
+
+                // すでにテキストボックスにパスが入力されていれば、そのフォルダを初期表示に設定
+                if (!string.IsNullOrWhiteSpace(recBatFilePathTextBox.Text) && System.IO.File.Exists(recBatFilePathTextBox.Text))
+                {
+                    ofd.InitialDirectory = System.IO.Path.GetDirectoryName(recBatFilePathTextBox.Text);
+                    ofd.FileName = System.IO.Path.GetFileName(recBatFilePathTextBox.Text);
+                }
+
+                if (ofd.ShowDialog(this) == DialogResult.OK)
+                {
+                    recBatFilePathTextBox.Text = ofd.FileName;
+                }
+            }
+        }
+
+        // フォームのロード時に初期状態を反映
+        private void SettingForm_Load(object sender, EventArgs e)
+        {
+            // 初期状態のコントロール有効/無効化を反映
+            UpdateEdcbReserveSettingControlsEnableState();
+            UpdateMarginControlsEnableState();
+            UpdateServiceDataControlsEnableState();
+            UpdatePostRecActionControlsEnableState();
+        }
+
+        // 「RockbarForEDCBで予約追加を行う」チェックボックスの制御
+        private void useRockbarReserveCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateEdcbReserveSettingControlsEnableState();
+        }
+
+        // 「RockbarForEDCBで予約追加を行う」チェックボックスがONの場合は、予約内容全体が入力不可
+        private void UpdateEdcbReserveSettingControlsEnableState()
+        {
+            // チェックが入っていない場合は GroupBox 全体を編集不可 (Enabled = false)
+            // GroupBox 自体の Enabled を変更することで、内部のコントロールが一括で制御されます
+            edcbReserveSettingGroupBox.Enabled = useRockbarReserveCheckbox.Checked;
+        }
+
+        // 録画マージンのデフォルトチェックボックスの制御
+        private void defaultMarginCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateMarginControlsEnableState();
+        }
+
+        // 録画マージンのデフォルトチェックボックスがONの場合は開始、終了の入力は不可
+        private void UpdateMarginControlsEnableState()
+        {
+            // チェックされている場合は入力不可 (Enabled = false)
+            bool isInputEnabled = !useDefaultRecMarginCheckBox.Checked;
+
+            startRecMarginNumericUpDown.Enabled = isInputEnabled;
+            endRecMarginNumericUpDown.Enabled = isInputEnabled;
+        }
+
+        // サービス対象データのデフォルトチェックボックスの制御
+        private void defaultServiceDataCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateServiceDataControlsEnableState();
+        }
+
+        // サービス対象データのデフォルトチェックボックスがONの場合は、字幕を含めるとデータカルーセルを含めるは入力不可
+        private void UpdateServiceDataControlsEnableState()
+        {
+            // チェックされている場合は入力不可 (Enabled = false)
+            bool isInputEnabled = !useDefaultRecServiceDataCheckBox.Checked;
+
+            recServiceDataCaptionCheckBox.Enabled = isInputEnabled;
+            recServiceDataCarouselCheckBox.Enabled = isInputEnabled;
+        }
+
+        // 録画後動作のデフォルトチェックボックスの制御
+        private void defaultPostRecActionCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdatePostRecActionControlsEnableState();
+        }
+
+        // 録画後動作のデフォルトチェックボックスがONの場合は、各ラジオボタンと復帰後再起動するチェックボックスは入力不可
+        private void UpdatePostRecActionControlsEnableState()
+        {
+            // チェックが入っている場合は編集不可 (Enabled = false)
+            bool isInputEnabled = !defaultSuspendModeAfterRecCheckBox.Checked;
+
+            afterRecNoActionRadioButton.Enabled = isInputEnabled;
+            afterRecStandbyRadioButton.Enabled = isInputEnabled;
+            afterRecSuspendRadioButton.Enabled = isInputEnabled;
+            afterRecShutdownRadioButton.Enabled = isInputEnabled;
+            rebootAfterReturnCheckBox.Enabled = isInputEnabled;
+        }
+
+        /// <summary>
         /// ListViewItem に表示されている各列（TSID / SID / 名前(チャンネル名) / 種別 / TVTestオプション）
         /// の値をそのまま Service オブジェクトとして組み立てて返す。
         /// </summary>
@@ -430,6 +841,89 @@ namespace RockbarForEDCB
             webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
             recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
 
+            // 予約関連
+            useRockbarReserveCheckbox.Checked = _configManager.RockbarSetting.UseRockbarReserve;
+            enableReserveCheckBox.Checked = _configManager.RockbarSetting.EnableReserve;
+            prioritizeViewRadioButton.Checked = _configManager.RockbarSetting.prioritizeView;
+            recModeComboBox.SelectedIndex = _configManager.RockbarSetting.RecMode;
+            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority;
+            recTuijyuuCheckBox.Checked = _configManager.RockbarSetting.RecTuijyuu;
+            recPittariCheckBox.Checked = _configManager.RockbarSetting.RecPittari;
+            useDefaultRecMarginCheckBox.Checked = _configManager.RockbarSetting.UseDefaultRecMargin;
+            startRecMarginNumericUpDown.Value = _configManager.RockbarSetting.StartRecMargin;
+            endRecMarginNumericUpDown.Value = _configManager.RockbarSetting.EndRecMargin;
+            // 右から1番目のビットが0 のとき true、1 のとき false
+            useDefaultRecServiceDataCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0000_0001) == 0;
+            //useDefaultRecServiceDataCheckBox.Checked = _configManager.RockbarSetting.UseDefaultServiceData;
+            // 右から5番目のビットが 1 なら true、0 なら false
+            recServiceDataCaptionCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0001_0000) != 0;
+            //recServiceDataCaptionCheckBox.Checked = _configManager.RockbarSetting.RecServiceDataCaption;
+            // 右から6番目のビットが 1 なら true、0 なら false
+            recServiceDataCarouselCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0010_0000) != 0;
+            //recServiceDataCarouselCheckBox.Checked = _configManager.RockbarSetting.RecServiceDataCarousel;
+
+            recFolderListView.Items.Clear();
+
+            // 1. 通常の録画フォルダ（部分受信：いいえ）の読み込み
+            if (_configManager.RockbarSetting.RecFolderList != null)
+            {
+                foreach (RecFileSetInfo info in _configManager.RockbarSetting.RecFolderList)
+                {
+                    if (info == null) continue;
+
+                    var item = new ListViewItem(new string[] {
+                        "いいえ",
+                        info.RecFolder ?? "",
+                        info.WritePlugIn ?? "",
+                        info.RecNamePlugIn ?? ""
+                    });
+                    recFolderListView.Items.Add(item);
+                }
+            }
+
+            // 2. 部分受信フォルダ（部分受信：はい）の読み込み
+            if (_configManager.RockbarSetting.PartialRecFolderList != null)
+            {
+                foreach (RecFileSetInfo info in _configManager.RockbarSetting.PartialRecFolderList)
+                {
+                    if (info == null) continue;
+
+                    var item = new ListViewItem(new string[] {
+                        "はい",
+                        info.RecFolder ?? "",
+                        info.WritePlugIn ?? "",
+                        info.RecNamePlugIn ?? ""
+                    });
+                    recFolderListView.Items.Add(item);
+                }
+            }
+
+            partialRecSeparateFileCheckBox.Checked = _configManager.RockbarSetting.PartialRecSeparateFile;
+            continueRecSameFileCheckBox.Checked = _configManager.RockbarSetting.ContinueRecSameFile;
+
+            // RecTuerIDは下の方の処理で保存
+
+            byte suspendMode = _configManager.RockbarSetting.SuspendModeAfterRec;
+
+            // 0 なら CheckBox を True、それ以外なら False
+            defaultSuspendModeAfterRecCheckBox.Checked = (suspendMode == 0);
+
+            // Panel内のラジオボタンを一括処理して Tag が一致するものを True にする
+            foreach (RadioButton rb in suspendModeAfterRecPanel.Controls.OfType<RadioButton>())
+            {
+                if (rb.Tag != null && Convert.ToByte(rb.Tag) == suspendMode)
+                {
+                    rb.Checked = true;
+                    break;
+                }
+            }
+
+            rebootAfterReturnCheckBox.Checked = _configManager.RockbarSetting.RebootAfterReturn;
+
+            recBatFilePathTextBox.Text = _configManager.RockbarSetting.RecBatFilePath;
+            recTagTextBox.Text = _configManager.RockbarSetting.RecTag;
+
+            // TVTest連携関連
             tvtestPathTextBox.Text = _configManager.RockbarSetting.TvtestPath;
             tvtestDttvOptionTextBox.Text = _configManager.RockbarSetting.TvtestDttvOption;
             tvtestBscsOptionTextBox.Text = _configManager.RockbarSetting.TvtestBscsOption;
@@ -524,6 +1018,12 @@ namespace RockbarForEDCB
                 autoCloseMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoCloseMargin;
             }
 
+            // 予約画面の初期表示時の有効/無効状態を反映
+            UpdateEdcbReserveSettingControlsEnableState();
+            UpdateMarginControlsEnableState();
+            UpdateServiceDataControlsEnableState();
+            UpdatePostRecActionControlsEnableState();
+
             // サービス一覧取得
             serviceInfos.Clear();
             tunerReserveInfos.Clear();
@@ -534,10 +1034,26 @@ namespace RockbarForEDCB
                 ctrlCmdUtil.SendEnumService(ref serviceInfos);
             }
 
-            // チューナー一覧の表示
+            // 予約タブのチューナーComboBox の初期化
+            recTunerIdComboBox.Items.Clear();
+            recTunerIdComboBox.DisplayMember = "DisplayText";
+            recTunerIdComboBox.ValueMember = "TunerID";
+            recTunerIdComboBox.Items.Add(new TunerSelectItem("自動", 0)); // 先頭に「自動」（TunerID = 0）を追加
+
+            // チューナー名タブのListView作成 および 予約タブのチューナーComboBoxの作成
             foreach (TunerReserveInfo tunerReserveInfo in tunerReserveInfos)
             {
-                if (!tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName)) {
+                // 「チューナー不足 (0xFFFFFFFF)」は ComboBox の選択肢から除外
+                if (tunerReserveInfo.tunerID != 0xFFFFFFFF)
+                {
+                    // 表示名: ID:00000001 (BonDriver_Proxy_T.dll)
+                    string displayText = $"ID:{tunerReserveInfo.tunerID:x8} ({tunerReserveInfo.tunerName})";
+                    recTunerIdComboBox.Items.Add(new TunerSelectItem(displayText, tunerReserveInfo.tunerID));
+                }
+
+                // ListView作成
+                if (!tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName))
+                {
                     String[] data = null;
 
                     if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
@@ -564,6 +1080,25 @@ namespace RockbarForEDCB
                     item.Name = tunerReserveInfo.tunerName;
                     tunerNameListView.Items.Add(item);
                 }
+            }
+
+            // チューナーComboBox の初期選択肢設定
+            uint targetTunerId = _configManager.RockbarSetting.RecTunerID;
+
+            // recTunerIdComboBox の要素から、TunerID が一致するアイテムを検索
+            var matchingItem = recTunerIdComboBox.Items
+                .OfType<TunerSelectItem>()
+                .FirstOrDefault(item => item.TunerID == targetTunerId);
+
+            if (matchingItem != null)
+            {
+                // 一致する項目があればそれを選択
+                recTunerIdComboBox.SelectedItem = matchingItem;
+            }
+            else if (recTunerIdComboBox.Items.Count > 0)
+            {
+                // 一致するものがない場合（初期状態など）は先頭（自動）を設定
+                recTunerIdComboBox.SelectedIndex = 0;
             }
 
             // 取得したチューナに含まれず、設定にだけあるものを一応表示
@@ -1116,6 +1651,118 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.WebEpgUrl = webEpgUrlTextBox.Text;
             _configManager.RockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
             _configManager.RockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
+
+            // 予約関連
+            _configManager.RockbarSetting.UseRockbarReserve = useRockbarReserveCheckbox.Checked;
+            _configManager.RockbarSetting.EnableReserve = enableReserveCheckBox.Checked;
+            _configManager.RockbarSetting.prioritizeView = prioritizeViewRadioButton.Checked;
+            _configManager.RockbarSetting.RecMode = (byte)recModeComboBox.SelectedIndex;
+            _configManager.RockbarSetting.RecPriority = (byte)recPriorityComboBox.SelectedIndex;
+            _configManager.RockbarSetting.RecTuijyuu = recTuijyuuCheckBox.Checked;
+            _configManager.RockbarSetting.RecPittari = recPittariCheckBox.Checked;
+            _configManager.RockbarSetting.UseDefaultRecMargin = useDefaultRecMarginCheckBox.Checked;
+            _configManager.RockbarSetting.StartRecMargin = (int)startRecMarginNumericUpDown.Value;
+            _configManager.RockbarSetting.EndRecMargin = (int)endRecMarginNumericUpDown.Value;
+
+            // 予約関連 recServiceMode
+            uint recServiceMode = _configManager.RockbarSetting.RecServiceMode;
+
+            // 右から1番目のビット（0b0000_0001）
+            // CheckBoxがChecked(True)ならビットを 0 に、Unchecked(False)ならビットを 1 にする
+            if (useDefaultRecServiceDataCheckBox.Checked)
+            {
+                recServiceMode &= ~0b0000_0001u; // 0にクリア
+            }
+            else
+            {
+                recServiceMode |= 0b0000_0001;  // 1をセット
+            }
+
+            // 右から5番目のビット（0b0001_0000）
+            // CheckBoxがChecked(True)ならビットを 1 に、Unchecked(False)ならビットを 0 にする
+            if (recServiceDataCaptionCheckBox.Checked)
+            {
+                recServiceMode |= 0b0001_0000;   // 1をセット
+            }
+            else
+            {
+                recServiceMode &= ~0b0001_0000u; // 0にクリア
+            }
+
+            // 右から6番目のビット（0b0010_0000）
+            // CheckBoxgfChecked(True)ならビットを 1 に、Unchecked(False)ならビットを 0 にする
+            if (recServiceDataCarouselCheckBox.Checked)
+            {
+                recServiceMode |= 0b0010_0000;   // 1をセット
+            }
+            else
+            {
+                recServiceMode &= ~0b0010_0000u; // 0にクリア
+            }
+
+            _configManager.RockbarSetting.RecServiceMode = recServiceMode;
+            // 予約関連 recServiceMode ここまで
+
+            // 予約関連 フォルダ関連
+            // ListView から全項目を取得し、各要素を '*' で結合してリストを作成
+            var recFolderList = new List<RecFileSetInfo>();
+            var partialRecFolderList = new List<RecFileSetInfo>();
+
+            foreach (ListViewItem item in recFolderListView.Items)
+            {
+                bool isPartial = item.SubItems.Count > 0 && item.SubItems[0].Text == "はい";
+                string folderPath = item.SubItems.Count > 1 ? item.SubItems[1].Text : "";
+                string writePlugIn = item.SubItems.Count > 2 ? item.SubItems[2].Text : "";
+                string recNamePlugIn = item.SubItems.Count > 3 ? item.SubItems[3].Text : "";
+
+                var info = new RecFileSetInfo
+                {
+                    RecFolder = folderPath,
+                    WritePlugIn = writePlugIn,
+                    RecNamePlugIn = recNamePlugIn,
+                    RecFileName = "" // 予約情報としては空文字列で保持
+                };
+
+                if (isPartial)
+                {
+                    partialRecFolderList.Add(info);
+                }
+                else
+                {
+                    recFolderList.Add(info);
+                }
+            }
+
+            _configManager.RockbarSetting.RecFolderList = recFolderList;
+            _configManager.RockbarSetting.PartialRecFolderList = partialRecFolderList;
+            // 予約関連 フォルダ関連 ここまで
+
+            _configManager.RockbarSetting.PartialRecSeparateFile = partialRecSeparateFileCheckBox.Checked;
+            _configManager.RockbarSetting.ContinueRecSameFile = continueRecSameFileCheckBox.Checked;
+
+            _configManager.RockbarSetting.RecTunerID = ((TunerSelectItem)recTunerIdComboBox.SelectedItem)?.TunerID ?? 0;
+
+            byte suspendMode = 0;
+
+            if (!defaultSuspendModeAfterRecCheckBox.Checked)
+            {
+                // チェックボックスが False の場合、選択中のラジオボタンの Tag を取得
+                RadioButton selectedRb = suspendModeAfterRecPanel.Controls
+                    .OfType<RadioButton>()
+                    .FirstOrDefault(rb => rb.Checked);
+
+                if (selectedRb?.Tag != null)
+                {
+                    suspendMode = Convert.ToByte(selectedRb.Tag);
+                }
+            }
+
+            _configManager.RockbarSetting.SuspendModeAfterRec = suspendMode;
+            _configManager.RockbarSetting.RebootAfterReturn = rebootAfterReturnCheckBox.Checked;
+
+            _configManager.RockbarSetting.RecBatFilePath = recBatFilePathTextBox.Text;
+            _configManager.RockbarSetting.RecTag = recTagTextBox.Text;
+
 
             _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
             _configManager.RockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;

@@ -30,25 +30,25 @@ namespace RockbarForEDCB
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingForm));
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem12 = new System.Windows.Forms.ListViewItem(new string[] {
             "チャンネル　00:00-00:00　　　通常番組",
             "test",
             "test",
             "test"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　◎　正常予約番組");
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　欠　部分予約番組");
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　×　予約不可番組");
-            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　無　無効予約番組");
-            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　　　予約一覧ヘッダ");
-            System.Windows.Forms.ListViewItem listViewItem7 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem13 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　◎　正常予約番組");
+            System.Windows.Forms.ListViewItem listViewItem14 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　欠　部分予約番組");
+            System.Windows.Forms.ListViewItem listViewItem15 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　×　予約不可番組");
+            System.Windows.Forms.ListViewItem listViewItem16 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　無　無効予約番組");
+            System.Windows.Forms.ListViewItem listViewItem17 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　　　予約一覧ヘッダ");
+            System.Windows.Forms.ListViewItem listViewItem18 = new System.Windows.Forms.ListViewItem(new string[] {
             "01/01 00:00～00:00  　  通常番組",
             "test",
             "test",
             "test"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem8 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ◎  正常予約番組");
-            System.Windows.Forms.ListViewItem listViewItem9 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  欠  部分予約番組");
-            System.Windows.Forms.ListViewItem listViewItem10 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ×  予約不可番組");
-            System.Windows.Forms.ListViewItem listViewItem11 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  無  無効予約番組");
+            System.Windows.Forms.ListViewItem listViewItem19 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ◎  正常予約番組");
+            System.Windows.Forms.ListViewItem listViewItem20 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  欠  部分予約番組");
+            System.Windows.Forms.ListViewItem listViewItem21 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ×  予約不可番組");
+            System.Windows.Forms.ListViewItem listViewItem22 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  無  無効予約番組");
             this.cancelButton = new System.Windows.Forms.Button();
             this.applyButton = new System.Windows.Forms.Button();
             this.allServiceListView = new System.Windows.Forms.ListView();
@@ -87,6 +87,53 @@ namespace RockbarForEDCB
             this.ipAddressTextBox = new System.Windows.Forms.TextBox();
             this.webLinkUrlTextBox = new System.Windows.Forms.TextBox();
             this.recInfoWebLinkUrlTextBox = new System.Windows.Forms.TextBox();
+            this.reserveTabPage = new System.Windows.Forms.TabPage();
+            this.edcbReserveSettingGroupBox = new System.Windows.Forms.GroupBox();
+            this.prioritizeRecRadioButton = new System.Windows.Forms.RadioButton();
+            this.prioritizeViewRadioButton = new System.Windows.Forms.RadioButton();
+            this.endRecMarginNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.startRecMarginNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.browseBatFileButton = new System.Windows.Forms.Button();
+            this.deleteRecFolderButton = new System.Windows.Forms.Button();
+            this.copyRecFolderButton = new System.Windows.Forms.Button();
+            this.editRecFolderButton = new System.Windows.Forms.Button();
+            this.addRecFolderButton = new System.Windows.Forms.Button();
+            this.enableReserveCheckBox = new System.Windows.Forms.CheckBox();
+            this.recTagTextBox = new System.Windows.Forms.TextBox();
+            this.recPriorityComboBox = new System.Windows.Forms.ComboBox();
+            this.recBatFilePathTextBox = new System.Windows.Forms.TextBox();
+            this.recModeComboBox = new System.Windows.Forms.ComboBox();
+            this.recTagLabel = new System.Windows.Forms.Label();
+            this.recModeLabel = new System.Windows.Forms.Label();
+            this.recBatFilePathLabel = new System.Windows.Forms.Label();
+            this.recTuijyuuCheckBox = new System.Windows.Forms.CheckBox();
+            this.rebootAfterReturnCheckBox = new System.Windows.Forms.CheckBox();
+            this.recPittariCheckBox = new System.Windows.Forms.CheckBox();
+            this.afterRecShutdownRadioButton = new System.Windows.Forms.RadioButton();
+            this.recPriorityLabel = new System.Windows.Forms.Label();
+            this.afterRecSuspendRadioButton = new System.Windows.Forms.RadioButton();
+            this.recMarginLabel = new System.Windows.Forms.Label();
+            this.afterRecStandbyRadioButton = new System.Windows.Forms.RadioButton();
+            this.useDefaultRecMarginCheckBox = new System.Windows.Forms.CheckBox();
+            this.afterRecNoActionRadioButton = new System.Windows.Forms.RadioButton();
+            this.startRecMarginLabel = new System.Windows.Forms.Label();
+            this.defaultSuspendModeAfterRecCheckBox = new System.Windows.Forms.CheckBox();
+            this.suspendModeAfterRecLabel = new System.Windows.Forms.Label();
+            this.endRecMarginLabel = new System.Windows.Forms.Label();
+            this.recTunerIdComboBox = new System.Windows.Forms.ComboBox();
+            this.recTunerIdLabel = new System.Windows.Forms.Label();
+            this.recServiceDataCarouselCheckBox = new System.Windows.Forms.CheckBox();
+            this.continueRecSameFileCheckBox = new System.Windows.Forms.CheckBox();
+            this.recServiceDataLabel = new System.Windows.Forms.Label();
+            this.partialRecSeparateFileCheckBox = new System.Windows.Forms.CheckBox();
+            this.useDefaultRecServiceDataCheckBox = new System.Windows.Forms.CheckBox();
+            this.recFolderListView = new System.Windows.Forms.ListView();
+            this.partialRecColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.recFolderColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.writePlugInColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.recNamePlugInColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.recServiceDataCaptionCheckBox = new System.Windows.Forms.CheckBox();
+            this.useRockbarReserveCheckbox = new System.Windows.Forms.CheckBox();
             this.tunerTabPage = new System.Windows.Forms.TabPage();
             this.tunerNameLabel = new System.Windows.Forms.Label();
             this.tunerNameNoteLabel = new System.Windows.Forms.Label();
@@ -244,9 +291,16 @@ namespace RockbarForEDCB
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
+            this.suspendModeAfterRecPanel = new System.Windows.Forms.Panel();
+            this.prioritizeViewPanel = new System.Windows.Forms.Panel();
+            this.prioritizeViewLabel = new System.Windows.Forms.Label();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
+            this.reserveTabPage.SuspendLayout();
+            this.edcbReserveSettingGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.endRecMarginNumericUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.startRecMarginNumericUpDown)).BeginInit();
             this.tunerTabPage.SuspendLayout();
             this.allServiceTabPage.SuspendLayout();
             this.favoriteServiceTabPage.SuspendLayout();
@@ -260,6 +314,8 @@ namespace RockbarForEDCB
             this.otherTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).BeginInit();
             this.taskTrayIconClickGroupBox.SuspendLayout();
+            this.suspendModeAfterRecPanel.SuspendLayout();
+            this.prioritizeViewPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // cancelButton
@@ -438,6 +494,7 @@ namespace RockbarForEDCB
             // settingTabControl
             // 
             this.settingTabControl.Controls.Add(this.edcbLinkageTabPage);
+            this.settingTabControl.Controls.Add(this.reserveTabPage);
             this.settingTabControl.Controls.Add(this.tunerTabPage);
             this.settingTabControl.Controls.Add(this.allServiceTabPage);
             this.settingTabControl.Controls.Add(this.favoriteServiceTabPage);
@@ -619,6 +676,539 @@ namespace RockbarForEDCB
             this.recInfoWebLinkUrlTextBox.Name = "recInfoWebLinkUrlTextBox";
             this.recInfoWebLinkUrlTextBox.Size = new System.Drawing.Size(478, 19);
             this.recInfoWebLinkUrlTextBox.TabIndex = 5;
+            // 
+            // reserveTabPage
+            // 
+            this.reserveTabPage.Controls.Add(this.edcbReserveSettingGroupBox);
+            this.reserveTabPage.Controls.Add(this.useRockbarReserveCheckbox);
+            this.reserveTabPage.Location = new System.Drawing.Point(4, 22);
+            this.reserveTabPage.Name = "reserveTabPage";
+            this.reserveTabPage.Size = new System.Drawing.Size(791, 384);
+            this.reserveTabPage.TabIndex = 9;
+            this.reserveTabPage.Text = "予約";
+            this.reserveTabPage.UseVisualStyleBackColor = true;
+            // 
+            // edcbReserveSettingGroupBox
+            // 
+            this.edcbReserveSettingGroupBox.Controls.Add(this.prioritizeViewLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.prioritizeViewPanel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.suspendModeAfterRecPanel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.endRecMarginNumericUpDown);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.startRecMarginNumericUpDown);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.browseBatFileButton);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.deleteRecFolderButton);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.copyRecFolderButton);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.editRecFolderButton);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.addRecFolderButton);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.enableReserveCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recTagTextBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recPriorityComboBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recBatFilePathTextBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recModeComboBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recTagLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recModeLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recBatFilePathLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recTuijyuuCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.rebootAfterReturnCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recPittariCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recPriorityLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recMarginLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.useDefaultRecMarginCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.startRecMarginLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.defaultSuspendModeAfterRecCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.suspendModeAfterRecLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.endRecMarginLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recTunerIdComboBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recTunerIdLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recServiceDataCarouselCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.continueRecSameFileCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recServiceDataLabel);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.partialRecSeparateFileCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.useDefaultRecServiceDataCheckBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recFolderListView);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recServiceDataCaptionCheckBox);
+            this.edcbReserveSettingGroupBox.Location = new System.Drawing.Point(23, 40);
+            this.edcbReserveSettingGroupBox.Name = "edcbReserveSettingGroupBox";
+            this.edcbReserveSettingGroupBox.Size = new System.Drawing.Size(708, 326);
+            this.edcbReserveSettingGroupBox.TabIndex = 56;
+            this.edcbReserveSettingGroupBox.TabStop = false;
+            this.edcbReserveSettingGroupBox.Text = "EDCB予約内容";
+            // 
+            // prioritizeRecRadioButton
+            // 
+            this.prioritizeRecRadioButton.AutoSize = true;
+            this.prioritizeRecRadioButton.Checked = true;
+            this.prioritizeRecRadioButton.Location = new System.Drawing.Point(60, 6);
+            this.prioritizeRecRadioButton.Name = "prioritizeRecRadioButton";
+            this.prioritizeRecRadioButton.Size = new System.Drawing.Size(47, 16);
+            this.prioritizeRecRadioButton.TabIndex = 63;
+            this.prioritizeRecRadioButton.TabStop = true;
+            this.prioritizeRecRadioButton.Text = "録画";
+            this.prioritizeRecRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // prioritizeViewRadioButton
+            // 
+            this.prioritizeViewRadioButton.AutoSize = true;
+            this.prioritizeViewRadioButton.Location = new System.Drawing.Point(8, 6);
+            this.prioritizeViewRadioButton.Name = "prioritizeViewRadioButton";
+            this.prioritizeViewRadioButton.Size = new System.Drawing.Size(47, 16);
+            this.prioritizeViewRadioButton.TabIndex = 62;
+            this.prioritizeViewRadioButton.Text = "視聴";
+            this.prioritizeViewRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // endRecMarginNumericUpDown
+            // 
+            this.endRecMarginNumericUpDown.Location = new System.Drawing.Point(432, 72);
+            this.endRecMarginNumericUpDown.Maximum = new decimal(new int[] {
+            9999,
+            0,
+            0,
+            0});
+            this.endRecMarginNumericUpDown.Minimum = new decimal(new int[] {
+            9999,
+            0,
+            0,
+            -2147483648});
+            this.endRecMarginNumericUpDown.Name = "endRecMarginNumericUpDown";
+            this.endRecMarginNumericUpDown.Size = new System.Drawing.Size(70, 19);
+            this.endRecMarginNumericUpDown.TabIndex = 61;
+            this.endRecMarginNumericUpDown.Value = new decimal(new int[] {
+            2,
+            0,
+            0,
+            0});
+            // 
+            // startRecMarginNumericUpDown
+            // 
+            this.startRecMarginNumericUpDown.Location = new System.Drawing.Point(297, 72);
+            this.startRecMarginNumericUpDown.Maximum = new decimal(new int[] {
+            9999,
+            0,
+            0,
+            0});
+            this.startRecMarginNumericUpDown.Minimum = new decimal(new int[] {
+            9999,
+            0,
+            0,
+            -2147483648});
+            this.startRecMarginNumericUpDown.Name = "startRecMarginNumericUpDown";
+            this.startRecMarginNumericUpDown.Size = new System.Drawing.Size(70, 19);
+            this.startRecMarginNumericUpDown.TabIndex = 18;
+            this.startRecMarginNumericUpDown.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            // 
+            // browseBatFileButton
+            // 
+            this.browseBatFileButton.Location = new System.Drawing.Point(539, 271);
+            this.browseBatFileButton.Name = "browseBatFileButton";
+            this.browseBatFileButton.Size = new System.Drawing.Size(40, 23);
+            this.browseBatFileButton.TabIndex = 60;
+            this.browseBatFileButton.Text = "開く";
+            this.browseBatFileButton.UseVisualStyleBackColor = true;
+            this.browseBatFileButton.Click += new System.EventHandler(this.browseBatFileButton_Click);
+            // 
+            // deleteRecFolderButton
+            // 
+            this.deleteRecFolderButton.Location = new System.Drawing.Point(589, 197);
+            this.deleteRecFolderButton.Name = "deleteRecFolderButton";
+            this.deleteRecFolderButton.Size = new System.Drawing.Size(40, 23);
+            this.deleteRecFolderButton.TabIndex = 59;
+            this.deleteRecFolderButton.Text = "削除";
+            this.deleteRecFolderButton.UseVisualStyleBackColor = true;
+            this.deleteRecFolderButton.Click += new System.EventHandler(this.delRecFolderButton_Click);
+            // 
+            // copyRecFolderButton
+            // 
+            this.copyRecFolderButton.Location = new System.Drawing.Point(589, 172);
+            this.copyRecFolderButton.Name = "copyRecFolderButton";
+            this.copyRecFolderButton.Size = new System.Drawing.Size(40, 23);
+            this.copyRecFolderButton.TabIndex = 58;
+            this.copyRecFolderButton.Text = "コピー";
+            this.copyRecFolderButton.UseVisualStyleBackColor = true;
+            this.copyRecFolderButton.Click += new System.EventHandler(this.copyRecFolderButton_Click);
+            // 
+            // editRecFolderButton
+            // 
+            this.editRecFolderButton.Location = new System.Drawing.Point(589, 147);
+            this.editRecFolderButton.Name = "editRecFolderButton";
+            this.editRecFolderButton.Size = new System.Drawing.Size(40, 23);
+            this.editRecFolderButton.TabIndex = 57;
+            this.editRecFolderButton.Text = "変更";
+            this.editRecFolderButton.UseVisualStyleBackColor = true;
+            this.editRecFolderButton.Click += new System.EventHandler(this.editRecFolderButton_Click);
+            // 
+            // addRecFolderButton
+            // 
+            this.addRecFolderButton.Location = new System.Drawing.Point(589, 122);
+            this.addRecFolderButton.Name = "addRecFolderButton";
+            this.addRecFolderButton.Size = new System.Drawing.Size(40, 23);
+            this.addRecFolderButton.TabIndex = 56;
+            this.addRecFolderButton.Text = "追加";
+            this.addRecFolderButton.UseVisualStyleBackColor = true;
+            this.addRecFolderButton.Click += new System.EventHandler(this.addRecFolderButton_Click);
+            // 
+            // enableReserveCheckBox
+            // 
+            this.enableReserveCheckBox.AutoSize = true;
+            this.enableReserveCheckBox.Checked = true;
+            this.enableReserveCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.enableReserveCheckBox.Location = new System.Drawing.Point(16, 23);
+            this.enableReserveCheckBox.Name = "enableReserveCheckBox";
+            this.enableReserveCheckBox.Size = new System.Drawing.Size(48, 16);
+            this.enableReserveCheckBox.TabIndex = 2;
+            this.enableReserveCheckBox.Text = "有効";
+            this.enableReserveCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // recTagTextBox
+            // 
+            this.recTagTextBox.Location = new System.Drawing.Point(113, 298);
+            this.recTagTextBox.Name = "recTagTextBox";
+            this.recTagTextBox.Size = new System.Drawing.Size(420, 19);
+            this.recTagTextBox.TabIndex = 55;
+            // 
+            // recPriorityComboBox
+            // 
+            this.recPriorityComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.recPriorityComboBox.FormattingEnabled = true;
+            this.recPriorityComboBox.Items.AddRange(new object[] {
+            "1(低)",
+            "2",
+            "3",
+            "4",
+            "5(高)"});
+            this.recPriorityComboBox.Location = new System.Drawing.Point(155, 47);
+            this.recPriorityComboBox.Name = "recPriorityComboBox";
+            this.recPriorityComboBox.Size = new System.Drawing.Size(101, 20);
+            this.recPriorityComboBox.TabIndex = 28;
+            // 
+            // recBatFilePathTextBox
+            // 
+            this.recBatFilePathTextBox.Location = new System.Drawing.Point(113, 273);
+            this.recBatFilePathTextBox.Name = "recBatFilePathTextBox";
+            this.recBatFilePathTextBox.Size = new System.Drawing.Size(420, 19);
+            this.recBatFilePathTextBox.TabIndex = 54;
+            // 
+            // recModeComboBox
+            // 
+            this.recModeComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.recModeComboBox.FormattingEnabled = true;
+            this.recModeComboBox.Items.AddRange(new object[] {
+            "全サービス",
+            "指定サービス",
+            "全サービス(デコード処理なし)",
+            "指定サービス(デコード処理なし)"});
+            this.recModeComboBox.Location = new System.Drawing.Point(349, 21);
+            this.recModeComboBox.Name = "recModeComboBox";
+            this.recModeComboBox.Size = new System.Drawing.Size(175, 20);
+            this.recModeComboBox.TabIndex = 24;
+            // 
+            // recTagLabel
+            // 
+            this.recTagLabel.AutoSize = true;
+            this.recTagLabel.Location = new System.Drawing.Point(14, 301);
+            this.recTagLabel.Name = "recTagLabel";
+            this.recTagLabel.Size = new System.Drawing.Size(46, 12);
+            this.recTagLabel.TabIndex = 53;
+            this.recTagLabel.Text = "録画タグ";
+            // 
+            // recModeLabel
+            // 
+            this.recModeLabel.AutoSize = true;
+            this.recModeLabel.Location = new System.Drawing.Point(287, 24);
+            this.recModeLabel.Name = "recModeLabel";
+            this.recModeLabel.Size = new System.Drawing.Size(57, 12);
+            this.recModeLabel.TabIndex = 25;
+            this.recModeLabel.Text = "録画モード";
+            // 
+            // recBatFilePathLabel
+            // 
+            this.recBatFilePathLabel.AutoSize = true;
+            this.recBatFilePathLabel.Location = new System.Drawing.Point(14, 276);
+            this.recBatFilePathLabel.Name = "recBatFilePathLabel";
+            this.recBatFilePathLabel.Size = new System.Drawing.Size(81, 12);
+            this.recBatFilePathLabel.TabIndex = 52;
+            this.recBatFilePathLabel.Text = "録画後実行bat";
+            // 
+            // recTuijyuuCheckBox
+            // 
+            this.recTuijyuuCheckBox.AutoSize = true;
+            this.recTuijyuuCheckBox.Checked = true;
+            this.recTuijyuuCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.recTuijyuuCheckBox.Location = new System.Drawing.Point(289, 49);
+            this.recTuijyuuCheckBox.Name = "recTuijyuuCheckBox";
+            this.recTuijyuuCheckBox.Size = new System.Drawing.Size(110, 16);
+            this.recTuijyuuCheckBox.TabIndex = 26;
+            this.recTuijyuuCheckBox.Text = "イベントリレー追従";
+            this.recTuijyuuCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // rebootAfterReturnCheckBox
+            // 
+            this.rebootAfterReturnCheckBox.AutoSize = true;
+            this.rebootAfterReturnCheckBox.Location = new System.Drawing.Point(480, 249);
+            this.rebootAfterReturnCheckBox.Name = "rebootAfterReturnCheckBox";
+            this.rebootAfterReturnCheckBox.Size = new System.Drawing.Size(115, 16);
+            this.rebootAfterReturnCheckBox.TabIndex = 51;
+            this.rebootAfterReturnCheckBox.Text = "復帰後再起動する";
+            this.rebootAfterReturnCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // recPittariCheckBox
+            // 
+            this.recPittariCheckBox.AutoSize = true;
+            this.recPittariCheckBox.Location = new System.Drawing.Point(418, 49);
+            this.recPittariCheckBox.Name = "recPittariCheckBox";
+            this.recPittariCheckBox.Size = new System.Drawing.Size(96, 16);
+            this.recPittariCheckBox.TabIndex = 27;
+            this.recPittariCheckBox.Text = "ぴったり(?)録画";
+            this.recPittariCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // afterRecShutdownRadioButton
+            // 
+            this.afterRecShutdownRadioButton.AutoSize = true;
+            this.afterRecShutdownRadioButton.Location = new System.Drawing.Point(216, 5);
+            this.afterRecShutdownRadioButton.Name = "afterRecShutdownRadioButton";
+            this.afterRecShutdownRadioButton.Size = new System.Drawing.Size(83, 16);
+            this.afterRecShutdownRadioButton.TabIndex = 50;
+            this.afterRecShutdownRadioButton.Tag = "3";
+            this.afterRecShutdownRadioButton.Text = "シャットダウン";
+            this.afterRecShutdownRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // recPriorityLabel
+            // 
+            this.recPriorityLabel.AutoSize = true;
+            this.recPriorityLabel.Location = new System.Drawing.Point(78, 50);
+            this.recPriorityLabel.Name = "recPriorityLabel";
+            this.recPriorityLabel.Size = new System.Drawing.Size(41, 12);
+            this.recPriorityLabel.TabIndex = 29;
+            this.recPriorityLabel.Text = "優先度";
+            // 
+            // afterRecSuspendRadioButton
+            // 
+            this.afterRecSuspendRadioButton.AutoSize = true;
+            this.afterRecSuspendRadioButton.Location = new System.Drawing.Point(163, 5);
+            this.afterRecSuspendRadioButton.Name = "afterRecSuspendRadioButton";
+            this.afterRecSuspendRadioButton.Size = new System.Drawing.Size(47, 16);
+            this.afterRecSuspendRadioButton.TabIndex = 49;
+            this.afterRecSuspendRadioButton.Tag = "2";
+            this.afterRecSuspendRadioButton.Text = "休止";
+            this.afterRecSuspendRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // recMarginLabel
+            // 
+            this.recMarginLabel.AutoSize = true;
+            this.recMarginLabel.Location = new System.Drawing.Point(14, 75);
+            this.recMarginLabel.Name = "recMarginLabel";
+            this.recMarginLabel.Size = new System.Drawing.Size(67, 12);
+            this.recMarginLabel.TabIndex = 30;
+            this.recMarginLabel.Text = "録画マージン";
+            // 
+            // afterRecStandbyRadioButton
+            // 
+            this.afterRecStandbyRadioButton.AutoSize = true;
+            this.afterRecStandbyRadioButton.Checked = true;
+            this.afterRecStandbyRadioButton.Location = new System.Drawing.Point(89, 5);
+            this.afterRecStandbyRadioButton.Name = "afterRecStandbyRadioButton";
+            this.afterRecStandbyRadioButton.Size = new System.Drawing.Size(68, 16);
+            this.afterRecStandbyRadioButton.TabIndex = 48;
+            this.afterRecStandbyRadioButton.TabStop = true;
+            this.afterRecStandbyRadioButton.Tag = "1";
+            this.afterRecStandbyRadioButton.Text = "スタンバイ";
+            this.afterRecStandbyRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // useDefaultRecMarginCheckBox
+            // 
+            this.useDefaultRecMarginCheckBox.AutoSize = true;
+            this.useDefaultRecMarginCheckBox.Checked = true;
+            this.useDefaultRecMarginCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.useDefaultRecMarginCheckBox.Location = new System.Drawing.Point(156, 74);
+            this.useDefaultRecMarginCheckBox.Name = "useDefaultRecMarginCheckBox";
+            this.useDefaultRecMarginCheckBox.Size = new System.Drawing.Size(68, 16);
+            this.useDefaultRecMarginCheckBox.TabIndex = 32;
+            this.useDefaultRecMarginCheckBox.Text = "デフォルト";
+            this.useDefaultRecMarginCheckBox.UseVisualStyleBackColor = true;
+            this.useDefaultRecMarginCheckBox.CheckedChanged += new System.EventHandler(this.defaultMarginCheckBox_CheckedChanged);
+            // 
+            // afterRecNoActionRadioButton
+            // 
+            this.afterRecNoActionRadioButton.AutoSize = true;
+            this.afterRecNoActionRadioButton.Location = new System.Drawing.Point(6, 5);
+            this.afterRecNoActionRadioButton.Name = "afterRecNoActionRadioButton";
+            this.afterRecNoActionRadioButton.Size = new System.Drawing.Size(73, 16);
+            this.afterRecNoActionRadioButton.TabIndex = 47;
+            this.afterRecNoActionRadioButton.Tag = "4";
+            this.afterRecNoActionRadioButton.Text = "何もしない";
+            this.afterRecNoActionRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // startRecMarginLabel
+            // 
+            this.startRecMarginLabel.AutoSize = true;
+            this.startRecMarginLabel.Location = new System.Drawing.Point(253, 75);
+            this.startRecMarginLabel.Name = "startRecMarginLabel";
+            this.startRecMarginLabel.Size = new System.Drawing.Size(29, 12);
+            this.startRecMarginLabel.TabIndex = 34;
+            this.startRecMarginLabel.Text = "開始";
+            // 
+            // defaultSuspendModeAfterRecCheckBox
+            // 
+            this.defaultSuspendModeAfterRecCheckBox.AutoSize = true;
+            this.defaultSuspendModeAfterRecCheckBox.Checked = true;
+            this.defaultSuspendModeAfterRecCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.defaultSuspendModeAfterRecCheckBox.Location = new System.Drawing.Point(101, 249);
+            this.defaultSuspendModeAfterRecCheckBox.Name = "defaultSuspendModeAfterRecCheckBox";
+            this.defaultSuspendModeAfterRecCheckBox.Size = new System.Drawing.Size(68, 16);
+            this.defaultSuspendModeAfterRecCheckBox.TabIndex = 46;
+            this.defaultSuspendModeAfterRecCheckBox.Text = "デフォルト";
+            this.defaultSuspendModeAfterRecCheckBox.UseVisualStyleBackColor = true;
+            this.defaultSuspendModeAfterRecCheckBox.CheckedChanged += new System.EventHandler(this.defaultPostRecActionCheckBox_CheckedChanged);
+            // 
+            // suspendModeAfterRecLabel
+            // 
+            this.suspendModeAfterRecLabel.AutoSize = true;
+            this.suspendModeAfterRecLabel.Location = new System.Drawing.Point(14, 250);
+            this.suspendModeAfterRecLabel.Name = "suspendModeAfterRecLabel";
+            this.suspendModeAfterRecLabel.Size = new System.Drawing.Size(65, 12);
+            this.suspendModeAfterRecLabel.TabIndex = 45;
+            this.suspendModeAfterRecLabel.Text = "録画後動作";
+            // 
+            // endRecMarginLabel
+            // 
+            this.endRecMarginLabel.AutoSize = true;
+            this.endRecMarginLabel.Location = new System.Drawing.Point(388, 75);
+            this.endRecMarginLabel.Name = "endRecMarginLabel";
+            this.endRecMarginLabel.Size = new System.Drawing.Size(29, 12);
+            this.endRecMarginLabel.TabIndex = 36;
+            this.endRecMarginLabel.Text = "終了";
+            // 
+            // recTunerIdComboBox
+            // 
+            this.recTunerIdComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.recTunerIdComboBox.FormattingEnabled = true;
+            this.recTunerIdComboBox.Location = new System.Drawing.Point(143, 222);
+            this.recTunerIdComboBox.Name = "recTunerIdComboBox";
+            this.recTunerIdComboBox.Size = new System.Drawing.Size(356, 20);
+            this.recTunerIdComboBox.TabIndex = 44;
+            // 
+            // recTunerIdLabel
+            // 
+            this.recTunerIdLabel.AutoSize = true;
+            this.recTunerIdLabel.Location = new System.Drawing.Point(13, 225);
+            this.recTunerIdLabel.Name = "recTunerIdLabel";
+            this.recTunerIdLabel.Size = new System.Drawing.Size(124, 12);
+            this.recTunerIdLabel.TabIndex = 43;
+            this.recTunerIdLabel.Text = "使用チューナー強制指定";
+            // 
+            // recServiceDataCarouselCheckBox
+            // 
+            this.recServiceDataCarouselCheckBox.AutoSize = true;
+            this.recServiceDataCarouselCheckBox.Location = new System.Drawing.Point(359, 98);
+            this.recServiceDataCarouselCheckBox.Name = "recServiceDataCarouselCheckBox";
+            this.recServiceDataCarouselCheckBox.Size = new System.Drawing.Size(141, 16);
+            this.recServiceDataCarouselCheckBox.TabIndex = 39;
+            this.recServiceDataCarouselCheckBox.Text = "データカルーセルを含める";
+            this.recServiceDataCarouselCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // continueRecSameFileCheckBox
+            // 
+            this.continueRecSameFileCheckBox.AutoSize = true;
+            this.continueRecSameFileCheckBox.Location = new System.Drawing.Point(309, 201);
+            this.continueRecSameFileCheckBox.Name = "continueRecSameFileCheckBox";
+            this.continueRecSameFileCheckBox.Size = new System.Drawing.Size(199, 16);
+            this.continueRecSameFileCheckBox.TabIndex = 42;
+            this.continueRecSameFileCheckBox.Text = "後ろの予約を同一ファイルで出力する";
+            this.continueRecSameFileCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // recServiceDataLabel
+            // 
+            this.recServiceDataLabel.AutoSize = true;
+            this.recServiceDataLabel.Location = new System.Drawing.Point(14, 99);
+            this.recServiceDataLabel.Name = "recServiceDataLabel";
+            this.recServiceDataLabel.Size = new System.Drawing.Size(118, 12);
+            this.recServiceDataLabel.TabIndex = 31;
+            this.recServiceDataLabel.Text = "指定サービス対象データ";
+            // 
+            // partialRecSeparateFileCheckBox
+            // 
+            this.partialRecSeparateFileCheckBox.AutoSize = true;
+            this.partialRecSeparateFileCheckBox.Location = new System.Drawing.Point(34, 201);
+            this.partialRecSeparateFileCheckBox.Name = "partialRecSeparateFileCheckBox";
+            this.partialRecSeparateFileCheckBox.Size = new System.Drawing.Size(248, 16);
+            this.partialRecSeparateFileCheckBox.TabIndex = 41;
+            this.partialRecSeparateFileCheckBox.Text = "部分受信(ワンセグ)を別ファイルに同時出力する";
+            this.partialRecSeparateFileCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // useDefaultRecServiceDataCheckBox
+            // 
+            this.useDefaultRecServiceDataCheckBox.AutoSize = true;
+            this.useDefaultRecServiceDataCheckBox.Checked = true;
+            this.useDefaultRecServiceDataCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.useDefaultRecServiceDataCheckBox.Location = new System.Drawing.Point(156, 98);
+            this.useDefaultRecServiceDataCheckBox.Name = "useDefaultRecServiceDataCheckBox";
+            this.useDefaultRecServiceDataCheckBox.Size = new System.Drawing.Size(68, 16);
+            this.useDefaultRecServiceDataCheckBox.TabIndex = 33;
+            this.useDefaultRecServiceDataCheckBox.Text = "デフォルト";
+            this.useDefaultRecServiceDataCheckBox.UseVisualStyleBackColor = true;
+            this.useDefaultRecServiceDataCheckBox.CheckedChanged += new System.EventHandler(this.defaultServiceDataCheckBox_CheckedChanged);
+            // 
+            // recFolderListView
+            // 
+            this.recFolderListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.partialRecColumnHeader,
+            this.recFolderColumnHeader,
+            this.writePlugInColumnHeader,
+            this.recNamePlugInColumnHeader});
+            this.recFolderListView.FullRowSelect = true;
+            this.recFolderListView.HideSelection = false;
+            this.recFolderListView.Location = new System.Drawing.Point(16, 122);
+            this.recFolderListView.Name = "recFolderListView";
+            this.recFolderListView.Size = new System.Drawing.Size(554, 72);
+            this.recFolderListView.TabIndex = 40;
+            this.recFolderListView.UseCompatibleStateImageBehavior = false;
+            this.recFolderListView.View = System.Windows.Forms.View.Details;
+            // 
+            // partialRecColumnHeader
+            // 
+            this.partialRecColumnHeader.Text = "部分受信";
+            this.partialRecColumnHeader.Width = 63;
+            // 
+            // recFolderColumnHeader
+            // 
+            this.recFolderColumnHeader.Text = "録画フォルダ";
+            this.recFolderColumnHeader.Width = 142;
+            // 
+            // writePlugInColumnHeader
+            // 
+            this.writePlugInColumnHeader.Text = "出力PlugIn";
+            this.writePlugInColumnHeader.Width = 130;
+            // 
+            // recNamePlugInColumnHeader
+            // 
+            this.recNamePlugInColumnHeader.Text = "ファイル名PlugIn";
+            this.recNamePlugInColumnHeader.Width = 163;
+            // 
+            // recServiceDataCaptionCheckBox
+            // 
+            this.recServiceDataCaptionCheckBox.AutoSize = true;
+            this.recServiceDataCaptionCheckBox.Checked = true;
+            this.recServiceDataCaptionCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.recServiceDataCaptionCheckBox.Location = new System.Drawing.Point(255, 98);
+            this.recServiceDataCaptionCheckBox.Name = "recServiceDataCaptionCheckBox";
+            this.recServiceDataCaptionCheckBox.Size = new System.Drawing.Size(88, 16);
+            this.recServiceDataCaptionCheckBox.TabIndex = 38;
+            this.recServiceDataCaptionCheckBox.Text = "字幕を含める";
+            this.recServiceDataCaptionCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // useRockbarReserveCheckbox
+            // 
+            this.useRockbarReserveCheckbox.AutoSize = true;
+            this.useRockbarReserveCheckbox.Location = new System.Drawing.Point(23, 18);
+            this.useRockbarReserveCheckbox.Name = "useRockbarReserveCheckbox";
+            this.useRockbarReserveCheckbox.Size = new System.Drawing.Size(200, 16);
+            this.useRockbarReserveCheckbox.TabIndex = 1;
+            this.useRockbarReserveCheckbox.Text = "RockbarForEDCBで予約追加を行う";
+            this.useRockbarReserveCheckbox.UseVisualStyleBackColor = true;
+            this.useRockbarReserveCheckbox.CheckedChanged += new System.EventHandler(this.useRockbarReserveCheckbox_CheckedChanged);
             // 
             // tunerTabPage
             // 
@@ -1480,12 +2070,12 @@ namespace RockbarForEDCB
             this.previewListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.previewListView.HideSelection = false;
             this.previewListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2,
-            listViewItem3,
-            listViewItem4,
-            listViewItem5,
-            listViewItem6});
+            listViewItem12,
+            listViewItem13,
+            listViewItem14,
+            listViewItem15,
+            listViewItem16,
+            listViewItem17});
             this.previewListView.Location = new System.Drawing.Point(423, 90);
             this.previewListView.MultiSelect = false;
             this.previewListView.Name = "previewListView";
@@ -1772,11 +2362,11 @@ namespace RockbarForEDCB
             this.previewMenuListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.previewMenuListView.HideSelection = false;
             this.previewMenuListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem7,
-            listViewItem8,
-            listViewItem9,
-            listViewItem10,
-            listViewItem11});
+            listViewItem18,
+            listViewItem19,
+            listViewItem20,
+            listViewItem21,
+            listViewItem22});
             this.previewMenuListView.Location = new System.Drawing.Point(409, 75);
             this.previewMenuListView.MultiSelect = false;
             this.previewMenuListView.Name = "previewMenuListView";
@@ -2198,6 +2788,35 @@ namespace RockbarForEDCB
             this.fontDialog.MinSize = 6;
             this.fontDialog.ShowEffects = false;
             // 
+            // suspendModeAfterRecPanel
+            // 
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecNoActionRadioButton);
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecStandbyRadioButton);
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecSuspendRadioButton);
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecShutdownRadioButton);
+            this.suspendModeAfterRecPanel.Location = new System.Drawing.Point(168, 244);
+            this.suspendModeAfterRecPanel.Name = "suspendModeAfterRecPanel";
+            this.suspendModeAfterRecPanel.Size = new System.Drawing.Size(304, 25);
+            this.suspendModeAfterRecPanel.TabIndex = 64;
+            // 
+            // prioritizeViewPanel
+            // 
+            this.prioritizeViewPanel.Controls.Add(this.prioritizeRecRadioButton);
+            this.prioritizeViewPanel.Controls.Add(this.prioritizeViewRadioButton);
+            this.prioritizeViewPanel.Location = new System.Drawing.Point(149, 16);
+            this.prioritizeViewPanel.Name = "prioritizeViewPanel";
+            this.prioritizeViewPanel.Size = new System.Drawing.Size(116, 27);
+            this.prioritizeViewPanel.TabIndex = 65;
+            // 
+            // prioritizeViewLabel
+            // 
+            this.prioritizeViewLabel.AutoSize = true;
+            this.prioritizeViewLabel.Location = new System.Drawing.Point(80, 24);
+            this.prioritizeViewLabel.Name = "prioritizeViewLabel";
+            this.prioritizeViewLabel.Size = new System.Drawing.Size(57, 12);
+            this.prioritizeViewLabel.TabIndex = 66;
+            this.prioritizeViewLabel.Text = "優先モード";
+            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -2213,6 +2832,12 @@ namespace RockbarForEDCB
             this.edcbLinkageTabPage.ResumeLayout(false);
             this.edcbLinkageTabPage.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).EndInit();
+            this.reserveTabPage.ResumeLayout(false);
+            this.reserveTabPage.PerformLayout();
+            this.edcbReserveSettingGroupBox.ResumeLayout(false);
+            this.edcbReserveSettingGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.endRecMarginNumericUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.startRecMarginNumericUpDown)).EndInit();
             this.tunerTabPage.ResumeLayout(false);
             this.tunerTabPage.PerformLayout();
             this.allServiceTabPage.ResumeLayout(false);
@@ -2236,6 +2861,10 @@ namespace RockbarForEDCB
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).EndInit();
             this.taskTrayIconClickGroupBox.ResumeLayout(false);
             this.taskTrayIconClickGroupBox.PerformLayout();
+            this.suspendModeAfterRecPanel.ResumeLayout(false);
+            this.suspendModeAfterRecPanel.PerformLayout();
+            this.prioritizeViewPanel.ResumeLayout(false);
+            this.prioritizeViewPanel.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -2437,5 +3066,55 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox isAutoOpenCatvCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenSphdCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenBs4kCheckBox;
+        private System.Windows.Forms.TabPage reserveTabPage;
+        private System.Windows.Forms.CheckBox useRockbarReserveCheckbox;
+        private System.Windows.Forms.CheckBox enableReserveCheckBox;
+        private System.Windows.Forms.Label recServiceDataLabel;
+        private System.Windows.Forms.Label recMarginLabel;
+        private System.Windows.Forms.Label recPriorityLabel;
+        private System.Windows.Forms.ComboBox recPriorityComboBox;
+        private System.Windows.Forms.CheckBox recPittariCheckBox;
+        private System.Windows.Forms.CheckBox recTuijyuuCheckBox;
+        private System.Windows.Forms.Label recModeLabel;
+        private System.Windows.Forms.ComboBox recModeComboBox;
+        private System.Windows.Forms.ListView recFolderListView;
+        private System.Windows.Forms.ColumnHeader partialRecColumnHeader;
+        private System.Windows.Forms.ColumnHeader recFolderColumnHeader;
+        private System.Windows.Forms.ColumnHeader writePlugInColumnHeader;
+        private System.Windows.Forms.ColumnHeader recNamePlugInColumnHeader;
+        private System.Windows.Forms.CheckBox recServiceDataCarouselCheckBox;
+        private System.Windows.Forms.CheckBox recServiceDataCaptionCheckBox;
+        private System.Windows.Forms.Label endRecMarginLabel;
+        private System.Windows.Forms.Label startRecMarginLabel;
+        private System.Windows.Forms.CheckBox useDefaultRecServiceDataCheckBox;
+        private System.Windows.Forms.CheckBox useDefaultRecMarginCheckBox;
+        private System.Windows.Forms.CheckBox partialRecSeparateFileCheckBox;
+        private System.Windows.Forms.Label recBatFilePathLabel;
+        private System.Windows.Forms.CheckBox rebootAfterReturnCheckBox;
+        private System.Windows.Forms.RadioButton afterRecShutdownRadioButton;
+        private System.Windows.Forms.RadioButton afterRecSuspendRadioButton;
+        private System.Windows.Forms.RadioButton afterRecStandbyRadioButton;
+        private System.Windows.Forms.RadioButton afterRecNoActionRadioButton;
+        private System.Windows.Forms.CheckBox defaultSuspendModeAfterRecCheckBox;
+        private System.Windows.Forms.Label suspendModeAfterRecLabel;
+        private System.Windows.Forms.ComboBox recTunerIdComboBox;
+        private System.Windows.Forms.Label recTunerIdLabel;
+        private System.Windows.Forms.CheckBox continueRecSameFileCheckBox;
+        private System.Windows.Forms.TextBox recTagTextBox;
+        private System.Windows.Forms.TextBox recBatFilePathTextBox;
+        private System.Windows.Forms.Label recTagLabel;
+        private System.Windows.Forms.GroupBox edcbReserveSettingGroupBox;
+        private System.Windows.Forms.Button browseBatFileButton;
+        private System.Windows.Forms.Button deleteRecFolderButton;
+        private System.Windows.Forms.Button copyRecFolderButton;
+        private System.Windows.Forms.Button editRecFolderButton;
+        private System.Windows.Forms.Button addRecFolderButton;
+        private System.Windows.Forms.NumericUpDown startRecMarginNumericUpDown;
+        private System.Windows.Forms.NumericUpDown endRecMarginNumericUpDown;
+        private System.Windows.Forms.RadioButton prioritizeRecRadioButton;
+        private System.Windows.Forms.RadioButton prioritizeViewRadioButton;
+        private System.Windows.Forms.Panel suspendModeAfterRecPanel;
+        private System.Windows.Forms.Panel prioritizeViewPanel;
+        private System.Windows.Forms.Label prioritizeViewLabel;
     }
 }
