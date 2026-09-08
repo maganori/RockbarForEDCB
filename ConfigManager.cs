@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using EpgTimer;
 
 namespace RockbarForEDCB
 {
@@ -332,6 +333,69 @@ namespace RockbarForEDCB
         public string WebLinkUrl { get; set; }
         // Web Link URL(録画結果)
         public string RecInfoWebLinkUrl { get; set; }
+
+        // Rockbarによる予約追加機能の使用
+        public bool UseRockbarReserve { get; set; }
+        // 予約の有効フラグ
+        public bool EnableReserve { get; set; }
+        // 優先モード(視聴登録優先)
+        public bool prioritizeView { get; set; }
+        // 録画モード
+        public byte RecMode { get; set; }
+        // 録画優先度
+        public byte RecPriority { get; set; }
+        // 録画追従の要否
+        public bool RecTuijyuu { get; set; }
+        // ぴったり録画の要否
+        public bool RecPittari { get; set; }
+        // デフォルトの録画マージンを使用
+        public bool UseDefaultRecMargin { get; set; }
+        // 録画開始マージン
+        public int StartRecMargin { get; set; }
+        // 録画終了マージン
+        public int EndRecMargin { get; set; }
+        // 録画ServiceMode
+        public uint RecServiceMode { get; set; }
+        // 録画保存先フォルダのパス一覧
+        // 部分録画保存先フォルダのパス一覧
+        // --- アプリ内部用([TomlIgnore] を付与して TOML 出力から除外) ---
+        [TomlIgnore]
+        public List<RecFileSetInfo> RecFolderList
+        {
+            get => RecFolderListDto?.Select(x => x.ToEntity()).ToList() ?? new List<RecFileSetInfo>();
+            set => RecFolderListDto = value?.Select(x => new RecFileSetInfoDto(x)).ToList() ?? new List<RecFileSetInfoDto>();
+        }
+
+        [TomlIgnore]
+        public List<RecFileSetInfo> PartialRecFolderList
+        {
+            get => PartialRecFolderListDto?.Select(x => x.ToEntity()).ToList() ?? new List<RecFileSetInfo>();
+            set => PartialRecFolderListDto = value?.Select(x => new RecFileSetInfoDto(x)).ToList() ?? new List<RecFileSetInfoDto>();
+        }
+
+        // --- TOML保存用 (DTO型でTOMLに出力・読み込みする) ---
+        [TomlMember(Key = "RecFolderList")]
+        public List<RecFileSetInfoDto> RecFolderListDto { get; set; } = new List<RecFileSetInfoDto>();
+
+        [TomlMember(Key = "PartialRecFolderList")]
+        public List<RecFileSetInfoDto> PartialRecFolderListDto { get; set; } = new List<RecFileSetInfoDto>();
+
+        // 部分受信(ワンセグ)を別ファイルに同時出力する
+        public bool PartialRecSeparateFile { get; set; }
+        // 後ろの予約を同一ファイルで出力する
+        public bool ContinueRecSameFile { get; set; }
+        // 使用チューナー強制指定
+        public uint RecTunerID { get; set; }
+        // SuspendMode
+        public byte SuspendModeAfterRec { get; set; }
+        // 復帰後再起動する
+        public bool RebootAfterReturn { get; set; }
+        // 録画後実行bat
+        public string RecBatFilePath { get; set; }
+        // 録画タグ
+        public string RecTag { get; set; }
+
+
         // TVTest.exeパス
         public string TvtestPath { get; set; }
         // TVTest 地デジオプション
@@ -431,5 +495,38 @@ namespace RockbarForEDCB
         public string TextBoxFont { get; set; }
         // BonDriver名→チューナー名マッピング
         public Dictionary<string, string> BonDriverNameToTunerName { get; set; }
+
+        /// <summary>
+        /// RecFileSetInfo の TOML シリアライズ用 DTO クラス
+        /// </summary>
+        public class RecFileSetInfoDto
+        {
+            public string RecFolder { get; set; } = "";
+            public string WritePlugIn { get; set; } = "";
+            public string RecNamePlugIn { get; set; } = "";
+            public string RecFileName { get; set; } = "";
+
+            public RecFileSetInfoDto() { }
+
+            public RecFileSetInfoDto(RecFileSetInfo src)
+            {
+                if (src == null) return;
+                this.RecFolder = src.RecFolder;
+                this.WritePlugIn = src.WritePlugIn;
+                this.RecNamePlugIn = src.RecNamePlugIn;
+                this.RecFileName = src.RecFileName;
+            }
+
+            public RecFileSetInfo ToEntity()
+            {
+                return new RecFileSetInfo
+                {
+                    RecFolder = this.RecFolder,
+                    WritePlugIn = this.WritePlugIn,
+                    RecNamePlugIn = this.RecNamePlugIn,
+                    RecFileName = this.RecFileName
+                };
+            }
+        }
     }
 }
