@@ -281,8 +281,9 @@ namespace RockbarForEDCB
 
             // 録画情報更新必要有無判定
             bool isRecDataUpdateRequired = 
-                mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いているか
-                now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval; //前回更新時間から時間経過しているか
+                mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いて かつ
+                ((isTransmission == true && forceMainListRefresh) || //通信要で強制リフレッシュ要　または
+                now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval); //前回更新時間から時間経過しているか
 
             // EpgTimerSrvと通信する
             if (_canConnect)

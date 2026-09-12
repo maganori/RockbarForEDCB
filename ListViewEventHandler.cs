@@ -139,21 +139,30 @@ namespace RockbarForEDCB
                     .OrderBy(a => a.start_time)
                     .FirstOrDefault();
 
-                if (ev == null)
+                // 映像情報が無い場合は処理を抜ける (他候補メモ：ShortInfo, AudioInfo)
+                if (ev == null || ev.ComponentInfo == null)
                 {
                     return;
                 }
+
+                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                bool isReserved = _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
 
                 // 既に予約済みであれば、予約の有効・無効を切り替える
-                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-                if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData))
+                if (isReserved && _configManager.RockbarSetting.UseRockbarReserveMod)
                 {
                     ToggleRecMode(reserveData);
-                    return;
                 }
-
                 // 予約がなければ予約を追加する
-                AddProgramReserve(ev);
+                else if (!isReserved && _configManager.RockbarSetting.UseRockbarReserveAdd)
+                {
+                    AddProgramReserve(ev);
+                }
+                // Rockbarで予約の追加や変更を行う設定ではないがWebLinkは使用するになっている場合
+                else if (_configManager.RockbarSetting.UseWebLink)
+                {
+                    OpenWebEpgInfo(ev);
+                }
             }
         }
 
@@ -269,16 +278,24 @@ namespace RockbarForEDCB
                 // Tagに格納されているものがEpgEventInfoならevへ代入
                 if (selected.Tag is EpgEventInfo ev)
                 {
-                    // 既に予約済みであれば、予約の有効・無効を切り替える
                     string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-                    if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData))
+                    bool isReserved = _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
+
+                    // 既に予約済みであれば、予約の有効・無効を切り替える
+                    if (isReserved && _configManager.RockbarSetting.UseRockbarReserveMod)
                     {
                         ToggleRecMode(reserveData);
-                        return;
                     }
-
                     // 予約がなければ予約を追加する
-                    AddProgramReserve(ev);
+                    else if (!isReserved && _configManager.RockbarSetting.UseRockbarReserveAdd)
+                    {
+                        AddProgramReserve(ev);
+                    }
+                    // Rockbarで予約の追加や変更を行う設定ではないがWebLinkは使用するになっている場合
+                    else if (_configManager.RockbarSetting.UseWebLink)
+                    {
+                        OpenWebEpgInfo(ev);
+                    }
                 }
             }
         }
@@ -384,10 +401,21 @@ namespace RockbarForEDCB
                 // クリックした箇所にある項目を取得する
                 var selected = targetListView.GetItemAt(e.Location.X, e.Location.Y);
 
-                if (selected != null && _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserve))
+                if (selected != null)
                 {
-                    ToggleRecMode(reserve);
+                    // 予約の有効・無効を切り替える
+                    if (_configManager.RockbarSetting.UseRockbarReserveMod && _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserveData))
+                    {
+                        ToggleRecMode(reserveData);
+                    }
+                    // Rockbarで予約の追加や変更を行う設定ではないがWebLinkは使用するになっている場合
+                    else if (_configManager.RockbarSetting.UseWebLink && _epgDataManager.AllEventMap.TryGetValue(selected.Name, out var ev))
+                    {
+                        OpenWebEpgInfo(ev);
+                    }
                 }
+
+
             }
         }
 
@@ -489,6 +517,11 @@ namespace RockbarForEDCB
                         AddWebSearchMenuItems(_contextMenu.Items, recFile.Title);
                         _contextMenu.Items.Add(new ToolStripSeparator());
                     }
+
+                    // 録画済み情報削除機能
+                    var delItem = _contextMenu.Items.Add(">> 録画済み情報を削除する");
+                    delItem.Click += (s2, e2) => DelRecInfo(recFile);
+                    _contextMenu.Items.Add(new ToolStripSeparator());
 
                     // 録画結果
                     var resultItem = _contextMenu.Items.Add($"録画結果 : {recFile.Comment}");
@@ -782,7 +815,7 @@ namespace RockbarForEDCB
             byte recMode = 0;
             bool enableReserve = _configManager.RockbarSetting.EnableReserve;
             // 引数で指定された場合はその値を優先し、null の場合は設定ファイル（RockbarSetting）の値を使用
-            bool prioritizeView = overridePrioritizeView ?? _configManager.RockbarSetting.prioritizeView;
+            bool prioritizeView = overridePrioritizeView ?? _configManager.RockbarSetting.PrioritizeView;
             byte settingRecMode = _configManager.RockbarSetting.RecMode;
 
             if (enableReserve)
@@ -832,7 +865,7 @@ namespace RockbarForEDCB
                 ServiceID = ev.service_id,
                 EventID = ev.event_id,
 
-                Comment = "RockbarForEDCB予約",
+                Comment = _configManager.RockbarSetting.RecComment,
 
                 ReserveID = 0, // 新規登録時は 0（自動採番）
 
@@ -843,17 +876,45 @@ namespace RockbarForEDCB
 
                 RecSetting = new RecSettingData
                 {
+                    // ・byte RecMode
+                    // 予約有効 全サービス：0
+                    // 予約有効 指定サービス：1
+                    // 予約有効 全サービス(デコード処理なし)：2
+                    // 予約有効 指定サービス(デコード処理なし)：3
+                    // 予約有効 視聴：4
+
+                    // 予約無効 全サービス：9
+                    // 予約無効 指定サービス：5
+                    // 予約無効 全サービス(デコード処理なし)：6
+                    // 予約無効 指定サービス(デコード処理なし)：7
+                    // 予約無効 視聴：8
                     RecMode = recMode,
-                    Priority = (byte)(_configManager.RockbarSetting.RecPriority + 1), // 予約追加するときはなぜか+1したPriorityを渡す必要がある
+                    Priority = _configManager.RockbarSetting.RecPriority,
                     TuijyuuFlag = _configManager.RockbarSetting.RecTuijyuu ? (byte)1 : (byte)0,
+
+                    // ・uint ServiceMode
+                    // 8765 4321
+                    // 1:デフォルトを使用(0:ON, 1:OFF)
+                    // 2:？
+                    // 3:？
+                    // 4:？
+                    // 5:字幕を含める(0:OFF, 1:ON)
+                    // 6:データカルーセルを含める(0:OFF, 1:ON)
                     ServiceMode = _configManager.RockbarSetting.RecServiceMode,
                     PittariFlag = _configManager.RockbarSetting.RecPittari ? (byte)1 : (byte)0,
                     BatFilePath = _configManager.RockbarSetting.RecBatFilePath,
                     RecTag = _configManager.RockbarSetting.RecTag,
                     RecFolderList = _configManager.RockbarSetting.RecFolderList,
+
+                    // ・byte SuspendMode
+                    // デフォルト有効 ：0 ※RebootFlagも0(無効)にされる
+                    // デフォルト無効 何もしない：4
+                    // デフォルト無効 スタンバイ：1
+                    // デフォルト無効 休止：2
+                    // デフォルト無効 シャットダウン：3
                     SuspendMode = _configManager.RockbarSetting.SuspendModeAfterRec,
                     RebootFlag = _configManager.RockbarSetting.RebootAfterReturn ? (byte)1 : (byte)0,
-                    UseMargineFlag = _configManager.RockbarSetting.UseDefaultRecMargin ? (byte)0 : (byte)1, // UseMargineFlagは個別にStart,EndMargineを使用するかFlag
+                    UseMargineFlag = _configManager.RockbarSetting.UseCustomRecMargin ? (byte)1 : (byte)0,
                     StartMargine = _configManager.RockbarSetting.StartRecMargin,
                     EndMargine = _configManager.RockbarSetting.EndRecMargin,
                     ContinueRecFlag = _configManager.RockbarSetting.ContinueRecSameFile ? (byte)1 : (byte)0,
@@ -875,6 +936,75 @@ namespace RockbarForEDCB
                 MessageBox.Show("録画予約登録でエラーが発生しました。", "録画予約登録エラー");
             }
             _refreshList?.Invoke(true, false, false);
+        }
+
+        /// <summary>
+        /// 録画予約の削除処理
+        /// </summary>
+        private void DelProgramReserve(ReserveData reserve)
+        {
+            // 削除確認ダイアログを表示
+            if (_configManager.RockbarSetting.UseRockbarReserveDelConfirm)
+            {
+                // 視聴予約か録画予約の確認
+                string viewOrRecText = (reserve.RecSetting.RecMode == 4 || reserve.RecSetting.RecMode == 8) ? "視聴" : "録画";
+
+                var result = MessageBox.Show(
+                $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}\n" +
+                $"{reserve.StationName}\n{reserve.Title}\n\nの{viewOrRecText}予約を削除しますか？",
+                $"{viewOrRecText}予約削除確認",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+                // 「はい」以外を選択した場合は処理を中断
+                if (result != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+
+            var err = _ctrlCmdUtil.SendDelReserve(new List<uint>() { reserve.ReserveID });
+            if (err != ErrCode.CMD_SUCCESS)
+            {
+                MessageBox.Show($"録画予約削除でエラーが発生しました。", "録画予約削除エラー");
+            }
+            _refreshList?.Invoke(true, false, false);
+        }
+
+        /// <summary>
+        /// 録画済み情報の削除処理
+        /// </summary>
+        private void DelRecInfo(RecFileInfo recFileInfo)
+        {
+            // 削除確認ダイアログを表示
+            if (_configManager.RockbarSetting.UseRockbarReserveDelConfirm)
+            {
+                // ファイルパスが存在する場合のみ補足文を作成
+                string pathNotice = string.IsNullOrEmpty(recFileInfo.RecFilePath)
+                    ? $"\n\n録画ファイル情報がないため録画に失敗した可能性があります。"
+                    : $"\n\n{recFileInfo.RecFilePath}\nは削除されません。";
+
+                var result = MessageBox.Show(
+                    $"{recFileInfo.StartTime:MM/dd(ddd) HH:mm}～{recFileInfo.StartTime.AddSeconds(recFileInfo.DurationSecond):HH:mm}\n" +
+                    $"{recFileInfo.ServiceName}\n{recFileInfo.Title}\n\nの録画済み情報を削除しますか？" +
+                    pathNotice,
+                    "録画済み情報削除確認",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                // 「はい」以外を選択した場合は処理を中断
+                if (result != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+
+            var err = _ctrlCmdUtil.SendDelRecInfo(new List<uint>() { recFileInfo.ID });
+            if (err != ErrCode.CMD_SUCCESS)
+            {
+                MessageBox.Show("録画済み情報削除でエラーが発生しました。", "録画済み情報削除エラー");
+            }
+            _refreshList?.Invoke(true, true, false);
         }
 
         /// <summary>
@@ -1030,26 +1160,45 @@ namespace RockbarForEDCB
             // 予約データが存在しない場合
             if (reserveData == null && ev != null)
             {
-                // 予約の追加 
-                var item = menuItems.Add(">> 録画予約する");
-                item.Click += (s2, e2) => AddProgramReserve(ev, false);
-                item = menuItems.Add(">> 視聴予約する");
-                item.Click += (s2, e2) => AddProgramReserve(ev, true);
-                menuItems.Add(new ToolStripSeparator());
-
+                // Rockbarで予約追加を行う機能が有効の場合、予約メニューを追加
+                if (_configManager.RockbarSetting.UseRockbarReserveAdd)
+                {
+                    var item = menuItems.Add(">> 録画予約をする");
+                    item.Click += (s2, e2) => AddProgramReserve(ev, false);
+                    item = menuItems.Add(">> 視聴予約をする");
+                    item.Click += (s2, e2) => AddProgramReserve(ev, true);
+                    menuItems.Add(new ToolStripSeparator());
+                }
             }
             // 予約データが存在する場合
             else if (reserveData != null)
             {
-                // 予約の有効・無効切り替え 
-                var reserveItem = menuItems.Add(reserveData.RecSetting.IsNoRec() ? ">> 予約を有効にする" : ">> 予約を無効にする");
-                reserveItem.Click += (s2, e2) => ToggleRecMode(reserveData);
-                menuItems.Add(new ToolStripSeparator());
+                // 視聴予約か録画予約の確認
+                string viewOrRecText = (reserveData.RecSetting.RecMode == 4 || reserveData.RecSetting.RecMode == 8) ? "視聴" : "録画";
+
+                // Rockbarで予約変更を行う機能が有効の場合、予約の有効・無効切り替えメニューを追加
+                if (_configManager.RockbarSetting.UseRockbarReserveMod)
+                {
+                    var reserveItem = menuItems.Add(reserveData.RecSetting.IsNoRec() ? $">> {viewOrRecText}予約を有効にする" : $">> {viewOrRecText}予約を無効にする");
+                    reserveItem.Click += (s2, e2) => ToggleRecMode(reserveData);
+                }
+
+                // Rockbarで予約削除を行う機能が有効の場合、予約の削除メニューを追加
+                if (_configManager.RockbarSetting.UseRockbarReserveDel)
+                {
+                    var reserveItem = menuItems.Add($">> {viewOrRecText}予約を削除する");
+                    reserveItem.Click += (s2, e2) => DelProgramReserve(reserveData);
+                }
+
+                if (_configManager.RockbarSetting.UseRockbarReserveMod || _configManager.RockbarSetting.UseRockbarReserveDel)
+                {
+                    menuItems.Add(new ToolStripSeparator());
+                }
 
                 // 予約コメント
                 string displayText = !string.IsNullOrEmpty(reserveData.Comment)
-                    ? $"予約コメント : {reserveData.Comment}"
-                    : "予約コメントなし(EPG手動予約)";
+                ? $"予約コメント : {reserveData.Comment}"
+                : "予約コメントなし(EPG手動予約)";
 
                 var item = menuItems.Add(displayText);
                 item.Click += (s2, e2) => CopyText(reserveData.Comment);
