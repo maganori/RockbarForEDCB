@@ -941,8 +941,21 @@ namespace RockbarForEDCB
 
             rebootAfterReturnCheckBox.Checked = _configManager.RockbarSetting.RebootAfterReturn;
 
-            recBatFilePathTextBox.Text = _configManager.RockbarSetting.RecBatFilePath;
-            recTagTextBox.Text = _configManager.RockbarSetting.RecTag;
+            //recBatFilePathTextBox.Text = _configManager.RockbarSetting.RecBatFilePath;
+            //recTagTextBox.Text = _configManager.RockbarSetting.RecTag;
+            string val = _configManager.RockbarSetting.RecBatFilePath;
+            int pos = val.IndexOf('*');
+            if (pos < 0)
+            {
+                recBatFilePathTextBox.Text = val;
+                recTagTextBox.Text = "";
+            }
+            else
+            {
+                recBatFilePathTextBox.Text = val.Substring(0, pos);
+                recTagTextBox.Text = val.Substring(pos + 1);
+            }
+
             recCommentTextBox.Text = _configManager.RockbarSetting.RecComment;
 
             // TVTest連携関連
@@ -1785,8 +1798,12 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.SuspendModeAfterRec = suspendMode;
             _configManager.RockbarSetting.RebootAfterReturn = rebootAfterReturnCheckBox.Checked;
 
-            _configManager.RockbarSetting.RecBatFilePath = recBatFilePathTextBox.Text;
-            _configManager.RockbarSetting.RecTag = recTagTextBox.Text;
+            _configManager.RockbarSetting.RecBatFilePath =
+                string.IsNullOrEmpty(recTagTextBox.Text)
+                    ? recBatFilePathTextBox.Text
+                    : $"{recBatFilePathTextBox.Text}*{recTagTextBox.Text}";
+
+            //_configManager.RockbarSetting.RecTag = recTagTextBox.Text;
             _configManager.RockbarSetting.RecComment = recCommentTextBox.Text;
 
             _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
