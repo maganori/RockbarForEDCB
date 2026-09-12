@@ -624,23 +624,38 @@ namespace RockbarForEDCB
         {
             // 初期状態のコントロール有効/無効化を反映
             UpdateEdcbReserveSettingControlsEnableState();
+            UpdateUseRockbarReserveDelConfirmControlsEnableState();
             UpdateMarginControlsEnableState();
             UpdateServiceDataControlsEnableState();
             UpdatePostRecActionControlsEnableState();
         }
 
-        // 「RockbarForEDCBで予約追加を行う」チェックボックスの制御
-        private void useRockbarReserveCheckbox_CheckedChanged(object sender, EventArgs e)
+        // 「予約追加」チェックボックスの制御
+        private void useRockbarReserveAddCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             UpdateEdcbReserveSettingControlsEnableState();
         }
 
-        // 「RockbarForEDCBで予約追加を行う」チェックボックスがONの場合は、予約内容全体が入力不可
+        // 「予約追加」チェックボックスがONの場合は、予約内容全体が入力不可
         private void UpdateEdcbReserveSettingControlsEnableState()
         {
             // チェックが入っていない場合は GroupBox 全体を編集不可 (Enabled = false)
-            // GroupBox 自体の Enabled を変更することで、内部のコントロールが一括で制御されます
-            edcbReserveSettingGroupBox.Enabled = useRockbarReserveCheckbox.Checked;
+            edcbReserveSettingGroupBox.Enabled = useRockbarReserveAddCheckBox.Checked;
+        }
+
+        // 「予約削除」チェックボックスの制御
+        private void useRockbarReserveDelCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateUseRockbarReserveDelConfirmControlsEnableState();
+        }
+
+        // 「予約削除」チェックボックスがONの場合は、「削除前確認表示」が入力不可
+        private void UpdateUseRockbarReserveDelConfirmControlsEnableState()
+        {
+            // チェックされている場合は入力不可 (Enabled = false)
+            bool isInputEnabled = useRockbarReserveDelCheckBox.Checked;
+
+            useRockbarReserveDelConfirmCheckBox.Enabled = isInputEnabled;
         }
 
         // 録画マージンのデフォルトチェックボックスの制御
@@ -692,6 +707,15 @@ namespace RockbarForEDCB
             afterRecSuspendRadioButton.Enabled = isInputEnabled;
             afterRecShutdownRadioButton.Enabled = isInputEnabled;
             rebootAfterReturnCheckBox.Enabled = isInputEnabled;
+        }
+
+        // 録画フォルダListViewダブルクリック動作
+        private void recFolderListView_DoubleClick(object sender, EventArgs e)
+        {
+            if (recFolderListView.SelectedItems.Count > 0)
+            {
+                ShowRecFolderEditDialog(recFolderListView.SelectedItems[0]);
+            }
         }
 
         /// <summary>
@@ -816,7 +840,7 @@ namespace RockbarForEDCB
             // セッティングを読み込んで画面表示
             _configManager = new ConfigManager();
 
-            useTcpIpCheckbox.Checked = _configManager.RockbarSetting.UseTcpIp;
+            useTcpIpCheckBox.Checked = _configManager.RockbarSetting.UseTcpIp;
             ipAddressTextBox.Text = _configManager.RockbarSetting.IpAddress;
 
             // 設定値異常の場合、下限にする
@@ -842,29 +866,26 @@ namespace RockbarForEDCB
             recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
 
             // 予約関連
-            useRockbarReserveCheckbox.Checked = _configManager.RockbarSetting.UseRockbarReserve;
+            useRockbarReserveAddCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveAdd;
+            useRockbarReserveModCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveMod;
+            useRockbarReserveDelCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveDel;
+            useRockbarReserveDelConfirmCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveDelConfirm;
             enableReserveCheckBox.Checked = _configManager.RockbarSetting.EnableReserve;
-            prioritizeViewRadioButton.Checked = _configManager.RockbarSetting.prioritizeView;
+            prioritizeViewRadioButton.Checked = _configManager.RockbarSetting.PrioritizeView;
             recModeComboBox.SelectedIndex = _configManager.RockbarSetting.RecMode;
-            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority;
+            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority -1; // 優先度1のindexは0のため-1が必要
             recTuijyuuCheckBox.Checked = _configManager.RockbarSetting.RecTuijyuu;
             recPittariCheckBox.Checked = _configManager.RockbarSetting.RecPittari;
-            useDefaultRecMarginCheckBox.Checked = _configManager.RockbarSetting.UseDefaultRecMargin;
+            useDefaultRecMarginCheckBox.Checked = !_configManager.RockbarSetting.UseCustomRecMargin; // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
             startRecMarginNumericUpDown.Value = _configManager.RockbarSetting.StartRecMargin;
             endRecMarginNumericUpDown.Value = _configManager.RockbarSetting.EndRecMargin;
-            // 右から1番目のビットが0 のとき true、1 のとき false
-            useDefaultRecServiceDataCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0000_0001) == 0;
-            //useDefaultRecServiceDataCheckBox.Checked = _configManager.RockbarSetting.UseDefaultServiceData;
-            // 右から5番目のビットが 1 なら true、0 なら false
-            recServiceDataCaptionCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0001_0000) != 0;
-            //recServiceDataCaptionCheckBox.Checked = _configManager.RockbarSetting.RecServiceDataCaption;
-            // 右から6番目のビットが 1 なら true、0 なら false
-            recServiceDataCarouselCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0010_0000) != 0;
-            //recServiceDataCarouselCheckBox.Checked = _configManager.RockbarSetting.RecServiceDataCarousel;
+            useDefaultRecServiceDataCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0000_0001) == 0; // 1ビット目(デフォルトを使用(0:ON, 1:OFF))が 0 の場合 true、1 の場合 false
+            recServiceDataCaptionCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0001_0000) != 0; // 5ビット目(字幕を含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
+            recServiceDataCarouselCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0010_0000) != 0; // 6ビット目(データカルーセルを含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
 
             recFolderListView.Items.Clear();
 
-            // 1. 通常の録画フォルダ（部分受信：いいえ）の読み込み
+            // 通常の録画フォルダ（部分受信：いいえ）の読み込み
             if (_configManager.RockbarSetting.RecFolderList != null)
             {
                 foreach (RecFileSetInfo info in _configManager.RockbarSetting.RecFolderList)
@@ -881,7 +902,7 @@ namespace RockbarForEDCB
                 }
             }
 
-            // 2. 部分受信フォルダ（部分受信：はい）の読み込み
+            // 部分受信フォルダ（部分受信：はい）の読み込み
             if (_configManager.RockbarSetting.PartialRecFolderList != null)
             {
                 foreach (RecFileSetInfo info in _configManager.RockbarSetting.PartialRecFolderList)
@@ -922,6 +943,7 @@ namespace RockbarForEDCB
 
             recBatFilePathTextBox.Text = _configManager.RockbarSetting.RecBatFilePath;
             recTagTextBox.Text = _configManager.RockbarSetting.RecTag;
+            recCommentTextBox.Text = _configManager.RockbarSetting.RecComment;
 
             // TVTest連携関連
             tvtestPathTextBox.Text = _configManager.RockbarSetting.TvtestPath;
@@ -1020,6 +1042,7 @@ namespace RockbarForEDCB
 
             // 予約画面の初期表示時の有効/無効状態を反映
             UpdateEdcbReserveSettingControlsEnableState();
+            UpdateUseRockbarReserveDelConfirmControlsEnableState();
             UpdateMarginControlsEnableState();
             UpdateServiceDataControlsEnableState();
             UpdatePostRecActionControlsEnableState();
@@ -1644,7 +1667,7 @@ namespace RockbarForEDCB
             }
 
             // その他TOML保存
-            _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckbox.Checked;
+            _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckBox.Checked;
             _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
             _configManager.RockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
             _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
@@ -1653,21 +1676,24 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
 
             // 予約関連
-            _configManager.RockbarSetting.UseRockbarReserve = useRockbarReserveCheckbox.Checked;
+            _configManager.RockbarSetting.UseRockbarReserveAdd = useRockbarReserveAddCheckBox.Checked;
+            _configManager.RockbarSetting.UseRockbarReserveMod = useRockbarReserveModCheckBox.Checked;
+            _configManager.RockbarSetting.UseRockbarReserveDel = useRockbarReserveDelCheckBox.Checked;
+            _configManager.RockbarSetting.UseRockbarReserveDelConfirm = useRockbarReserveDelConfirmCheckBox.Checked;
             _configManager.RockbarSetting.EnableReserve = enableReserveCheckBox.Checked;
-            _configManager.RockbarSetting.prioritizeView = prioritizeViewRadioButton.Checked;
+            _configManager.RockbarSetting.PrioritizeView = prioritizeViewRadioButton.Checked;
             _configManager.RockbarSetting.RecMode = (byte)recModeComboBox.SelectedIndex;
-            _configManager.RockbarSetting.RecPriority = (byte)recPriorityComboBox.SelectedIndex;
+            _configManager.RockbarSetting.RecPriority = (byte)(recPriorityComboBox.SelectedIndex +1); // 優先度1のindexは0のため+1が必要
             _configManager.RockbarSetting.RecTuijyuu = recTuijyuuCheckBox.Checked;
             _configManager.RockbarSetting.RecPittari = recPittariCheckBox.Checked;
-            _configManager.RockbarSetting.UseDefaultRecMargin = useDefaultRecMarginCheckBox.Checked;
+            _configManager.RockbarSetting.UseCustomRecMargin = !useDefaultRecMarginCheckBox.Checked;  // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
             _configManager.RockbarSetting.StartRecMargin = (int)startRecMarginNumericUpDown.Value;
             _configManager.RockbarSetting.EndRecMargin = (int)endRecMarginNumericUpDown.Value;
 
             // 予約関連 recServiceMode
             uint recServiceMode = _configManager.RockbarSetting.RecServiceMode;
 
-            // 右から1番目のビット（0b0000_0001）
+            // 1ビット目(デフォルトを使用(0:ON, 1:OFF))
             // CheckBoxがChecked(True)ならビットを 0 に、Unchecked(False)ならビットを 1 にする
             if (useDefaultRecServiceDataCheckBox.Checked)
             {
@@ -1678,7 +1704,7 @@ namespace RockbarForEDCB
                 recServiceMode |= 0b0000_0001;  // 1をセット
             }
 
-            // 右から5番目のビット（0b0001_0000）
+            // 5ビット目(字幕を含める(0:OFF, 1:ON))
             // CheckBoxがChecked(True)ならビットを 1 に、Unchecked(False)ならビットを 0 にする
             if (recServiceDataCaptionCheckBox.Checked)
             {
@@ -1689,8 +1715,8 @@ namespace RockbarForEDCB
                 recServiceMode &= ~0b0001_0000u; // 0にクリア
             }
 
-            // 右から6番目のビット（0b0010_0000）
-            // CheckBoxgfChecked(True)ならビットを 1 に、Unchecked(False)ならビットを 0 にする
+            // 6ビット目(データカルーセルを含める(0:OFF, 1:ON))
+            // CheckBoxがChecked(True)ならビットを 1 に、Unchecked(False)ならビットを 0 にする
             if (recServiceDataCarouselCheckBox.Checked)
             {
                 recServiceMode |= 0b0010_0000;   // 1をセット
@@ -1704,7 +1730,6 @@ namespace RockbarForEDCB
             // 予約関連 recServiceMode ここまで
 
             // 予約関連 フォルダ関連
-            // ListView から全項目を取得し、各要素を '*' で結合してリストを作成
             var recFolderList = new List<RecFileSetInfo>();
             var partialRecFolderList = new List<RecFileSetInfo>();
 
@@ -1762,7 +1787,7 @@ namespace RockbarForEDCB
 
             _configManager.RockbarSetting.RecBatFilePath = recBatFilePathTextBox.Text;
             _configManager.RockbarSetting.RecTag = recTagTextBox.Text;
-
+            _configManager.RockbarSetting.RecComment = recCommentTextBox.Text;
 
             _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
             _configManager.RockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;
