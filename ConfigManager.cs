@@ -344,10 +344,10 @@ namespace RockbarForEDCB
         public bool UseRockbarReserveDelConfirm { get; set; } = true;
         // 予約の有効フラグ
         public bool EnableReserve { get; set; } = true;
-        // 優先モード(視聴登録優先)
-        public bool PrioritizeView { get; set; } = false;
         // 録画モード
         public byte RecMode { get; set; } = 1;
+        // 優先モード(視聴登録優先)
+        public bool PrioritizeView { get; set; } = false;
         // 録画優先度
         public byte RecPriority { get; set; } = 2;
         // 録画追従の要否
@@ -356,10 +356,8 @@ namespace RockbarForEDCB
         public uint RecServiceMode { get; set; } = 48;
         // ぴったり録画の要否
         public bool RecPittari { get; set; }
-        // 録画後実行bat
+        // 録画後実行bat*録画タグ
         public string RecBatFilePath { get; set; }
-        // 録画タグ
-        public string RecTag { get; set; }
         // SuspendMode
         public byte SuspendModeAfterRec { get; set; }
         // 復帰後再起動する
