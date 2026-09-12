@@ -902,10 +902,9 @@ namespace RockbarForEDCB
                     // 6:データカルーセルを含める(0:OFF, 1:ON)
                     ServiceMode = _configManager.RockbarSetting.RecServiceMode,
                     PittariFlag = _configManager.RockbarSetting.RecPittari ? (byte)1 : (byte)0,
-                    BatFilePath = _configManager.RockbarSetting.RecBatFilePath,
-                    RecTag = _configManager.RockbarSetting.RecTag,
+                    //BatFilePath = _configManager.RockbarSetting.RecBatFilePath,
+                    //RecTag = _configManager.RockbarSetting.RecTag,
                     RecFolderList = _configManager.RockbarSetting.RecFolderList,
-
                     // ・byte SuspendMode
                     // デフォルト有効 ：0 ※RebootFlagも0(無効)にされる
                     // デフォルト無効 何もしない：4
@@ -928,6 +927,7 @@ namespace RockbarForEDCB
                 //AutoAddInfo = new List<EpgAutoAddBasicInfo>(),
 
             };
+            reserve.RecSetting.SetBatFilePathAndRecTag(_configManager.RockbarSetting.RecBatFilePath);
 
             // サーバーへ予約追加コマンド送信
             var err = _ctrlCmdUtil.SendAddReserve(new List<ReserveData> { reserve });
