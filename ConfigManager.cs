@@ -334,28 +334,51 @@ namespace RockbarForEDCB
         // Web Link URL(録画結果)
         public string RecInfoWebLinkUrl { get; set; }
 
-        // Rockbarによる予約追加機能の使用
-        public bool UseRockbarReserve { get; set; }
+        // Rockbarによる予約追加機能
+        public bool UseRockbarReserveAdd { get; set; }
+        // Rockbarによる予約変更機能
+        public bool UseRockbarReserveMod { get; set; }
+        // Rockbarによる予約・録画情報削除機能
+        public bool UseRockbarReserveDel { get; set; }
+        // Rockbarによる予約・録画情報削除前確認表示
+        public bool UseRockbarReserveDelConfirm { get; set; } = true;
         // 予約の有効フラグ
-        public bool EnableReserve { get; set; }
+        public bool EnableReserve { get; set; } = true;
         // 優先モード(視聴登録優先)
-        public bool prioritizeView { get; set; }
+        public bool PrioritizeView { get; set; } = false;
         // 録画モード
-        public byte RecMode { get; set; }
+        public byte RecMode { get; set; } = 1;
         // 録画優先度
-        public byte RecPriority { get; set; }
+        public byte RecPriority { get; set; } = 2;
         // 録画追従の要否
-        public bool RecTuijyuu { get; set; }
+        public bool RecTuijyuu { get; set; } = true;
+        // 録画ServiceMode
+        public uint RecServiceMode { get; set; } = 48;
         // ぴったり録画の要否
         public bool RecPittari { get; set; }
-        // デフォルトの録画マージンを使用
-        public bool UseDefaultRecMargin { get; set; }
+        // 録画後実行bat
+        public string RecBatFilePath { get; set; }
+        // 録画タグ
+        public string RecTag { get; set; }
+        // SuspendMode
+        public byte SuspendModeAfterRec { get; set; }
+        // 復帰後再起動する
+        public bool RebootAfterReturn { get; set; }
+        // カスタマイズの録画マージンを使用
+        public bool UseCustomRecMargin { get; set; }
         // 録画開始マージン
-        public int StartRecMargin { get; set; }
+        public int StartRecMargin { get; set; } = 5;
         // 録画終了マージン
-        public int EndRecMargin { get; set; }
-        // 録画ServiceMode
-        public uint RecServiceMode { get; set; }
+        public int EndRecMargin { get; set; } = 5;
+        // 後ろの予約を同一ファイルで出力する
+        public bool ContinueRecSameFile { get; set; }
+        // 部分受信(ワンセグ)を別ファイルに同時出力する
+        public bool PartialRecSeparateFile { get; set; }
+        // 使用チューナー強制指定
+        public uint RecTunerID { get; set; }
+        // 録画コメント
+        public string RecComment { get; set; } = "RockbarForEDCB予約";
+
         // 録画保存先フォルダのパス一覧
         // 部分録画保存先フォルダのパス一覧
         // --- アプリ内部用([TomlIgnore] を付与して TOML 出力から除外) ---
@@ -379,21 +402,6 @@ namespace RockbarForEDCB
 
         [TomlMember(Key = "PartialRecFolderList")]
         public List<RecFileSetInfoDto> PartialRecFolderListDto { get; set; } = new List<RecFileSetInfoDto>();
-
-        // 部分受信(ワンセグ)を別ファイルに同時出力する
-        public bool PartialRecSeparateFile { get; set; }
-        // 後ろの予約を同一ファイルで出力する
-        public bool ContinueRecSameFile { get; set; }
-        // 使用チューナー強制指定
-        public uint RecTunerID { get; set; }
-        // SuspendMode
-        public byte SuspendModeAfterRec { get; set; }
-        // 復帰後再起動する
-        public bool RebootAfterReturn { get; set; }
-        // 録画後実行bat
-        public string RecBatFilePath { get; set; }
-        // 録画タグ
-        public string RecTag { get; set; }
 
 
         // TVTest.exeパス
@@ -504,7 +512,6 @@ namespace RockbarForEDCB
             public string RecFolder { get; set; } = "";
             public string WritePlugIn { get; set; } = "";
             public string RecNamePlugIn { get; set; } = "";
-            public string RecFileName { get; set; } = "";
 
             public RecFileSetInfoDto() { }
 
@@ -514,7 +521,6 @@ namespace RockbarForEDCB
                 this.RecFolder = src.RecFolder;
                 this.WritePlugIn = src.WritePlugIn;
                 this.RecNamePlugIn = src.RecNamePlugIn;
-                this.RecFileName = src.RecFileName;
             }
 
             public RecFileSetInfo ToEntity()
@@ -524,7 +530,7 @@ namespace RockbarForEDCB
                     RecFolder = this.RecFolder,
                     WritePlugIn = this.WritePlugIn,
                     RecNamePlugIn = this.RecNamePlugIn,
-                    RecFileName = this.RecFileName
+                    RecFileName = ""
                 };
             }
         }

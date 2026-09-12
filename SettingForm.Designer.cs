@@ -30,25 +30,25 @@ namespace RockbarForEDCB
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingForm));
-            System.Windows.Forms.ListViewItem listViewItem12 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem(new string[] {
             "チャンネル　00:00-00:00　　　通常番組",
             "test",
             "test",
             "test"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem13 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　◎　正常予約番組");
-            System.Windows.Forms.ListViewItem listViewItem14 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　欠　部分予約番組");
-            System.Windows.Forms.ListViewItem listViewItem15 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　×　予約不可番組");
-            System.Windows.Forms.ListViewItem listViewItem16 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　無　無効予約番組");
-            System.Windows.Forms.ListViewItem listViewItem17 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　　　予約一覧ヘッダ");
-            System.Windows.Forms.ListViewItem listViewItem18 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　◎　正常予約番組");
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　欠　部分予約番組");
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　×　予約不可番組");
+            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　無　無効予約番組");
+            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem("チャンネル　00:00-00:00　　　予約一覧ヘッダ");
+            System.Windows.Forms.ListViewItem listViewItem7 = new System.Windows.Forms.ListViewItem(new string[] {
             "01/01 00:00～00:00  　  通常番組",
             "test",
             "test",
             "test"}, -1);
-            System.Windows.Forms.ListViewItem listViewItem19 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ◎  正常予約番組");
-            System.Windows.Forms.ListViewItem listViewItem20 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  欠  部分予約番組");
-            System.Windows.Forms.ListViewItem listViewItem21 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ×  予約不可番組");
-            System.Windows.Forms.ListViewItem listViewItem22 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  無  無効予約番組");
+            System.Windows.Forms.ListViewItem listViewItem8 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ◎  正常予約番組");
+            System.Windows.Forms.ListViewItem listViewItem9 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  欠  部分予約番組");
+            System.Windows.Forms.ListViewItem listViewItem10 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ×  予約不可番組");
+            System.Windows.Forms.ListViewItem listViewItem11 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  無  無効予約番組");
             this.cancelButton = new System.Windows.Forms.Button();
             this.applyButton = new System.Windows.Forms.Button();
             this.allServiceListView = new System.Windows.Forms.ListView();
@@ -79,7 +79,7 @@ namespace RockbarForEDCB
             this.label3 = new System.Windows.Forms.Label();
             this.portNumberLabel = new System.Windows.Forms.Label();
             this.webLinkUrlExampleLabel = new System.Windows.Forms.Label();
-            this.useTcpIpCheckbox = new System.Windows.Forms.CheckBox();
+            this.useTcpIpCheckBox = new System.Windows.Forms.CheckBox();
             this.useWebLinkCheckBox = new System.Windows.Forms.CheckBox();
             this.ipAddressLabel = new System.Windows.Forms.Label();
             this.webLinkUrlLabel = new System.Windows.Forms.Label();
@@ -88,9 +88,22 @@ namespace RockbarForEDCB
             this.webLinkUrlTextBox = new System.Windows.Forms.TextBox();
             this.recInfoWebLinkUrlTextBox = new System.Windows.Forms.TextBox();
             this.reserveTabPage = new System.Windows.Forms.TabPage();
+            this.useRockbarReserveLabel = new System.Windows.Forms.Label();
+            this.useRockbarReserveDelConfirmCheckBox = new System.Windows.Forms.CheckBox();
+            this.useRockbarReserveDelCheckBox = new System.Windows.Forms.CheckBox();
+            this.useRockbarReserveModCheckBox = new System.Windows.Forms.CheckBox();
             this.edcbReserveSettingGroupBox = new System.Windows.Forms.GroupBox();
+            this.recCommentTextBox = new System.Windows.Forms.TextBox();
+            this.recCommentLabel = new System.Windows.Forms.Label();
+            this.prioritizeViewLabel = new System.Windows.Forms.Label();
+            this.prioritizeViewPanel = new System.Windows.Forms.Panel();
             this.prioritizeRecRadioButton = new System.Windows.Forms.RadioButton();
             this.prioritizeViewRadioButton = new System.Windows.Forms.RadioButton();
+            this.suspendModeAfterRecPanel = new System.Windows.Forms.Panel();
+            this.afterRecNoActionRadioButton = new System.Windows.Forms.RadioButton();
+            this.afterRecStandbyRadioButton = new System.Windows.Forms.RadioButton();
+            this.afterRecSuspendRadioButton = new System.Windows.Forms.RadioButton();
+            this.afterRecShutdownRadioButton = new System.Windows.Forms.RadioButton();
             this.endRecMarginNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.startRecMarginNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.browseBatFileButton = new System.Windows.Forms.Button();
@@ -109,13 +122,9 @@ namespace RockbarForEDCB
             this.recTuijyuuCheckBox = new System.Windows.Forms.CheckBox();
             this.rebootAfterReturnCheckBox = new System.Windows.Forms.CheckBox();
             this.recPittariCheckBox = new System.Windows.Forms.CheckBox();
-            this.afterRecShutdownRadioButton = new System.Windows.Forms.RadioButton();
             this.recPriorityLabel = new System.Windows.Forms.Label();
-            this.afterRecSuspendRadioButton = new System.Windows.Forms.RadioButton();
             this.recMarginLabel = new System.Windows.Forms.Label();
-            this.afterRecStandbyRadioButton = new System.Windows.Forms.RadioButton();
             this.useDefaultRecMarginCheckBox = new System.Windows.Forms.CheckBox();
-            this.afterRecNoActionRadioButton = new System.Windows.Forms.RadioButton();
             this.startRecMarginLabel = new System.Windows.Forms.Label();
             this.defaultSuspendModeAfterRecCheckBox = new System.Windows.Forms.CheckBox();
             this.suspendModeAfterRecLabel = new System.Windows.Forms.Label();
@@ -133,7 +142,7 @@ namespace RockbarForEDCB
             this.writePlugInColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.recNamePlugInColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.recServiceDataCaptionCheckBox = new System.Windows.Forms.CheckBox();
-            this.useRockbarReserveCheckbox = new System.Windows.Forms.CheckBox();
+            this.useRockbarReserveAddCheckBox = new System.Windows.Forms.CheckBox();
             this.tunerTabPage = new System.Windows.Forms.TabPage();
             this.tunerNameLabel = new System.Windows.Forms.Label();
             this.tunerNameNoteLabel = new System.Windows.Forms.Label();
@@ -291,14 +300,13 @@ namespace RockbarForEDCB
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
-            this.suspendModeAfterRecPanel = new System.Windows.Forms.Panel();
-            this.prioritizeViewPanel = new System.Windows.Forms.Panel();
-            this.prioritizeViewLabel = new System.Windows.Forms.Label();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
             this.reserveTabPage.SuspendLayout();
             this.edcbReserveSettingGroupBox.SuspendLayout();
+            this.prioritizeViewPanel.SuspendLayout();
+            this.suspendModeAfterRecPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.endRecMarginNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.startRecMarginNumericUpDown)).BeginInit();
             this.tunerTabPage.SuspendLayout();
@@ -314,8 +322,6 @@ namespace RockbarForEDCB
             this.otherTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).BeginInit();
             this.taskTrayIconClickGroupBox.SuspendLayout();
-            this.suspendModeAfterRecPanel.SuspendLayout();
-            this.prioritizeViewPanel.SuspendLayout();
             this.SuspendLayout();
             // 
             // cancelButton
@@ -519,7 +525,7 @@ namespace RockbarForEDCB
             this.edcbLinkageTabPage.Controls.Add(this.label3);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlExampleLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.useTcpIpCheckbox);
+            this.edcbLinkageTabPage.Controls.Add(this.useTcpIpCheckBox);
             this.edcbLinkageTabPage.Controls.Add(this.useWebLinkCheckBox);
             this.edcbLinkageTabPage.Controls.Add(this.ipAddressLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlLabel);
@@ -609,15 +615,15 @@ namespace RockbarForEDCB
             this.webLinkUrlExampleLabel.TabIndex = 11;
             this.webLinkUrlExampleLabel.Text = resources.GetString("webLinkUrlExampleLabel.Text");
             // 
-            // useTcpIpCheckbox
+            // useTcpIpCheckBox
             // 
-            this.useTcpIpCheckbox.AutoSize = true;
-            this.useTcpIpCheckbox.Location = new System.Drawing.Point(22, 20);
-            this.useTcpIpCheckbox.Name = "useTcpIpCheckbox";
-            this.useTcpIpCheckbox.Size = new System.Drawing.Size(196, 16);
-            this.useTcpIpCheckbox.TabIndex = 0;
-            this.useTcpIpCheckbox.Text = "EDCBとの通信にTCP/IPを使用する";
-            this.useTcpIpCheckbox.UseVisualStyleBackColor = true;
+            this.useTcpIpCheckBox.AutoSize = true;
+            this.useTcpIpCheckBox.Location = new System.Drawing.Point(22, 20);
+            this.useTcpIpCheckBox.Name = "useTcpIpCheckBox";
+            this.useTcpIpCheckBox.Size = new System.Drawing.Size(196, 16);
+            this.useTcpIpCheckBox.TabIndex = 0;
+            this.useTcpIpCheckBox.Text = "EDCBとの通信にTCP/IPを使用する";
+            this.useTcpIpCheckBox.UseVisualStyleBackColor = true;
             // 
             // useWebLinkCheckBox
             // 
@@ -679,8 +685,12 @@ namespace RockbarForEDCB
             // 
             // reserveTabPage
             // 
+            this.reserveTabPage.Controls.Add(this.useRockbarReserveLabel);
+            this.reserveTabPage.Controls.Add(this.useRockbarReserveDelConfirmCheckBox);
+            this.reserveTabPage.Controls.Add(this.useRockbarReserveDelCheckBox);
+            this.reserveTabPage.Controls.Add(this.useRockbarReserveModCheckBox);
             this.reserveTabPage.Controls.Add(this.edcbReserveSettingGroupBox);
-            this.reserveTabPage.Controls.Add(this.useRockbarReserveCheckbox);
+            this.reserveTabPage.Controls.Add(this.useRockbarReserveAddCheckBox);
             this.reserveTabPage.Location = new System.Drawing.Point(4, 22);
             this.reserveTabPage.Name = "reserveTabPage";
             this.reserveTabPage.Size = new System.Drawing.Size(791, 384);
@@ -688,8 +698,52 @@ namespace RockbarForEDCB
             this.reserveTabPage.Text = "予約";
             this.reserveTabPage.UseVisualStyleBackColor = true;
             // 
+            // useRockbarReserveLabel
+            // 
+            this.useRockbarReserveLabel.AutoSize = true;
+            this.useRockbarReserveLabel.Location = new System.Drawing.Point(21, 17);
+            this.useRockbarReserveLabel.Name = "useRockbarReserveLabel";
+            this.useRockbarReserveLabel.Size = new System.Drawing.Size(143, 12);
+            this.useRockbarReserveLabel.TabIndex = 60;
+            this.useRockbarReserveLabel.Text = "RockbarForEDCB予約機能";
+            // 
+            // useRockbarReserveDelConfirmCheckBox
+            // 
+            this.useRockbarReserveDelConfirmCheckBox.AutoSize = true;
+            this.useRockbarReserveDelConfirmCheckBox.Checked = true;
+            this.useRockbarReserveDelConfirmCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.useRockbarReserveDelConfirmCheckBox.Location = new System.Drawing.Point(488, 16);
+            this.useRockbarReserveDelConfirmCheckBox.Name = "useRockbarReserveDelConfirmCheckBox";
+            this.useRockbarReserveDelConfirmCheckBox.Size = new System.Drawing.Size(108, 16);
+            this.useRockbarReserveDelConfirmCheckBox.TabIndex = 59;
+            this.useRockbarReserveDelConfirmCheckBox.Text = "削除前確認表示";
+            this.useRockbarReserveDelConfirmCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // useRockbarReserveDelCheckBox
+            // 
+            this.useRockbarReserveDelCheckBox.AutoSize = true;
+            this.useRockbarReserveDelCheckBox.Location = new System.Drawing.Point(346, 16);
+            this.useRockbarReserveDelCheckBox.Name = "useRockbarReserveDelCheckBox";
+            this.useRockbarReserveDelCheckBox.Size = new System.Drawing.Size(126, 16);
+            this.useRockbarReserveDelCheckBox.TabIndex = 58;
+            this.useRockbarReserveDelCheckBox.Text = "予約・録画情報削除";
+            this.useRockbarReserveDelCheckBox.UseVisualStyleBackColor = true;
+            this.useRockbarReserveDelCheckBox.CheckedChanged += new System.EventHandler(this.useRockbarReserveDelCheckBox_CheckedChanged);
+            // 
+            // useRockbarReserveModCheckBox
+            // 
+            this.useRockbarReserveModCheckBox.AutoSize = true;
+            this.useRockbarReserveModCheckBox.Location = new System.Drawing.Point(260, 16);
+            this.useRockbarReserveModCheckBox.Name = "useRockbarReserveModCheckBox";
+            this.useRockbarReserveModCheckBox.Size = new System.Drawing.Size(72, 16);
+            this.useRockbarReserveModCheckBox.TabIndex = 57;
+            this.useRockbarReserveModCheckBox.Text = "予約変更";
+            this.useRockbarReserveModCheckBox.UseVisualStyleBackColor = true;
+            // 
             // edcbReserveSettingGroupBox
             // 
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recCommentTextBox);
+            this.edcbReserveSettingGroupBox.Controls.Add(this.recCommentLabel);
             this.edcbReserveSettingGroupBox.Controls.Add(this.prioritizeViewLabel);
             this.edcbReserveSettingGroupBox.Controls.Add(this.prioritizeViewPanel);
             this.edcbReserveSettingGroupBox.Controls.Add(this.suspendModeAfterRecPanel);
@@ -729,10 +783,44 @@ namespace RockbarForEDCB
             this.edcbReserveSettingGroupBox.Controls.Add(this.recServiceDataCaptionCheckBox);
             this.edcbReserveSettingGroupBox.Location = new System.Drawing.Point(23, 40);
             this.edcbReserveSettingGroupBox.Name = "edcbReserveSettingGroupBox";
-            this.edcbReserveSettingGroupBox.Size = new System.Drawing.Size(708, 326);
+            this.edcbReserveSettingGroupBox.Size = new System.Drawing.Size(655, 333);
             this.edcbReserveSettingGroupBox.TabIndex = 56;
             this.edcbReserveSettingGroupBox.TabStop = false;
-            this.edcbReserveSettingGroupBox.Text = "EDCB予約内容";
+            this.edcbReserveSettingGroupBox.Text = "EDCB予約追加内容";
+            // 
+            // recCommentTextBox
+            // 
+            this.recCommentTextBox.Location = new System.Drawing.Point(113, 303);
+            this.recCommentTextBox.Name = "recCommentTextBox";
+            this.recCommentTextBox.Size = new System.Drawing.Size(420, 19);
+            this.recCommentTextBox.TabIndex = 68;
+            // 
+            // recCommentLabel
+            // 
+            this.recCommentLabel.AutoSize = true;
+            this.recCommentLabel.Location = new System.Drawing.Point(14, 306);
+            this.recCommentLabel.Name = "recCommentLabel";
+            this.recCommentLabel.Size = new System.Drawing.Size(62, 12);
+            this.recCommentLabel.TabIndex = 67;
+            this.recCommentLabel.Text = "録画コメント";
+            // 
+            // prioritizeViewLabel
+            // 
+            this.prioritizeViewLabel.AutoSize = true;
+            this.prioritizeViewLabel.Location = new System.Drawing.Point(80, 24);
+            this.prioritizeViewLabel.Name = "prioritizeViewLabel";
+            this.prioritizeViewLabel.Size = new System.Drawing.Size(57, 12);
+            this.prioritizeViewLabel.TabIndex = 66;
+            this.prioritizeViewLabel.Text = "優先モード";
+            // 
+            // prioritizeViewPanel
+            // 
+            this.prioritizeViewPanel.Controls.Add(this.prioritizeRecRadioButton);
+            this.prioritizeViewPanel.Controls.Add(this.prioritizeViewRadioButton);
+            this.prioritizeViewPanel.Location = new System.Drawing.Point(149, 16);
+            this.prioritizeViewPanel.Name = "prioritizeViewPanel";
+            this.prioritizeViewPanel.Size = new System.Drawing.Size(116, 27);
+            this.prioritizeViewPanel.TabIndex = 65;
             // 
             // prioritizeRecRadioButton
             // 
@@ -756,6 +844,63 @@ namespace RockbarForEDCB
             this.prioritizeViewRadioButton.Text = "視聴";
             this.prioritizeViewRadioButton.UseVisualStyleBackColor = true;
             // 
+            // suspendModeAfterRecPanel
+            // 
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecNoActionRadioButton);
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecStandbyRadioButton);
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecSuspendRadioButton);
+            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecShutdownRadioButton);
+            this.suspendModeAfterRecPanel.Location = new System.Drawing.Point(168, 225);
+            this.suspendModeAfterRecPanel.Name = "suspendModeAfterRecPanel";
+            this.suspendModeAfterRecPanel.Size = new System.Drawing.Size(304, 25);
+            this.suspendModeAfterRecPanel.TabIndex = 64;
+            // 
+            // afterRecNoActionRadioButton
+            // 
+            this.afterRecNoActionRadioButton.AutoSize = true;
+            this.afterRecNoActionRadioButton.Location = new System.Drawing.Point(6, 5);
+            this.afterRecNoActionRadioButton.Name = "afterRecNoActionRadioButton";
+            this.afterRecNoActionRadioButton.Size = new System.Drawing.Size(73, 16);
+            this.afterRecNoActionRadioButton.TabIndex = 47;
+            this.afterRecNoActionRadioButton.Tag = "4";
+            this.afterRecNoActionRadioButton.Text = "何もしない";
+            this.afterRecNoActionRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // afterRecStandbyRadioButton
+            // 
+            this.afterRecStandbyRadioButton.AutoSize = true;
+            this.afterRecStandbyRadioButton.Checked = true;
+            this.afterRecStandbyRadioButton.Location = new System.Drawing.Point(89, 5);
+            this.afterRecStandbyRadioButton.Name = "afterRecStandbyRadioButton";
+            this.afterRecStandbyRadioButton.Size = new System.Drawing.Size(68, 16);
+            this.afterRecStandbyRadioButton.TabIndex = 48;
+            this.afterRecStandbyRadioButton.TabStop = true;
+            this.afterRecStandbyRadioButton.Tag = "1";
+            this.afterRecStandbyRadioButton.Text = "スタンバイ";
+            this.afterRecStandbyRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // afterRecSuspendRadioButton
+            // 
+            this.afterRecSuspendRadioButton.AutoSize = true;
+            this.afterRecSuspendRadioButton.Location = new System.Drawing.Point(163, 5);
+            this.afterRecSuspendRadioButton.Name = "afterRecSuspendRadioButton";
+            this.afterRecSuspendRadioButton.Size = new System.Drawing.Size(47, 16);
+            this.afterRecSuspendRadioButton.TabIndex = 49;
+            this.afterRecSuspendRadioButton.Tag = "2";
+            this.afterRecSuspendRadioButton.Text = "休止";
+            this.afterRecSuspendRadioButton.UseVisualStyleBackColor = true;
+            // 
+            // afterRecShutdownRadioButton
+            // 
+            this.afterRecShutdownRadioButton.AutoSize = true;
+            this.afterRecShutdownRadioButton.Location = new System.Drawing.Point(216, 5);
+            this.afterRecShutdownRadioButton.Name = "afterRecShutdownRadioButton";
+            this.afterRecShutdownRadioButton.Size = new System.Drawing.Size(83, 16);
+            this.afterRecShutdownRadioButton.TabIndex = 50;
+            this.afterRecShutdownRadioButton.Tag = "3";
+            this.afterRecShutdownRadioButton.Text = "シャットダウン";
+            this.afterRecShutdownRadioButton.UseVisualStyleBackColor = true;
+            // 
             // endRecMarginNumericUpDown
             // 
             this.endRecMarginNumericUpDown.Location = new System.Drawing.Point(432, 72);
@@ -773,7 +918,7 @@ namespace RockbarForEDCB
             this.endRecMarginNumericUpDown.Size = new System.Drawing.Size(70, 19);
             this.endRecMarginNumericUpDown.TabIndex = 61;
             this.endRecMarginNumericUpDown.Value = new decimal(new int[] {
-            2,
+            5,
             0,
             0,
             0});
@@ -802,7 +947,7 @@ namespace RockbarForEDCB
             // 
             // browseBatFileButton
             // 
-            this.browseBatFileButton.Location = new System.Drawing.Point(539, 271);
+            this.browseBatFileButton.Location = new System.Drawing.Point(539, 252);
             this.browseBatFileButton.Name = "browseBatFileButton";
             this.browseBatFileButton.Size = new System.Drawing.Size(40, 23);
             this.browseBatFileButton.TabIndex = 60;
@@ -864,7 +1009,7 @@ namespace RockbarForEDCB
             // 
             // recTagTextBox
             // 
-            this.recTagTextBox.Location = new System.Drawing.Point(113, 298);
+            this.recTagTextBox.Location = new System.Drawing.Point(113, 279);
             this.recTagTextBox.Name = "recTagTextBox";
             this.recTagTextBox.Size = new System.Drawing.Size(420, 19);
             this.recTagTextBox.TabIndex = 55;
@@ -886,7 +1031,7 @@ namespace RockbarForEDCB
             // 
             // recBatFilePathTextBox
             // 
-            this.recBatFilePathTextBox.Location = new System.Drawing.Point(113, 273);
+            this.recBatFilePathTextBox.Location = new System.Drawing.Point(113, 254);
             this.recBatFilePathTextBox.Name = "recBatFilePathTextBox";
             this.recBatFilePathTextBox.Size = new System.Drawing.Size(420, 19);
             this.recBatFilePathTextBox.TabIndex = 54;
@@ -908,7 +1053,7 @@ namespace RockbarForEDCB
             // recTagLabel
             // 
             this.recTagLabel.AutoSize = true;
-            this.recTagLabel.Location = new System.Drawing.Point(14, 301);
+            this.recTagLabel.Location = new System.Drawing.Point(14, 282);
             this.recTagLabel.Name = "recTagLabel";
             this.recTagLabel.Size = new System.Drawing.Size(46, 12);
             this.recTagLabel.TabIndex = 53;
@@ -926,7 +1071,7 @@ namespace RockbarForEDCB
             // recBatFilePathLabel
             // 
             this.recBatFilePathLabel.AutoSize = true;
-            this.recBatFilePathLabel.Location = new System.Drawing.Point(14, 276);
+            this.recBatFilePathLabel.Location = new System.Drawing.Point(14, 257);
             this.recBatFilePathLabel.Name = "recBatFilePathLabel";
             this.recBatFilePathLabel.Size = new System.Drawing.Size(81, 12);
             this.recBatFilePathLabel.TabIndex = 52;
@@ -947,7 +1092,7 @@ namespace RockbarForEDCB
             // rebootAfterReturnCheckBox
             // 
             this.rebootAfterReturnCheckBox.AutoSize = true;
-            this.rebootAfterReturnCheckBox.Location = new System.Drawing.Point(480, 249);
+            this.rebootAfterReturnCheckBox.Location = new System.Drawing.Point(480, 230);
             this.rebootAfterReturnCheckBox.Name = "rebootAfterReturnCheckBox";
             this.rebootAfterReturnCheckBox.Size = new System.Drawing.Size(115, 16);
             this.rebootAfterReturnCheckBox.TabIndex = 51;
@@ -964,17 +1109,6 @@ namespace RockbarForEDCB
             this.recPittariCheckBox.Text = "ぴったり(?)録画";
             this.recPittariCheckBox.UseVisualStyleBackColor = true;
             // 
-            // afterRecShutdownRadioButton
-            // 
-            this.afterRecShutdownRadioButton.AutoSize = true;
-            this.afterRecShutdownRadioButton.Location = new System.Drawing.Point(216, 5);
-            this.afterRecShutdownRadioButton.Name = "afterRecShutdownRadioButton";
-            this.afterRecShutdownRadioButton.Size = new System.Drawing.Size(83, 16);
-            this.afterRecShutdownRadioButton.TabIndex = 50;
-            this.afterRecShutdownRadioButton.Tag = "3";
-            this.afterRecShutdownRadioButton.Text = "シャットダウン";
-            this.afterRecShutdownRadioButton.UseVisualStyleBackColor = true;
-            // 
             // recPriorityLabel
             // 
             this.recPriorityLabel.AutoSize = true;
@@ -984,17 +1118,6 @@ namespace RockbarForEDCB
             this.recPriorityLabel.TabIndex = 29;
             this.recPriorityLabel.Text = "優先度";
             // 
-            // afterRecSuspendRadioButton
-            // 
-            this.afterRecSuspendRadioButton.AutoSize = true;
-            this.afterRecSuspendRadioButton.Location = new System.Drawing.Point(163, 5);
-            this.afterRecSuspendRadioButton.Name = "afterRecSuspendRadioButton";
-            this.afterRecSuspendRadioButton.Size = new System.Drawing.Size(47, 16);
-            this.afterRecSuspendRadioButton.TabIndex = 49;
-            this.afterRecSuspendRadioButton.Tag = "2";
-            this.afterRecSuspendRadioButton.Text = "休止";
-            this.afterRecSuspendRadioButton.UseVisualStyleBackColor = true;
-            // 
             // recMarginLabel
             // 
             this.recMarginLabel.AutoSize = true;
@@ -1003,19 +1126,6 @@ namespace RockbarForEDCB
             this.recMarginLabel.Size = new System.Drawing.Size(67, 12);
             this.recMarginLabel.TabIndex = 30;
             this.recMarginLabel.Text = "録画マージン";
-            // 
-            // afterRecStandbyRadioButton
-            // 
-            this.afterRecStandbyRadioButton.AutoSize = true;
-            this.afterRecStandbyRadioButton.Checked = true;
-            this.afterRecStandbyRadioButton.Location = new System.Drawing.Point(89, 5);
-            this.afterRecStandbyRadioButton.Name = "afterRecStandbyRadioButton";
-            this.afterRecStandbyRadioButton.Size = new System.Drawing.Size(68, 16);
-            this.afterRecStandbyRadioButton.TabIndex = 48;
-            this.afterRecStandbyRadioButton.TabStop = true;
-            this.afterRecStandbyRadioButton.Tag = "1";
-            this.afterRecStandbyRadioButton.Text = "スタンバイ";
-            this.afterRecStandbyRadioButton.UseVisualStyleBackColor = true;
             // 
             // useDefaultRecMarginCheckBox
             // 
@@ -1029,17 +1139,6 @@ namespace RockbarForEDCB
             this.useDefaultRecMarginCheckBox.Text = "デフォルト";
             this.useDefaultRecMarginCheckBox.UseVisualStyleBackColor = true;
             this.useDefaultRecMarginCheckBox.CheckedChanged += new System.EventHandler(this.defaultMarginCheckBox_CheckedChanged);
-            // 
-            // afterRecNoActionRadioButton
-            // 
-            this.afterRecNoActionRadioButton.AutoSize = true;
-            this.afterRecNoActionRadioButton.Location = new System.Drawing.Point(6, 5);
-            this.afterRecNoActionRadioButton.Name = "afterRecNoActionRadioButton";
-            this.afterRecNoActionRadioButton.Size = new System.Drawing.Size(73, 16);
-            this.afterRecNoActionRadioButton.TabIndex = 47;
-            this.afterRecNoActionRadioButton.Tag = "4";
-            this.afterRecNoActionRadioButton.Text = "何もしない";
-            this.afterRecNoActionRadioButton.UseVisualStyleBackColor = true;
             // 
             // startRecMarginLabel
             // 
@@ -1055,7 +1154,7 @@ namespace RockbarForEDCB
             this.defaultSuspendModeAfterRecCheckBox.AutoSize = true;
             this.defaultSuspendModeAfterRecCheckBox.Checked = true;
             this.defaultSuspendModeAfterRecCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.defaultSuspendModeAfterRecCheckBox.Location = new System.Drawing.Point(101, 249);
+            this.defaultSuspendModeAfterRecCheckBox.Location = new System.Drawing.Point(101, 230);
             this.defaultSuspendModeAfterRecCheckBox.Name = "defaultSuspendModeAfterRecCheckBox";
             this.defaultSuspendModeAfterRecCheckBox.Size = new System.Drawing.Size(68, 16);
             this.defaultSuspendModeAfterRecCheckBox.TabIndex = 46;
@@ -1066,7 +1165,7 @@ namespace RockbarForEDCB
             // suspendModeAfterRecLabel
             // 
             this.suspendModeAfterRecLabel.AutoSize = true;
-            this.suspendModeAfterRecLabel.Location = new System.Drawing.Point(14, 250);
+            this.suspendModeAfterRecLabel.Location = new System.Drawing.Point(14, 231);
             this.suspendModeAfterRecLabel.Name = "suspendModeAfterRecLabel";
             this.suspendModeAfterRecLabel.Size = new System.Drawing.Size(65, 12);
             this.suspendModeAfterRecLabel.TabIndex = 45;
@@ -1085,7 +1184,7 @@ namespace RockbarForEDCB
             // 
             this.recTunerIdComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.recTunerIdComboBox.FormattingEnabled = true;
-            this.recTunerIdComboBox.Location = new System.Drawing.Point(143, 222);
+            this.recTunerIdComboBox.Location = new System.Drawing.Point(143, 203);
             this.recTunerIdComboBox.Name = "recTunerIdComboBox";
             this.recTunerIdComboBox.Size = new System.Drawing.Size(356, 20);
             this.recTunerIdComboBox.TabIndex = 44;
@@ -1093,7 +1192,7 @@ namespace RockbarForEDCB
             // recTunerIdLabel
             // 
             this.recTunerIdLabel.AutoSize = true;
-            this.recTunerIdLabel.Location = new System.Drawing.Point(13, 225);
+            this.recTunerIdLabel.Location = new System.Drawing.Point(13, 206);
             this.recTunerIdLabel.Name = "recTunerIdLabel";
             this.recTunerIdLabel.Size = new System.Drawing.Size(124, 12);
             this.recTunerIdLabel.TabIndex = 43;
@@ -1112,7 +1211,7 @@ namespace RockbarForEDCB
             // continueRecSameFileCheckBox
             // 
             this.continueRecSameFileCheckBox.AutoSize = true;
-            this.continueRecSameFileCheckBox.Location = new System.Drawing.Point(309, 201);
+            this.continueRecSameFileCheckBox.Location = new System.Drawing.Point(309, 182);
             this.continueRecSameFileCheckBox.Name = "continueRecSameFileCheckBox";
             this.continueRecSameFileCheckBox.Size = new System.Drawing.Size(199, 16);
             this.continueRecSameFileCheckBox.TabIndex = 42;
@@ -1131,7 +1230,7 @@ namespace RockbarForEDCB
             // partialRecSeparateFileCheckBox
             // 
             this.partialRecSeparateFileCheckBox.AutoSize = true;
-            this.partialRecSeparateFileCheckBox.Location = new System.Drawing.Point(34, 201);
+            this.partialRecSeparateFileCheckBox.Location = new System.Drawing.Point(34, 182);
             this.partialRecSeparateFileCheckBox.Name = "partialRecSeparateFileCheckBox";
             this.partialRecSeparateFileCheckBox.Size = new System.Drawing.Size(248, 16);
             this.partialRecSeparateFileCheckBox.TabIndex = 41;
@@ -1162,10 +1261,11 @@ namespace RockbarForEDCB
             this.recFolderListView.HideSelection = false;
             this.recFolderListView.Location = new System.Drawing.Point(16, 122);
             this.recFolderListView.Name = "recFolderListView";
-            this.recFolderListView.Size = new System.Drawing.Size(554, 72);
+            this.recFolderListView.Size = new System.Drawing.Size(554, 54);
             this.recFolderListView.TabIndex = 40;
             this.recFolderListView.UseCompatibleStateImageBehavior = false;
             this.recFolderListView.View = System.Windows.Forms.View.Details;
+            this.recFolderListView.DoubleClick += new System.EventHandler(this.recFolderListView_DoubleClick);
             // 
             // partialRecColumnHeader
             // 
@@ -1199,16 +1299,16 @@ namespace RockbarForEDCB
             this.recServiceDataCaptionCheckBox.Text = "字幕を含める";
             this.recServiceDataCaptionCheckBox.UseVisualStyleBackColor = true;
             // 
-            // useRockbarReserveCheckbox
+            // useRockbarReserveAddCheckBox
             // 
-            this.useRockbarReserveCheckbox.AutoSize = true;
-            this.useRockbarReserveCheckbox.Location = new System.Drawing.Point(23, 18);
-            this.useRockbarReserveCheckbox.Name = "useRockbarReserveCheckbox";
-            this.useRockbarReserveCheckbox.Size = new System.Drawing.Size(200, 16);
-            this.useRockbarReserveCheckbox.TabIndex = 1;
-            this.useRockbarReserveCheckbox.Text = "RockbarForEDCBで予約追加を行う";
-            this.useRockbarReserveCheckbox.UseVisualStyleBackColor = true;
-            this.useRockbarReserveCheckbox.CheckedChanged += new System.EventHandler(this.useRockbarReserveCheckbox_CheckedChanged);
+            this.useRockbarReserveAddCheckBox.AutoSize = true;
+            this.useRockbarReserveAddCheckBox.Location = new System.Drawing.Point(174, 16);
+            this.useRockbarReserveAddCheckBox.Name = "useRockbarReserveAddCheckBox";
+            this.useRockbarReserveAddCheckBox.Size = new System.Drawing.Size(72, 16);
+            this.useRockbarReserveAddCheckBox.TabIndex = 1;
+            this.useRockbarReserveAddCheckBox.Text = "予約追加";
+            this.useRockbarReserveAddCheckBox.UseVisualStyleBackColor = true;
+            this.useRockbarReserveAddCheckBox.CheckedChanged += new System.EventHandler(this.useRockbarReserveAddCheckBox_CheckedChanged);
             // 
             // tunerTabPage
             // 
@@ -2070,12 +2170,12 @@ namespace RockbarForEDCB
             this.previewListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.previewListView.HideSelection = false;
             this.previewListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem12,
-            listViewItem13,
-            listViewItem14,
-            listViewItem15,
-            listViewItem16,
-            listViewItem17});
+            listViewItem1,
+            listViewItem2,
+            listViewItem3,
+            listViewItem4,
+            listViewItem5,
+            listViewItem6});
             this.previewListView.Location = new System.Drawing.Point(423, 90);
             this.previewListView.MultiSelect = false;
             this.previewListView.Name = "previewListView";
@@ -2362,11 +2462,11 @@ namespace RockbarForEDCB
             this.previewMenuListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.previewMenuListView.HideSelection = false;
             this.previewMenuListView.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem18,
-            listViewItem19,
-            listViewItem20,
-            listViewItem21,
-            listViewItem22});
+            listViewItem7,
+            listViewItem8,
+            listViewItem9,
+            listViewItem10,
+            listViewItem11});
             this.previewMenuListView.Location = new System.Drawing.Point(409, 75);
             this.previewMenuListView.MultiSelect = false;
             this.previewMenuListView.Name = "previewMenuListView";
@@ -2788,35 +2888,6 @@ namespace RockbarForEDCB
             this.fontDialog.MinSize = 6;
             this.fontDialog.ShowEffects = false;
             // 
-            // suspendModeAfterRecPanel
-            // 
-            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecNoActionRadioButton);
-            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecStandbyRadioButton);
-            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecSuspendRadioButton);
-            this.suspendModeAfterRecPanel.Controls.Add(this.afterRecShutdownRadioButton);
-            this.suspendModeAfterRecPanel.Location = new System.Drawing.Point(168, 244);
-            this.suspendModeAfterRecPanel.Name = "suspendModeAfterRecPanel";
-            this.suspendModeAfterRecPanel.Size = new System.Drawing.Size(304, 25);
-            this.suspendModeAfterRecPanel.TabIndex = 64;
-            // 
-            // prioritizeViewPanel
-            // 
-            this.prioritizeViewPanel.Controls.Add(this.prioritizeRecRadioButton);
-            this.prioritizeViewPanel.Controls.Add(this.prioritizeViewRadioButton);
-            this.prioritizeViewPanel.Location = new System.Drawing.Point(149, 16);
-            this.prioritizeViewPanel.Name = "prioritizeViewPanel";
-            this.prioritizeViewPanel.Size = new System.Drawing.Size(116, 27);
-            this.prioritizeViewPanel.TabIndex = 65;
-            // 
-            // prioritizeViewLabel
-            // 
-            this.prioritizeViewLabel.AutoSize = true;
-            this.prioritizeViewLabel.Location = new System.Drawing.Point(80, 24);
-            this.prioritizeViewLabel.Name = "prioritizeViewLabel";
-            this.prioritizeViewLabel.Size = new System.Drawing.Size(57, 12);
-            this.prioritizeViewLabel.TabIndex = 66;
-            this.prioritizeViewLabel.Text = "優先モード";
-            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -2836,6 +2907,10 @@ namespace RockbarForEDCB
             this.reserveTabPage.PerformLayout();
             this.edcbReserveSettingGroupBox.ResumeLayout(false);
             this.edcbReserveSettingGroupBox.PerformLayout();
+            this.prioritizeViewPanel.ResumeLayout(false);
+            this.prioritizeViewPanel.PerformLayout();
+            this.suspendModeAfterRecPanel.ResumeLayout(false);
+            this.suspendModeAfterRecPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.endRecMarginNumericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.startRecMarginNumericUpDown)).EndInit();
             this.tunerTabPage.ResumeLayout(false);
@@ -2861,10 +2936,6 @@ namespace RockbarForEDCB
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).EndInit();
             this.taskTrayIconClickGroupBox.ResumeLayout(false);
             this.taskTrayIconClickGroupBox.PerformLayout();
-            this.suspendModeAfterRecPanel.ResumeLayout(false);
-            this.suspendModeAfterRecPanel.PerformLayout();
-            this.prioritizeViewPanel.ResumeLayout(false);
-            this.prioritizeViewPanel.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -2925,7 +2996,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Button addFavoriteServiceButton;
         private System.Windows.Forms.TabPage tvtestLinkageTabPage;
         private System.Windows.Forms.Label portNumberLabel;
-        private System.Windows.Forms.CheckBox useTcpIpCheckbox;
+        private System.Windows.Forms.CheckBox useTcpIpCheckBox;
         private System.Windows.Forms.Label ipAddressLabel;
         private System.Windows.Forms.TextBox ipAddressTextBox;
         private System.Windows.Forms.Label tvTestNoteLabel;
@@ -3067,7 +3138,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox isAutoOpenSphdCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenBs4kCheckBox;
         private System.Windows.Forms.TabPage reserveTabPage;
-        private System.Windows.Forms.CheckBox useRockbarReserveCheckbox;
+        private System.Windows.Forms.CheckBox useRockbarReserveAddCheckBox;
         private System.Windows.Forms.CheckBox enableReserveCheckBox;
         private System.Windows.Forms.Label recServiceDataLabel;
         private System.Windows.Forms.Label recMarginLabel;
@@ -3116,5 +3187,11 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Panel suspendModeAfterRecPanel;
         private System.Windows.Forms.Panel prioritizeViewPanel;
         private System.Windows.Forms.Label prioritizeViewLabel;
+        private System.Windows.Forms.TextBox recCommentTextBox;
+        private System.Windows.Forms.Label recCommentLabel;
+        private System.Windows.Forms.CheckBox useRockbarReserveDelCheckBox;
+        private System.Windows.Forms.CheckBox useRockbarReserveModCheckBox;
+        private System.Windows.Forms.CheckBox useRockbarReserveDelConfirmCheckBox;
+        private System.Windows.Forms.Label useRockbarReserveLabel;
     }
 }
