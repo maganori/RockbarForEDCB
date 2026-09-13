@@ -462,114 +462,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// ListViewItem に表示されている各列（TSID / SID / 名前(チャンネル名) / 種別 / TVTestオプション）
-        /// の値をそのまま Service オブジェクトとして組み立てて返す。
-        /// </summary>
-        private Service GetServiceFromListViewItem(ListViewItem item)
-        {
-            return new Service
-            {
-                Tsid = item.SubItems[selectedServiceTsidColumnHeader.Index].Text,
-                Sid = item.SubItems[selectedServiceSidColumnHeader.Index].Text,
-                Name = item.SubItems[selectedServiceNameColumnHeader.Index].Text,
-                TypeName = item.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text,
-                TvtestOption = item.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text
-            };
-        }
-
-        /// <summary>
-        /// Service オブジェクトから ListViewItem を生成する。
-        /// </summary>
-        /// <param name="service">表示対象のサービス情報</param>
-        /// <returns>生成された ListViewItem</returns>
-        private static ListViewItem CreateServiceListItem(Service service)
-        {
-            string type = RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(service.TypeName, null));
-
-            ListViewItem item = new ListViewItem(new string[] {
-                "",
-                type,
-                service.Name ?? "",
-                service.Tsid ?? "",
-                service.Sid ?? "",
-                service.TvtestOption ?? ""
-            });
-            item.Name = RockbarUtility.GetKey(service.Tsid, service.Sid);
-            return item;
-        }
-
-        /// <summary>
-        /// 選択サービスの「新規追加」と「編集」処理。
-        /// item == null → 新規追加モード
-        /// item != null → 編集モード
-        /// </summary>
-        /// <param name="listView">編集対象の ListView</param>
-        /// <param name="item">編集する ListViewItem</param>
-        private void EditServiceItem(ListView listView, ListViewItem item)
-        {
-            // 既存キー一覧（編集モードなら自分自身を除外）
-            var existingKeys = listView.Items.Cast<ListViewItem>()
-                .Where(x => x != item)
-                .Select(x => x.Name)
-                .ToHashSet();
-
-            // 初期値（編集モードなら既存サービス、新規追加モードなら null）
-            Service initialService = item != null ? ServiceListViewHelper.GetServiceFromListViewItem(item) : null;
-
-            using (ServiceEditDialog dialog = new ServiceEditDialog(initialService, this.serviceInfos, existingKeys))
-            {
-                if (dialog.ShowDialog(this) != DialogResult.OK)
-                {
-                    return;
-                }
-
-                Service service = dialog.ResultService;
-                string newKey = RockbarUtility.GetKey(service.Tsid, service.Sid);
-
-                ListViewItem newItem = ServiceListViewHelper.CreateServiceListItem(service);
-
-                ListViewItem originalItem = allServiceListView.Items[newKey];
-                if (originalItem != null)
-                {
-                    // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
-                    ServiceListViewHelper.ApplyModMarkIfChanged(originalItem, newItem);
-                }
-                else
-                {
-                    // 左リストにないため1列目に add 印を付ける。
-                    ServiceListViewHelper.ApplyManualAddMark(newItem);
-                }
-
-                // 新規追加モード
-                if (item == null)
-                {
-                    listView.Items.Add(newItem);
-                }
-
-                // 編集モード
-                else
-                {
-                    int index = item.Index;
-                    listView.Items.Remove(item);
-                    listView.Items.Insert(index, newItem);
-                    newItem.Selected = true;
-
-                    // 編集前のチャンネルが左リストにあれば印を外す。
-                    if (allServiceListView.Items.ContainsKey(item.Name))
-                    {
-                        ServiceListViewHelper.UncheckServiceItem(allServiceListView.Items[item.Name]);
-                    }
-                }
-
-                // 編集後のチャンネルが左リストにあれば印を付ける。
-                if (allServiceListView.Items.ContainsKey(newKey))
-                {
-                    ServiceListViewHelper.CheckServiceItem(allServiceListView.Items[newKey]);
-                }
-            }
-        }
-
-        /// <summary>
         /// コンストラクタ
         /// 設定ファイルを読み込み画面表示する。
         /// サービス一覧を取得し、全サービスとしてリストに表示する。
@@ -1159,102 +1051,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// サービスへのチェック処理
-        /// 1列目に✔を表示して色を変える。
-        /// </summary>
-        /// <param name="item">ListViewアイテム</param>
-        private void checkServiceItem(ListViewItem item)
-        {
-            item.SubItems[0].Text = "✔";
-            item.BackColor = Color.LightGray;
-        }
-
-        /// <summary>
-        /// checkServiceItem の効果（✔ と背景色）を解除する。
-        /// </summary>
-        /// <param name="item">解除対象の ListViewItem</param>
-        private void uncheckServiceItem(ListViewItem item)
-        {
-            // ✔ を消す
-            item.SubItems[0].Text = "";
-
-            // 背景色を通常に戻す
-            if (item.ListView != null)
-            {
-                item.BackColor = item.ListView.BackColor;
-            }
-            else
-            {
-                item.BackColor = SystemColors.Window;
-            }
-        }
-
-        /// <summary>
-        /// サービス追加処理
-        /// 左リストビューで選択中のサービスを右リストビューに追加し、左リストビューのアイテムにチェックをつけて選択をクリアする。
-        /// </summary>
-        /// <param name="leftListView">左ListView</param>
-        /// <param name="rightListView">右ListView</param>
-        private void addService(ListView leftListView, ListView rightListView)
-        {
-            // >>ボタン
-            foreach (ListViewItem item in leftListView.SelectedItems)
-            {
-                string key = item.Name;
-
-                if (!rightListView.Items.ContainsKey(key))
-                {
-                    ListViewItem targetItem = leftListView.Items[key];
-
-                    ListViewItem newItem = (ListViewItem)targetItem.Clone();
-                    newItem.Name = key;
-
-                    // TVTestOption 列まで SubItems を揃える
-                    while (newItem.SubItems.Count <= selectedServiceTvtestOptionColumnHeader.Index)
-                    {
-                        newItem.SubItems.Add("");
-                    }
-
-                    rightListView.Items.Add(newItem);
-
-                    checkServiceItem(targetItem);
-                }
-            }
-
-            leftListView.SelectedItems.Clear();
-        }
-
-        /// <summary>
-        /// 左リストに存在しないサービスの場合、1列目に "A" を付ける。
-        /// </summary>
-        private void ApplyManualAddMarkIfNotExists(ListViewItem item)
-        {
-            if (!allServiceListView.Items.ContainsKey(item.Name))
-            {
-                item.SubItems[0].Text = "A";
-            }
-        }
-
-        /// <summary>
-        /// NetworkType または ServiceName が左リストの元データと異なる場合、1列目に mod 印を付ける。
-        /// </summary>
-        private void ApplyModMarkIfChanged(ListViewItem newItem, ListViewItem originalItem)
-        {
-            bool isTypeChanged =
-                newItem.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text !=
-                originalItem.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text;
-
-            bool isNameChanged =
-                newItem.SubItems[selectedServiceNameColumnHeader.Index].Text !=
-                originalItem.SubItems[selectedServiceNameColumnHeader.Index].Text;
-
-            if (isTypeChanged || isNameChanged)
-            {
-                newItem.SubItems[0].Text = "M";
-            }
-        }
-
-        /// <summary>
         /// 選択サービス追加処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -1315,30 +1111,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// サービス削除処理
-        /// 右リストビューで選択中のサービスを右リストビューから削除し、左リストビューのアイテムのチェックを外して選択をクリアする。
-        /// </summary>
-        /// <param name="leftListView">左ListView</param>
-        /// <param name="rightListView">右ListView</param>
-        private void removeServiceButton(ListView leftListView, ListView rightListView)
-        {
-            // <<ボタン
-            foreach (ListViewItem item in rightListView.SelectedItems)
-            {
-                rightListView.Items.Remove(item);
-
-                if (leftListView.Items.ContainsKey(item.Name))
-                {
-                    // 左リストに同じチャンネルがあれば印を外す。
-                    uncheckServiceItem(leftListView.Items[item.Name]);
-                }
-            }
-
-            // 選択をクリア
-            rightListView.SelectedItems.Clear();
-        }
-
-        /// <summary>
         /// 選択サービス削除処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -1359,46 +1131,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// アイテム上移動処理
-        /// 対象ListViewの選択中のItemをひとつ上に移動する。複数箇所の選択に対応する。
-        /// </summary>
-        /// <param name="listview">対象ListView</param>
-        private void moveUp(ListView listview)
-        {
-            // ↑処理
-            int selectedEndIndex = -1;
-
-            // 選択されたアイテムを範囲ごとにリスト化
-            List<(int, int)> ranges = new List<(int, int)>();
-
-            for (int i = listview.Items.Count - 1; i >= 0; i--)
-            {
-                if (listview.Items[i].Selected)
-                {
-                    if (selectedEndIndex < 0)
-                    {
-                        selectedEndIndex = i;
-                    }
-                }
-                else if (selectedEndIndex >= 0)
-                {
-                    ranges.Add((i + 1, selectedEndIndex));
-                    selectedEndIndex = -1;
-                }
-            }
-
-            // 末尾処理不要(リストの先頭行を含む選択範囲は移動しない)
-
-            foreach ((int startIndex, int endIndex) in ranges)
-            {
-                // startindexのひとつ上を削除して、endIndexにinsertする
-                ListViewItem tempItem = listview.Items[startIndex - 1];
-                listview.Items.Remove(tempItem);
-                listview.Items.Insert(endIndex, tempItem);
-            }
-        }
-
-        /// <summary>
         /// 選択サービス上移動処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -1416,47 +1148,6 @@ namespace RockbarForEDCB
         private void moveUpFavoriteServiceButton_Click(object sender, EventArgs e)
         {
             ServiceListViewHelper.MoveUp(favoriteServiceListView);
-        }
-
-        /// <summary>
-        /// アイテム下移動処理
-        /// 対象ListViewの選択中のItemをひとつ下に移動する。複数箇所の選択に対応する。
-        /// </summary>
-        /// <param name="listview"></param>
-        private void moveDown(ListView listview)
-        {
-            // ↓処理
-            int selectedStartIndex = -1;
-
-            // 選択されたアイテムを範囲ごとにリスト化
-            List<(int, int)> ranges = new List<(int, int)>();
-
-            for (int i = 0; i < listview.Items.Count; i++)
-            {
-                if (listview.Items[i].Selected)
-                {
-                    if (selectedStartIndex < 0)
-                    {
-                        selectedStartIndex = i;
-                    }
-                }
-                else if (selectedStartIndex >= 0)
-                {
-                    ranges.Add((selectedStartIndex, i - 1));
-                    selectedStartIndex = -1;
-                }
-            }
-
-            // 末尾処理不要(リストの最終行を含む選択範囲は移動しない)
-
-            foreach ((int startIndex, int endIndex) in ranges)
-            {
-                // 下へ移動
-                // startindexのひとつ下を削除して、startIndexにinsertする
-                ListViewItem tempItem = listview.Items[endIndex + 1];
-                listview.Items.Remove(tempItem);
-                listview.Items.Insert(startIndex, tempItem);
-            }
         }
 
         /// <summary>
@@ -1859,50 +1550,6 @@ namespace RockbarForEDCB
             {
                 ServiceListViewHelper.RefreshFavoriteService(selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
             }
-        }
-
-        /// <summary>
-        /// 選択サービスをリフレッシュしお気に入りサービスキー情報以外を更新する。
-        /// </summary>
-        private void RefreshFavoriteService()
-        {
-            // 選択サービスを選択サービスタブからコピーし直す
-            selectedServiceListView2.Items.Clear();
-
-            foreach (ListViewItem item in selectedServiceListView.Items)
-            {
-                ListViewItem copiedItem = (ListViewItem)item.Clone();
-                copiedItem.Name = item.Name;
-                selectedServiceListView2.Items.Add(copiedItem);
-            };
-
-            // 設定ファイルの選択サービス一覧の表示
-            List<ListViewItem> needCheckItems = new List<ListViewItem>();
-
-            foreach (ListViewItem item in favoriteServiceListView.Items)
-            {
-                string key = item.Name;
-
-                if (selectedServiceListView2.Items.ContainsKey(key))
-                {
-                    // 登録済みはチェック表示
-                    ListViewItem targetItem = selectedServiceListView2.Items[key];
-
-                    item.SubItems[favoriteServiceMarkColumnHeader.Index].Text = targetItem.SubItems[selectedService2MarkColumnHeader.Index].Text;
-                    item.SubItems[favoriteServiceNetworkTypeColumnHeader.Index].Text = targetItem.SubItems[selectedService2NetworkTypeColumnHeader.Index].Text;
-                    item.SubItems[favoriteServiceNameColumnHeader.Index].Text = targetItem.SubItems[selectedService2NameColumnHeader.Index].Text;
-                    item.SubItems[favoriteServiceTvtestOptionColumnHeader.Index].Text = targetItem.SubItems[selectedService2TvtestOptionColumnHeader.Index].Text;
-
-                    needCheckItems.Add(targetItem);
-                }
-                else
-                {
-                    item.SubItems[favoriteServiceMarkColumnHeader.Index].Text = "！";
-                };
-            }
-
-            // チェックする
-            needCheckItems.ForEach(x => checkServiceItem(x));
         }
 
         /// <summary>
