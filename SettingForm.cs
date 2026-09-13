@@ -38,252 +38,6 @@ namespace RockbarForEDCB
         private List<TunerReserveInfo> tunerReserveInfos = new List<TunerReserveInfo>();
 
         /// <summary>
-        /// ListView用の比較クラス
-        /// ListViewごとに作成・状態保持しておき、列ヘッダクリックごとにソートを行う
-        /// </summary>
-        public class ListViewItemComparer : IComparer
-        {
-            private int columnIndex = -1;
-            private SortOrder sortOrder = SortOrder.Ascending;
-            private bool isNumber = false;
-
-            /// <summary>
-            /// 列index更新処理
-            /// </summary>
-            /// <param name="columnIndex">列index</param>
-            public void setColumn(int columnIndex, bool isNumber = false)
-            {
-                this.isNumber = isNumber;
-
-                // 同じカラムがクリックされた場合はソート方向を反転
-                if (this.columnIndex == columnIndex)
-                {
-                    if (this.sortOrder == SortOrder.Ascending)
-                    {
-                        this.sortOrder = SortOrder.Descending;
-                    }
-                    else
-                    {
-                        this.sortOrder = SortOrder.Ascending;
-                    }
-                }
-                else
-                {
-                    this.sortOrder = SortOrder.Ascending;
-                }
-
-                this.columnIndex = columnIndex;
-            }
-
-            /// <summary>
-            /// 比較処理
-            /// 要素1<要素2 → 負, 要素1>要素2 → 正, 要素1=要素2 → 0
-            /// </summary>
-            /// <param name="x1">要素1</param>
-            /// <param name="x2">要素2</param>
-            /// <returns>比較結果</returns>
-            public int Compare(object x1, object x2)
-            {
-                if (columnIndex < 0)
-                {
-                    return 0;
-                }
-
-                ListViewItem item1 = (ListViewItem) x1;
-                ListViewItem item2 = (ListViewItem) x2;
-
-                // 1回文字列比較
-                int result = string.Compare(item1.SubItems[columnIndex].Text, item2.SubItems[columnIndex].Text);
-
-                // 数値の場合の比較
-                if (this.isNumber)
-                {
-                    try
-                    {
-                        result = int.Parse(item1.SubItems[columnIndex].Text) - int.Parse(item2.SubItems[columnIndex].Text);
-                    }
-                    catch
-                    {
-                        // 数値変換で比較が失敗した場合は文字列比較の結果を残す
-                    }
-                }
-
-                if (this.sortOrder == SortOrder.Descending)
-                {
-                    result *= -1;
-                }
-
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// サービス新規追加編集フォームクラス
-        /// </summary>
-        private class ServiceEditDialog : Form
-        {
-            private readonly TextBox tsidTextBox = new TextBox();
-            private readonly TextBox sidTextBox = new TextBox();
-            private readonly TextBox nameTextBox = new TextBox();
-            private readonly ComboBox typeComboBox = new ComboBox();
-            private readonly TextBox tvtestOptionTextBox = new TextBox();
-            private readonly List<EpgServiceInfo> serviceInfos;
-            private readonly HashSet<string> existingKeys;
-
-            public Service ResultService { get; private set; }
-
-            /// <summary>
-            /// サービス新規追加編集
-            /// </summary>
-            /// <param name="initialService">入力済みサービス</param>
-            /// <param name="epgServiceInfos">サービス一覧</param>
-            public ServiceEditDialog(Service initialService, List<EpgServiceInfo> epgServiceInfos, HashSet<string> existingKeys)
-            {
-                this.Text = (initialService != null) ? "チャンネル編集" : "チャンネル追加";
-                this.FormBorderStyle = FormBorderStyle.FixedDialog;
-                this.StartPosition = FormStartPosition.CenterParent;
-                this.MinimizeBox = false;
-                this.MaximizeBox = false;
-                this.ShowInTaskbar = false;
-                this.ClientSize = new Size(360, 210);
-                this.serviceInfos = epgServiceInfos;
-                this.existingKeys = existingKeys;
-
-                Label tsidLabel = new Label { Left = 16, Top = 18, Width = 100, Text = "TSID" };
-                tsidTextBox.Left = 120;
-                tsidTextBox.Top = 14;
-                tsidTextBox.Width = 200;
-
-                Label sidLabel = new Label { Left = 16, Top = 48, Width = 100, Text = "SID" };
-                sidTextBox.Left = 120;
-                sidTextBox.Top = 44;
-                sidTextBox.Width = 200;
-
-                Label nameLabel = new Label { Left = 16, Top = 78, Width = 100, Text = "名前" };
-                nameTextBox.Left = 120;
-                nameTextBox.Top = 74;
-                nameTextBox.Width = 200;
-
-                Label typeLabel = new Label { Left = 16, Top = 108, Width = 100, Text = "Type" };
-                typeComboBox.Left = 120;
-                typeComboBox.Top = 104;
-                typeComboBox.Width = 200;
-                typeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-                typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
-
-                Label tvtestOptionLabel = new Label { Left = 16, Top = 138, Width = 100, Text = "TVTestオプション" };
-                tvtestOptionTextBox.Left = 120;
-                tvtestOptionTextBox.Top = 134;
-                tvtestOptionTextBox.Width = 200;
-
-                Button okButton = new Button { Left = 164, Top = 172, Width = 75, Text = "OK", DialogResult = DialogResult.OK };
-                Button cancelButton = new Button { Left = 245, Top = 172, Width = 75, Text = "キャンセル", DialogResult = DialogResult.Cancel };
-
-                okButton.Click += okButton_Click;
-
-                this.Controls.AddRange(new Control[] {
-                    tsidLabel, tsidTextBox,
-                    sidLabel, sidTextBox,
-                    nameLabel, nameTextBox,
-                    typeLabel, typeComboBox,
-                    tvtestOptionLabel, tvtestOptionTextBox,
-                    okButton, cancelButton
-                });
-
-                this.AcceptButton = okButton;
-                this.CancelButton = cancelButton;
-
-                if (initialService != null)
-                {
-                    tsidTextBox.Text = initialService.Tsid;
-                    sidTextBox.Text = initialService.Sid;
-                    nameTextBox.Text = initialService.Name;
-                    typeComboBox.SelectedItem = RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(initialService.TypeName, null));
-                    tvtestOptionTextBox.Text = initialService.TvtestOption;
-                }
-                else
-                {
-                    typeComboBox.SelectedIndex = 0;
-                }
-            }
-
-            /// <summary>
-            /// サービス新規追加編集フォームOKボタン
-            /// </summary>
-            private void okButton_Click(object sender, EventArgs e)
-            {
-                ushort tsid;
-                ushort sid;
-
-                if (!ushort.TryParse(tsidTextBox.Text, out tsid) || !ushort.TryParse(sidTextBox.Text, out sid))
-                {
-                    MessageBox.Show("TSID と SID は有効数値で入力してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    this.DialogResult = DialogResult.None;
-                    return;
-                }
-
-                string key = RockbarUtility.GetKey(tsid.ToString(), sid.ToString());
-
-                // 重複チェック（追加・編集共通）
-                if (existingKeys.Contains(key))
-                {
-                    MessageBox.Show(
-                        "同じ TSID / SID のチャンネルが既に登録されています。",
-                        "重複登録はできません",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning
-                    );
-                    this.DialogResult = DialogResult.None;
-                    return;
-                }
-
-                EpgServiceInfo matchedService = null;
-                // 全チャンネル側に同じチャンネルがあれば取得
-                if (serviceInfos != null)
-                {
-                    matchedService = serviceInfos
-                        .FirstOrDefault(x => x.TSID == tsid && x.SID == sid);
-                }
-
-                // 名前補完
-                // 未指定なら全チャンネル側の名前を使用、なければTSID-SID
-                if (string.IsNullOrWhiteSpace(nameTextBox.Text))
-                {
-                    if (matchedService != null)
-                    {
-                        nameTextBox.Text = matchedService.service_name;
-                    }
-                    else
-                    {
-                        nameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
-                    }
-                }
-                
-                // 種別補正
-                // 種別指定が正しいか判定。誤りがあれば全チャンネル側の情報を使用
-                if (matchedService != null)
-                {
-                    var stype = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), matchedService.ONID);
-                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(stype);
-                }
-                else
-                {
-                    var stype = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), null);
-                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(stype);
-                }
-
-                ResultService = new Service
-                {
-                    Tsid = tsid.ToString(),
-                    Sid = sid.ToString(),
-                    Name = nameTextBox.Text.Trim(),
-                    TypeName = typeComboBox.Text.Trim(),
-                    TvtestOption = string.IsNullOrWhiteSpace(tvtestOptionTextBox.Text) ? null : tvtestOptionTextBox.Text.Trim()
-                };
-            }
-        }
-
-        /// <summary>
         /// 録画フォルダ追加・編集用ダイアログクラス
         /// </summary>
         private class RecFolderEditDialog : Form
@@ -760,7 +514,7 @@ namespace RockbarForEDCB
                 .ToHashSet();
 
             // 初期値（編集モードなら既存サービス、新規追加モードなら null）
-            Service initialService = item != null ? GetServiceFromListViewItem(item) : null;
+            Service initialService = item != null ? ServiceListViewHelper.GetServiceFromListViewItem(item) : null;
 
             using (ServiceEditDialog dialog = new ServiceEditDialog(initialService, this.serviceInfos, existingKeys))
             {
@@ -771,18 +525,20 @@ namespace RockbarForEDCB
 
                 Service service = dialog.ResultService;
                 string newKey = RockbarUtility.GetKey(service.Tsid, service.Sid);
-                
-                ListViewItem newItem = CreateServiceListItem(service);
 
-                // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
-                if (allServiceListView.Items.ContainsKey(newKey))
+                ListViewItem newItem = ServiceListViewHelper.CreateServiceListItem(service);
+
+                ListViewItem originalItem = allServiceListView.Items[newKey];
+                if (originalItem != null)
                 {
-                    ListViewItem originalItem = allServiceListView.Items[newKey];
-                    ApplyModMarkIfChanged(newItem, originalItem);
+                    // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
+                    ServiceListViewHelper.ApplyModMarkIfChanged(originalItem, newItem);
                 }
-
-                // 左リストにない場合は1列目に add 印を付ける。
-                ApplyManualAddMarkIfNotExists(newItem);
+                else
+                {
+                    // 左リストにないため1列目に add 印を付ける。
+                    ServiceListViewHelper.ApplyManualAddMark(newItem);
+                }
 
                 // 新規追加モード
                 if (item == null)
@@ -801,14 +557,14 @@ namespace RockbarForEDCB
                     // 編集前のチャンネルが左リストにあれば印を外す。
                     if (allServiceListView.Items.ContainsKey(item.Name))
                     {
-                        uncheckServiceItem(allServiceListView.Items[item.Name]);
+                        ServiceListViewHelper.UncheckServiceItem(allServiceListView.Items[item.Name]);
                     }
                 }
 
                 // 編集後のチャンネルが左リストにあれば印を付ける。
                 if (allServiceListView.Items.ContainsKey(newKey))
                 {
-                    checkServiceItem(allServiceListView.Items[newKey]);
+                    ServiceListViewHelper.CheckServiceItem(allServiceListView.Items[newKey]);
                 }
             }
         }
@@ -1140,14 +896,14 @@ namespace RockbarForEDCB
 
                 if (allServiceListView.Items.ContainsKey(key))
                 {
-                    ListViewItem targetItem = allServiceListView.Items[key];
-                    ListViewItem item = (ListViewItem)targetItem.Clone();
-                    item.Name = targetItem.Name;
+                    ListViewItem allServiceItem = allServiceListView.Items[key];
+                    ListViewItem targetItem = (ListViewItem)allServiceItem.Clone();
+                    targetItem.Name = allServiceItem.Name;
 
                     // NetworkType指定があれば上書きする
                     if (!string.IsNullOrWhiteSpace(service.TypeName))
                     {
-                        item.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text = RockbarUtility.GetShortNetworkTypeName(
+                        targetItem.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text = RockbarUtility.GetShortNetworkTypeName(
                             RockbarUtility.GetNetworkType(service.TypeName, null)
                         );
                     }
@@ -1155,39 +911,39 @@ namespace RockbarForEDCB
                     // チャンネル名指定があれば上書きする
                     if (!string.IsNullOrWhiteSpace(service.Name))
                     {
-                        item.SubItems[selectedServiceNameColumnHeader.Index].Text = service.Name;
+                        targetItem.SubItems[selectedServiceNameColumnHeader.Index].Text = service.Name;
                     }
 
                     // Tvtestオプションカラムを作成し設定
-                    while (item.SubItems.Count <= selectedServiceTvtestOptionColumnHeader.Index)
+                    while (targetItem.SubItems.Count <= selectedServiceTvtestOptionColumnHeader.Index)
                     {
-                        item.SubItems.Add("");
+                        targetItem.SubItems.Add("");
                     }
 
-                    item.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text = service.TvtestOption ?? "";
+                    targetItem.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text = service.TvtestOption ?? "";
 
                     // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
-                    ApplyModMarkIfChanged(item, targetItem);
+                    ServiceListViewHelper.ApplyModMarkIfChanged(allServiceItem, targetItem);
 
-                    selectedServiceListView.Items.Add(item);
+                    selectedServiceListView.Items.Add(targetItem);
 
                     // 選択チャンネルにあるチャンネルはチェック表示
-                    needCheckItems.Add(targetItem);
+                    needCheckItems.Add(allServiceItem);
                 }
                 else
                 {
-                    ListViewItem manualItem = CreateServiceListItem(service);
-                    manualItem.Name = key;
+                    ListViewItem manualAddItem = ServiceListViewHelper.CreateServiceListItem(service);
+                    manualAddItem.Name = key;
 
                     // 左リストに存在しないためadd印を付ける
-                    ApplyManualAddMarkIfNotExists(manualItem);
+                    ServiceListViewHelper.ApplyManualAddMark(manualAddItem);
 
-                    selectedServiceListView.Items.Add(manualItem);
+                    selectedServiceListView.Items.Add(manualAddItem);
                 }
             }
 
             // チェックする
-            needCheckItems.ForEach(x => checkServiceItem(x));
+            needCheckItems.ForEach(x => ServiceListViewHelper.CheckServiceItem(x));
         }
 
         /// <summary>
@@ -1505,7 +1261,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void addSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            addService(allServiceListView, selectedServiceListView);
+            ServiceListViewHelper.AddService(allServiceListView, selectedServiceListView);
         }
 
         /// <summary>
@@ -1515,7 +1271,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void addNewServiceButton_Click(object sender, EventArgs e)
         {
-            EditServiceItem(selectedServiceListView, null);
+            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, null);
         }
 
         /// <summary>
@@ -1530,7 +1286,7 @@ namespace RockbarForEDCB
                 return;
             }
 
-            EditServiceItem(selectedServiceListView, selectedServiceListView.SelectedItems[0]);
+            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
         }
 
         /// <summary>
@@ -1545,7 +1301,7 @@ namespace RockbarForEDCB
                 return;
             }
 
-            EditServiceItem(selectedServiceListView, selectedServiceListView.SelectedItems[0]);
+            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
         }
 
         /// <summary>
@@ -1555,7 +1311,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void addFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            addService(selectedServiceListView2, favoriteServiceListView);
+            ServiceListViewHelper.AddService(selectedServiceListView2, favoriteServiceListView);
         }
 
         /// <summary>
@@ -1589,7 +1345,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void removeServiceButton_Click(object sender, EventArgs e)
         {
-            removeServiceButton(allServiceListView, selectedServiceListView);
+            ServiceListViewHelper.RemoveService(allServiceListView, selectedServiceListView);
         }
 
         /// <summary>
@@ -1599,7 +1355,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void removeFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            removeServiceButton(selectedServiceListView2, favoriteServiceListView);
+            ServiceListViewHelper.RemoveService(selectedServiceListView2, favoriteServiceListView);
         }
 
         /// <summary>
@@ -1649,7 +1405,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveUpSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            moveUp(selectedServiceListView);
+            ServiceListViewHelper.MoveUp(selectedServiceListView);
         }
 
         /// <summary>
@@ -1659,7 +1415,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveUpFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            moveUp(favoriteServiceListView);
+            ServiceListViewHelper.MoveUp(favoriteServiceListView);
         }
 
         /// <summary>
@@ -1710,7 +1466,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveDownSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            moveDown(selectedServiceListView);
+            ServiceListViewHelper.MoveDown(selectedServiceListView);
         }
 
         /// <summary>
@@ -1720,7 +1476,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveDownFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            moveDown(favoriteServiceListView);
+            ServiceListViewHelper.MoveDown(favoriteServiceListView);
         }
 
         /// <summary>
@@ -1964,7 +1720,7 @@ namespace RockbarForEDCB
         /// </summary>
         private void SaveFavoriteServiceSettings()
         {
-            RefreshFavoriteService();
+            ServiceListViewHelper.RefreshFavoriteService(selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
 
             // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
             _configManager.FavoriteServiceList.Clear();
@@ -2101,7 +1857,7 @@ namespace RockbarForEDCB
         {
             if (settingTabControl.SelectedTab == favoriteServiceTabPage)
             {
-                RefreshFavoriteService();
+                ServiceListViewHelper.RefreshFavoriteService(selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
             }
         }
 
