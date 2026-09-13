@@ -619,17 +619,6 @@ namespace RockbarForEDCB
             }
         }
 
-        // フォームのロード時に初期状態を反映
-        private void SettingForm_Load(object sender, EventArgs e)
-        {
-            // 初期状態のコントロール有効/無効化を反映
-            UpdateEdcbReserveSettingControlsEnableState();
-            UpdateUseRockbarReserveDelConfirmControlsEnableState();
-            UpdateMarginControlsEnableState();
-            UpdateServiceDataControlsEnableState();
-            UpdatePostRecActionControlsEnableState();
-        }
-
         // 「予約追加」チェックボックスの制御
         private void useRockbarReserveAddCheckBox_CheckedChanged(object sender, EventArgs e)
         {
@@ -840,49 +829,104 @@ namespace RockbarForEDCB
             // セッティングを読み込んで画面表示
             _configManager = new ConfigManager();
 
+            // サービス一覧取得
+            serviceInfos.Clear();
+            tunerReserveInfos.Clear();
+
+            if (canConnect)
+            {
+                ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
+                ctrlCmdUtil.SendEnumService(ref serviceInfos);
+            }
+
+            // EDCB連携設定
+            LoadEdcbLinkageSettings();
+
+            // 予約動作設定
+            LoadReserveSettings();
+
+            // チューナー名設定
+            LoadTunerNameSettings();
+
+            // 選択サービス設定
+            LoadSelectServiceSettings();
+
+            // お気に入りサービス設定
+            LoadFavoriteServiceSettings();
+
+            // TVTest連携関連設定
+            LoadTvTestLinkageSettings();
+
+            // フォント・色(ListView)設定
+            LoadListViewFontColor();
+
+            // フォント・色(右クリック)設定
+            LoadContextMenuFontColor();
+
+            // フォント(コントロールUI)設定
+            LoadControlUiFontColor();
+
+            // その他設定
+            LoadOtherSettings();
+
+            // コントロールUIのフォント設定を適用
+            ApplyUiFontSettings();
+        }
+
+        /// <summary>
+        /// EDCB連携設定の読み込み
+        /// </summary>
+        private void LoadEdcbLinkageSettings()
+        {
             useTcpIpCheckBox.Checked = _configManager.RockbarSetting.UseTcpIp;
             ipAddressTextBox.Text = _configManager.RockbarSetting.IpAddress;
 
-            // 設定値異常の場合、下限にする
-            if (_configManager.RockbarSetting.PortNumber > portNumberNumericUpDown.Maximum || _configManager.RockbarSetting.PortNumber < portNumberNumericUpDown.Minimum) {
+            // port番号が異常の場合、下限にする
+            if (_configManager.RockbarSetting.PortNumber > portNumberNumericUpDown.Maximum || _configManager.RockbarSetting.PortNumber < portNumberNumericUpDown.Minimum)
+            {
                 portNumberNumericUpDown.Value = portNumberNumericUpDown.Minimum;
             }
             else
             {
                 portNumberNumericUpDown.Value = _configManager.RockbarSetting.PortNumber;
             }
-            // 設定値異常の場合、デフォルトにする
-            if (_configManager.RockbarSetting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum || _configManager.RockbarSetting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
-            {
-                recListMaxCountNumericUpDown.Value = RockBarSetting.DEFAULT_REC_LIST_MAX_COUNT;
-            }
-            else
-            {
-                recListMaxCountNumericUpDown.Value = _configManager.RockbarSetting.RecListMaxCount;
-            }
+
             useWebLinkCheckBox.Checked = _configManager.RockbarSetting.UseWebLink;
             webEpgUrlTextBox.Text = _configManager.RockbarSetting.WebEpgUrl;
             webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
             recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
+        }
 
-            // 予約関連
+        /// <summary>
+        /// 予約動作設定の読み込み
+        /// </summary>
+        private void LoadReserveSettings()
+        {
+            // Rockbar機能
             useRockbarReserveAddCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveAdd;
             useRockbarReserveModCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveMod;
             useRockbarReserveDelCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveDel;
             useRockbarReserveDelConfirmCheckBox.Checked = _configManager.RockbarSetting.UseRockbarReserveDelConfirm;
+
+            // EDCB予約追加内容
             enableReserveCheckBox.Checked = _configManager.RockbarSetting.EnableReserve;
             prioritizeViewRadioButton.Checked = _configManager.RockbarSetting.PrioritizeView;
             recModeComboBox.SelectedIndex = _configManager.RockbarSetting.RecMode;
-            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority -1; // 優先度1のindexは0のため-1が必要
+
+            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority - 1; // 優先度1のindexは0のため-1が必要
             recTuijyuuCheckBox.Checked = _configManager.RockbarSetting.RecTuijyuu;
             recPittariCheckBox.Checked = _configManager.RockbarSetting.RecPittari;
+
             useDefaultRecMarginCheckBox.Checked = !_configManager.RockbarSetting.UseCustomRecMargin; // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
             startRecMarginNumericUpDown.Value = _configManager.RockbarSetting.StartRecMargin;
             endRecMarginNumericUpDown.Value = _configManager.RockbarSetting.EndRecMargin;
+
+            // recServiceMode
             useDefaultRecServiceDataCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0000_0001) == 0; // 1ビット目(デフォルトを使用(0:ON, 1:OFF))が 0 の場合 true、1 の場合 false
             recServiceDataCaptionCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0001_0000) != 0; // 5ビット目(字幕を含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
             recServiceDataCarouselCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0010_0000) != 0; // 6ビット目(データカルーセルを含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
 
+            // 録画フォルダ
             recFolderListView.Items.Clear();
 
             // 通常の録画フォルダ（部分受信：いいえ）の読み込み
@@ -922,161 +966,13 @@ namespace RockbarForEDCB
             partialRecSeparateFileCheckBox.Checked = _configManager.RockbarSetting.PartialRecSeparateFile;
             continueRecSameFileCheckBox.Checked = _configManager.RockbarSetting.ContinueRecSameFile;
 
-            // RecTuerIDは下の方の処理で保存
-
-            byte suspendMode = _configManager.RockbarSetting.SuspendModeAfterRec;
-
-            // 0 なら CheckBox を True、それ以外なら False
-            defaultSuspendModeAfterRecCheckBox.Checked = (suspendMode == 0);
-
-            // Panel内のラジオボタンを一括処理して Tag が一致するものを True にする
-            foreach (RadioButton rb in suspendModeAfterRecPanel.Controls.OfType<RadioButton>())
-            {
-                if (rb.Tag != null && Convert.ToByte(rb.Tag) == suspendMode)
-                {
-                    rb.Checked = true;
-                    break;
-                }
-            }
-
-            rebootAfterReturnCheckBox.Checked = _configManager.RockbarSetting.RebootAfterReturn;
-
-            //recBatFilePathTextBox.Text = _configManager.RockbarSetting.RecBatFilePath;
-            //recTagTextBox.Text = _configManager.RockbarSetting.RecTag;
-            string val = _configManager.RockbarSetting.RecBatFilePath;
-            int pos = val.IndexOf('*');
-            if (pos < 0)
-            {
-                recBatFilePathTextBox.Text = val;
-                recTagTextBox.Text = "";
-            }
-            else
-            {
-                recBatFilePathTextBox.Text = val.Substring(0, pos);
-                recTagTextBox.Text = val.Substring(pos + 1);
-            }
-
-            recCommentTextBox.Text = _configManager.RockbarSetting.RecComment;
-
-            // TVTest連携関連
-            tvtestPathTextBox.Text = _configManager.RockbarSetting.TvtestPath;
-            tvtestDttvOptionTextBox.Text = _configManager.RockbarSetting.TvtestDttvOption;
-            tvtestBscsOptionTextBox.Text = _configManager.RockbarSetting.TvtestBscsOption;
-            tvtestCatvOptionTextBox.Text = _configManager.RockbarSetting.TvtestCatvOption;
-            tvtestSphdOptionTextBox.Text = _configManager.RockbarSetting.TvtestSphdOption;
-            tvtestBs4kOptionTextBox.Text = _configManager.RockbarSetting.TvtestBs4kOption;
-            tvtestTsFileOptionTextBox.Text = _configManager.RockbarSetting.TvtestTsFileOption;
-            useDoubleClickTvtestCheckBox.Checked = _configManager.RockbarSetting.UseDoubleClickTvtest;
-            isAutoOpenTvtestCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtest;
-            isAutoOpenDttvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestDttv;
-            isAutoOpenBsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs;
-            isAutoOpenCsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCs;
-            isAutoOpenCatvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCatv;
-            isAutoOpenBs4kCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs4k;
-            isAutoOpenSphdCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestSphd;
-            isAutoOpenFavoriteServiceCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService;
-            showTaskTrayIconCheckBox.Checked = _configManager.RockbarSetting.ShowTaskTrayIcon;
-            storeTaskTrayByClosingCheckBox.Checked = _configManager.RockbarSetting.StoreTaskTrayByClosing;
-            toggleVisibleTaskTrayIconClickCheckBox.Checked = _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick;
-            isHorizontalSplitCheckBox.Checked = _configManager.RockbarSetting.IsHorizontalSplit;
-            fixNoRecToServiceOnlyCheckBox.Checked = _configManager.RockbarSetting.FixNoRecToServiceOnly;
-
-            taskTrayIconLeftClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconLeftClick;
-            taskTrayIconLeftDoubleClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick;
-            taskTrayIconRightClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconRightClick;
-            taskTrayIconRightDoubleClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconRightDoubleClick;
-
-            fontTextBox.Text = _configManager.RockbarSetting.Font;
-
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            previewListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
-
-            formBackColorTextBox.Text = _configManager.RockbarSetting.FormBackColor;
-            listBackColorTextBox.Text = _configManager.RockbarSetting.ListBackColor;
-            okReserveListBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveListBackColor;
-            partialReserveListBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveListBackColor;
-            ngReserveListBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveListBackColor;
-            disabledReserveListBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveListBackColor;
-            listHeaderForeColorTextBox.Text = _configManager.RockbarSetting.ListHeaderForeColor;
-            listHeaderBackColorTextBox.Text = _configManager.RockbarSetting.ListHeaderBackColor;
-            foreColorTextBox.Text = _configManager.RockbarSetting.ForeColor;
-
-            menuFontTextBox.Text = _configManager.RockbarSetting.MenuFont;
-            previewMenuListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
-
-            menuBackColorTextBox.Text = _configManager.RockbarSetting.MenuBackColor;
-            okReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveMenuBackColor;
-            partialReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveMenuBackColor;
-            ngReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveMenuBackColor;
-            disabledReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveMenuBackColor;
-
-            tabFontTextBox.Text = _configManager.RockbarSetting.TabFont;
-            buttonFontTextBox.Text = _configManager.RockbarSetting.ButtonFont;
-            labelFontTextBox.Text = _configManager.RockbarSetting.LabelFont;
-            textBoxFontTextBox.Text = _configManager.RockbarSetting.TextBoxFont;
-
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            previewFormPanel.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
-            previewListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
-            previewListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveListBackColor);
-            previewListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveListBackColor);
-            previewListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
-            previewListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
-            previewListView.Items[5].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
-            previewListView.ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
-            previewListView.Items[5].ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
-
-            previewMenuListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
-            previewMenuListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveMenuBackColor);
-            previewMenuListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
-            previewMenuListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
-            previewMenuListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
-
-            // 設定値異常の場合、下限にする
-            if (_configManager.RockbarSetting.AutoOpenMargin > autoOpenMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoOpenMargin < autoOpenMarginNumericUpDown.Minimum)
-            {
-                autoOpenMarginNumericUpDown.Value = autoOpenMarginNumericUpDown.Minimum;
-            }
-            else
-            {
-                autoOpenMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoOpenMargin;
-            }
-
-            // 設定値異常の場合、下限にする
-            if (_configManager.RockbarSetting.AutoCloseMargin > autoCloseMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoCloseMargin < autoCloseMarginNumericUpDown.Minimum)
-            {
-                autoCloseMarginNumericUpDown.Value = autoCloseMarginNumericUpDown.Minimum;
-            }
-            else
-            {
-                autoCloseMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoCloseMargin;
-            }
-
-            // 予約画面の初期表示時の有効/無効状態を反映
-            UpdateEdcbReserveSettingControlsEnableState();
-            UpdateUseRockbarReserveDelConfirmControlsEnableState();
-            UpdateMarginControlsEnableState();
-            UpdateServiceDataControlsEnableState();
-            UpdatePostRecActionControlsEnableState();
-
-            // サービス一覧取得
-            serviceInfos.Clear();
-            tunerReserveInfos.Clear();
-
-            if (canConnect)
-            {
-                ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
-                ctrlCmdUtil.SendEnumService(ref serviceInfos);
-            }
-
-            // 予約タブのチューナーComboBox の初期化
+            // チューナーComboBox の初期化
             recTunerIdComboBox.Items.Clear();
             recTunerIdComboBox.DisplayMember = "DisplayText";
             recTunerIdComboBox.ValueMember = "TunerID";
             recTunerIdComboBox.Items.Add(new TunerSelectItem("自動", 0)); // 先頭に「自動」（TunerID = 0）を追加
 
-            // チューナー名タブのListView作成 および 予約タブのチューナーComboBoxの作成
+            // チューナーComboBoxの作成
             foreach (TunerReserveInfo tunerReserveInfo in tunerReserveInfos)
             {
                 // 「チューナー不足 (0xFFFFFFFF)」は ComboBox の選択肢から除外
@@ -1085,36 +981,6 @@ namespace RockbarForEDCB
                     // 表示名: ID:00000001 (BonDriver_Proxy_T.dll)
                     string displayText = $"ID:{tunerReserveInfo.tunerID:x8} ({tunerReserveInfo.tunerName})";
                     recTunerIdComboBox.Items.Add(new TunerSelectItem(displayText, tunerReserveInfo.tunerID));
-                }
-
-                // ListView作成
-                if (!tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName))
-                {
-                    String[] data = null;
-
-                    if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
-                    {
-                        data = new []{
-                            "",
-                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
-                            tunerReserveInfo.tunerName,
-                            _configManager.RockbarSetting.BonDriverNameToTunerName[tunerReserveInfo.tunerName]
-                        };
-
-                    }
-                    else
-                    {
-                        data = new []{
-                            "",
-                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
-                            tunerReserveInfo.tunerName,
-                            RockbarUtility.GetDefaultTunerName(tunerReserveInfo.tunerName)
-                        };
-                    }
-
-                    ListViewItem item = new ListViewItem(data);
-                    item.Name = tunerReserveInfo.tunerName;
-                    tunerNameListView.Items.Add(item);
                 }
             }
 
@@ -1137,6 +1003,88 @@ namespace RockbarForEDCB
                 recTunerIdComboBox.SelectedIndex = 0;
             }
 
+            // 録画後動作
+            byte suspendMode = _configManager.RockbarSetting.SuspendModeAfterRec;
+
+            // 0 なら デフォルトCheckBox を True、それ以外なら False
+            defaultSuspendModeAfterRecCheckBox.Checked = (suspendMode == 0);
+
+            // Panel内のラジオボタンを一括処理して Tag が一致するものを True にする
+            foreach (RadioButton rb in suspendModeAfterRecPanel.Controls.OfType<RadioButton>())
+            {
+                if (rb.Tag != null && Convert.ToByte(rb.Tag) == suspendMode)
+                {
+                    rb.Checked = true;
+                    break;
+                }
+            }
+
+            rebootAfterReturnCheckBox.Checked = _configManager.RockbarSetting.RebootAfterReturn;
+
+            // 録画後実行batと録画タグ
+            string val = _configManager.RockbarSetting.RecBatFilePath;
+            int pos = val.IndexOf('*');
+            if (pos < 0)
+            {
+                recBatFilePathTextBox.Text = val;
+                recTagTextBox.Text = "";
+            }
+            else
+            {
+                recBatFilePathTextBox.Text = val.Substring(0, pos);
+                recTagTextBox.Text = val.Substring(pos + 1);
+            }
+
+            // 録画コメント
+            recCommentTextBox.Text = _configManager.RockbarSetting.RecComment;
+
+            // 予約画面の初期表示時の有効/無効状態を反映
+            UpdateEdcbReserveSettingControlsEnableState();
+            UpdateUseRockbarReserveDelConfirmControlsEnableState();
+            UpdateMarginControlsEnableState();
+            UpdateServiceDataControlsEnableState();
+            UpdatePostRecActionControlsEnableState();
+        }
+
+        /// <summary>
+        /// チューナー名設定の読み込み
+        /// </summary>
+        private void LoadTunerNameSettings()
+        {
+            // チューナー名タブのListView作成
+            foreach (TunerReserveInfo tunerReserveInfo in tunerReserveInfos)
+            {
+                // ListView作成
+                if (!tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName))
+                {
+                    String[] data = null;
+
+                    if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
+                    {
+                        data = new[]{
+                            "",
+                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
+                            tunerReserveInfo.tunerName,
+                            _configManager.RockbarSetting.BonDriverNameToTunerName[tunerReserveInfo.tunerName]
+                        };
+
+                    }
+                    else
+                    {
+                        data = new[]{
+                            "",
+                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
+                            tunerReserveInfo.tunerName,
+                            RockbarUtility.GetDefaultTunerName(tunerReserveInfo.tunerName)
+                        };
+                    }
+
+                    ListViewItem item = new ListViewItem(data);
+                    item.Name = tunerReserveInfo.tunerName;
+                    tunerNameListView.Items.Add(item);
+                }
+            }
+
             // 取得したチューナに含まれず、設定にだけあるものを一応表示
             foreach (var kv in _configManager.RockbarSetting.BonDriverNameToTunerName)
             {
@@ -1155,7 +1103,13 @@ namespace RockbarForEDCB
                     tunerNameListView.Items.Add(item);
                 }
             }
+        }
 
+        /// <summary>
+        /// 選択サービス設定の読み込み
+        /// </summary>
+        private void LoadSelectServiceSettings()
+        {
             // 全チャンネルの表示
             foreach (EpgServiceInfo epgServiceInfo in serviceInfos)
             {
@@ -1178,8 +1132,6 @@ namespace RockbarForEDCB
             }
 
             // 設定ファイルの選択サービス一覧の表示
-            //List<Service> selectedServices = _configManager.SelectedServiceList;
-
             List<ListViewItem> needCheckItems = new List<ListViewItem>();
 
             foreach (Service service in _configManager.SelectedServiceList)
@@ -1189,7 +1141,7 @@ namespace RockbarForEDCB
                 if (allServiceListView.Items.ContainsKey(key))
                 {
                     ListViewItem targetItem = allServiceListView.Items[key];
-                    ListViewItem item = (ListViewItem) targetItem.Clone();
+                    ListViewItem item = (ListViewItem)targetItem.Clone();
                     item.Name = targetItem.Name;
 
                     // NetworkType指定があれば上書きする
@@ -1235,11 +1187,15 @@ namespace RockbarForEDCB
             }
 
             // チェックする
-            needCheckItems.ForEach(x => checkServiceItem(x) );
+            needCheckItems.ForEach(x => checkServiceItem(x));
+        }
 
+        /// <summary>
+        /// お気に入りサービス設定の読み込み
+        /// </summary>
+        private void LoadFavoriteServiceSettings()
+        {
             // 設定ファイルのお気に入りサービス一覧の仮表示
-            //List<Service> favoriteServices = _configManager.FavoriteServiceList;
-
             foreach (Service service in _configManager.FavoriteServiceList)
             {
                 // 1回キーとTSID, SIDだけで追加
@@ -1256,15 +1212,152 @@ namespace RockbarForEDCB
                 item.Name = RockbarUtility.GetKey(service.Tsid, service.Sid);
                 favoriteServiceListView.Items.Add(item);
             }
+        }
 
-            // コントロールUIのフォント設定を適用
-            applyUiFontSettings();
+        /// <summary>
+        /// TVTest連携設定の読み込み
+        /// </summary>
+        private void LoadTvTestLinkageSettings()
+        {
+            tvtestPathTextBox.Text = _configManager.RockbarSetting.TvtestPath;
+            tvtestDttvOptionTextBox.Text = _configManager.RockbarSetting.TvtestDttvOption;
+            tvtestBscsOptionTextBox.Text = _configManager.RockbarSetting.TvtestBscsOption;
+            tvtestCatvOptionTextBox.Text = _configManager.RockbarSetting.TvtestCatvOption;
+            tvtestSphdOptionTextBox.Text = _configManager.RockbarSetting.TvtestSphdOption;
+            tvtestBs4kOptionTextBox.Text = _configManager.RockbarSetting.TvtestBs4kOption;
+            tvtestTsFileOptionTextBox.Text = _configManager.RockbarSetting.TvtestTsFileOption;
+
+            useDoubleClickTvtestCheckBox.Checked = _configManager.RockbarSetting.UseDoubleClickTvtest;
+
+            isAutoOpenTvtestCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtest;
+
+            isAutoOpenDttvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestDttv;
+            isAutoOpenBsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs;
+            isAutoOpenCsCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCs;
+            isAutoOpenCatvCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestCatv;
+            isAutoOpenBs4kCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestBs4k;
+            isAutoOpenSphdCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestSphd;
+            isAutoOpenFavoriteServiceCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService;
+
+            // 設定値異常の場合、下限にする
+            if (_configManager.RockbarSetting.AutoOpenMargin > autoOpenMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoOpenMargin < autoOpenMarginNumericUpDown.Minimum)
+            {
+                autoOpenMarginNumericUpDown.Value = autoOpenMarginNumericUpDown.Minimum;
+            }
+            else
+            {
+                autoOpenMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoOpenMargin;
+            }
+
+            // 設定値異常の場合、下限にする
+            if (_configManager.RockbarSetting.AutoCloseMargin > autoCloseMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoCloseMargin < autoCloseMarginNumericUpDown.Minimum)
+            {
+                autoCloseMarginNumericUpDown.Value = autoCloseMarginNumericUpDown.Minimum;
+            }
+            else
+            {
+                autoCloseMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoCloseMargin;
+            }
+        }
+
+        /// <summary>
+        /// フォント・色(ListView)の設定の読み込み
+        /// </summary>
+        private void LoadListViewFontColor()
+        {
+            fontTextBox.Text = _configManager.RockbarSetting.Font;
+            formBackColorTextBox.Text = _configManager.RockbarSetting.FormBackColor;
+            foreColorTextBox.Text = _configManager.RockbarSetting.ForeColor;
+            listBackColorTextBox.Text = _configManager.RockbarSetting.ListBackColor;
+            okReserveListBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveListBackColor;
+            partialReserveListBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveListBackColor;
+            ngReserveListBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveListBackColor;
+            disabledReserveListBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveListBackColor;
+            listHeaderForeColorTextBox.Text = _configManager.RockbarSetting.ListHeaderForeColor;
+            listHeaderBackColorTextBox.Text = _configManager.RockbarSetting.ListHeaderBackColor;
+
+            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
+            previewListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
+
+            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
+            previewFormPanel.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
+            previewListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
+            previewListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveListBackColor);
+            previewListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveListBackColor);
+            previewListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
+            previewListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
+            previewListView.Items[5].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
+            previewListView.ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
+            previewListView.Items[5].ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
+        }
+
+        /// <summary>
+        /// フォント・色(右クリック)の設定の読み込み
+        /// </summary>
+        private void LoadContextMenuFontColor()
+        {
+            menuFontTextBox.Text = _configManager.RockbarSetting.MenuFont;
+            menuBackColorTextBox.Text = _configManager.RockbarSetting.MenuBackColor;
+            okReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveMenuBackColor;
+            partialReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveMenuBackColor;
+            ngReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveMenuBackColor;
+            disabledReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveMenuBackColor;
+
+            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
+            previewMenuListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
+
+            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
+            previewMenuListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
+            previewMenuListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveMenuBackColor);
+            previewMenuListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
+            previewMenuListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
+            previewMenuListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
+
+        }
+
+        /// <summary>
+        /// フォント(コントロールUI)の設定の読み込み
+        /// </summary>
+        private void LoadControlUiFontColor()
+        {
+            tabFontTextBox.Text = _configManager.RockbarSetting.TabFont;
+            buttonFontTextBox.Text = _configManager.RockbarSetting.ButtonFont;
+            labelFontTextBox.Text = _configManager.RockbarSetting.LabelFont;
+            textBoxFontTextBox.Text = _configManager.RockbarSetting.TextBoxFont;
+        }
+
+        /// <summary>
+        /// その他の設定の読み込み
+        /// </summary>
+        private void LoadOtherSettings()
+        {
+            showTaskTrayIconCheckBox.Checked = _configManager.RockbarSetting.ShowTaskTrayIcon;
+            storeTaskTrayByClosingCheckBox.Checked = _configManager.RockbarSetting.StoreTaskTrayByClosing;
+            toggleVisibleTaskTrayIconClickCheckBox.Checked = _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick;
+            isHorizontalSplitCheckBox.Checked = _configManager.RockbarSetting.IsHorizontalSplit;
+            fixNoRecToServiceOnlyCheckBox.Checked = _configManager.RockbarSetting.FixNoRecToServiceOnly;
+
+            // 設定値異常の場合、デフォルトにする
+            if (_configManager.RockbarSetting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum || _configManager.RockbarSetting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
+            {
+                recListMaxCountNumericUpDown.Value = RockBarSetting.DEFAULT_REC_LIST_MAX_COUNT;
+            }
+            else
+            {
+                recListMaxCountNumericUpDown.Value = _configManager.RockbarSetting.RecListMaxCount;
+            }
+
+            // タスクトレイアイコンマウス操作
+            taskTrayIconLeftClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconLeftClick;
+            taskTrayIconLeftDoubleClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick;
+            taskTrayIconRightClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconRightClick;
+            taskTrayIconRightDoubleClickComboBox.SelectedItem = _configManager.RockbarSetting.TaskTrayIconRightDoubleClick;
         }
 
         /// <summary>
         /// コントロールUIのフォント設定を適用
         /// </summary>
-        private void applyUiFontSettings()
+        private void ApplyUiFontSettings()
         {
             try
             {
@@ -1631,7 +1724,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 
+        /// キャンセルボタン押下処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
@@ -1642,68 +1735,88 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 
+        /// 設定保存ボタン押下処理
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void applyButton_Click(object sender, EventArgs e)
         {
-            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
-            // 選択チャンネル
-            _configManager.SelectedServiceList.Clear();
+            // EDCB連携設定
+            SaveEdcbLinkageSettings();
 
-            foreach (ListViewItem item in selectedServiceListView.Items)
-            {
-                _configManager.SelectedServiceList.Add(new Service {
-                    Tsid = item.SubItems[selectedServiceTsidColumnHeader.Index].Text,
-                    Sid = item.SubItems[selectedServiceSidColumnHeader.Index].Text,
-                    Name = item.SubItems[selectedServiceNameColumnHeader.Index].Text,
-                    TypeName = item.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text,
-                    TvtestOption = item.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text
-                });
-            }
+            // 予約動作設定
+            SaveReserveSettings();
 
-            // お気に入りチャンネル
-            RefreshFavoriteService();
+            // チューナー名設定
+            SaveTunerNameSettings();
 
-            _configManager.FavoriteServiceList.Clear();
+            // 選択サービス設定
+            SaveSelectServiceSettings();
 
-            foreach (ListViewItem item in favoriteServiceListView.Items)
-            {
-                _configManager.FavoriteServiceList.Add(new Service {
-                    Tsid = item.SubItems[favoriteServiceTsidColumnHeader.Index].Text,
-                    Sid = item.SubItems[favoriteServiceSidColumnHeader.Index].Text,
-                    Name = item.SubItems[favoriteServiceNameColumnHeader.Index].Text,
-                    TypeName = item.SubItems[favoriteServiceNetworkTypeColumnHeader.Index].Text,
-                    TvtestOption = item.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text
-                });
-            }
+            // お気に入りサービス設定
+            SaveFavoriteServiceSettings();
 
-            // その他TOML保存
+            // TVTest連携関連設定
+            SaveTvTestLinkageSettings();
+
+            // フォント・色(ListView)設定
+            SaveListViewFontColor();
+
+            // フォント・色(右クリック)設定
+            SaveContextMenuFontColor();
+
+            // フォント(コントロールUI)設定
+            SaveControlUiFontColor();
+
+            // その他設定
+            SaveOtherSettings();
+
+            // 設定ファイルに書き込み
+            _configManager.SaveFromFile();
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        /// <summary>
+        /// EDCB連携設定の書き込み
+        /// </summary>
+        private void SaveEdcbLinkageSettings()
+        {
             _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckBox.Checked;
             _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
-            _configManager.RockbarSetting.PortNumber = (uint) portNumberNumericUpDown.Value;
+            _configManager.RockbarSetting.PortNumber = (uint)portNumberNumericUpDown.Value;
             _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
             _configManager.RockbarSetting.WebEpgUrl = webEpgUrlTextBox.Text;
             _configManager.RockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
             _configManager.RockbarSetting.RecInfoWebLinkUrl = recInfoWebLinkUrlTextBox.Text;
+        }
 
-            // 予約関連
+        /// <summary>
+        /// 予約動作設定の書き込み
+        /// </summary>
+        private void SaveReserveSettings()
+        {
+            // Rockbar機能
             _configManager.RockbarSetting.UseRockbarReserveAdd = useRockbarReserveAddCheckBox.Checked;
             _configManager.RockbarSetting.UseRockbarReserveMod = useRockbarReserveModCheckBox.Checked;
             _configManager.RockbarSetting.UseRockbarReserveDel = useRockbarReserveDelCheckBox.Checked;
             _configManager.RockbarSetting.UseRockbarReserveDelConfirm = useRockbarReserveDelConfirmCheckBox.Checked;
+
+            // EDCB予約追加内容
             _configManager.RockbarSetting.EnableReserve = enableReserveCheckBox.Checked;
             _configManager.RockbarSetting.PrioritizeView = prioritizeViewRadioButton.Checked;
             _configManager.RockbarSetting.RecMode = (byte)recModeComboBox.SelectedIndex;
-            _configManager.RockbarSetting.RecPriority = (byte)(recPriorityComboBox.SelectedIndex +1); // 優先度1のindexは0のため+1が必要
+
+            _configManager.RockbarSetting.RecPriority = (byte)(recPriorityComboBox.SelectedIndex + 1); // 優先度1のindexは0のため+1が必要
             _configManager.RockbarSetting.RecTuijyuu = recTuijyuuCheckBox.Checked;
             _configManager.RockbarSetting.RecPittari = recPittariCheckBox.Checked;
+
             _configManager.RockbarSetting.UseCustomRecMargin = !useDefaultRecMarginCheckBox.Checked;  // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
             _configManager.RockbarSetting.StartRecMargin = (int)startRecMarginNumericUpDown.Value;
             _configManager.RockbarSetting.EndRecMargin = (int)endRecMarginNumericUpDown.Value;
 
-            // 予約関連 recServiceMode
+            // recServiceMode
             uint recServiceMode = _configManager.RockbarSetting.RecServiceMode;
 
             // 1ビット目(デフォルトを使用(0:ON, 1:OFF))
@@ -1740,9 +1853,9 @@ namespace RockbarForEDCB
             }
 
             _configManager.RockbarSetting.RecServiceMode = recServiceMode;
-            // 予約関連 recServiceMode ここまで
+            // recServiceMode ここまで
 
-            // 予約関連 フォルダ関連
+            // 録画フォルダ関連
             var recFolderList = new List<RecFileSetInfo>();
             var partialRecFolderList = new List<RecFileSetInfo>();
 
@@ -1773,13 +1886,14 @@ namespace RockbarForEDCB
 
             _configManager.RockbarSetting.RecFolderList = recFolderList;
             _configManager.RockbarSetting.PartialRecFolderList = partialRecFolderList;
-            // 予約関連 フォルダ関連 ここまで
+            // 録画フォルダ関連 ここまで
 
             _configManager.RockbarSetting.PartialRecSeparateFile = partialRecSeparateFileCheckBox.Checked;
             _configManager.RockbarSetting.ContinueRecSameFile = continueRecSameFileCheckBox.Checked;
 
             _configManager.RockbarSetting.RecTunerID = ((TunerSelectItem)recTunerIdComboBox.SelectedItem)?.TunerID ?? 0;
 
+            // 録画後動作
             byte suspendMode = 0;
 
             if (!defaultSuspendModeAfterRecCheckBox.Checked)
@@ -1798,67 +1912,21 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.SuspendModeAfterRec = suspendMode;
             _configManager.RockbarSetting.RebootAfterReturn = rebootAfterReturnCheckBox.Checked;
 
+            // 録画後実行batと録画タグ
             _configManager.RockbarSetting.RecBatFilePath =
                 string.IsNullOrEmpty(recTagTextBox.Text)
                     ? recBatFilePathTextBox.Text
                     : $"{recBatFilePathTextBox.Text}*{recTagTextBox.Text}";
 
-            //_configManager.RockbarSetting.RecTag = recTagTextBox.Text;
+            // 録画コメント
             _configManager.RockbarSetting.RecComment = recCommentTextBox.Text;
+        }
 
-            _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
-            _configManager.RockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;
-            _configManager.RockbarSetting.TvtestBscsOption = tvtestBscsOptionTextBox.Text;
-            _configManager.RockbarSetting.TvtestCatvOption = tvtestCatvOptionTextBox.Text;
-            _configManager.RockbarSetting.TvtestSphdOption = tvtestSphdOptionTextBox.Text;
-            _configManager.RockbarSetting.TvtestBs4kOption = tvtestBs4kOptionTextBox.Text;
-            _configManager.RockbarSetting.TvtestTsFileOption = tvtestTsFileOptionTextBox.Text;
-            _configManager.RockbarSetting.UseDoubleClickTvtest = useDoubleClickTvtestCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtest = isAutoOpenTvtestCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestDttv = isAutoOpenDttvCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestBs = isAutoOpenBsCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestCs = isAutoOpenCsCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestCatv = isAutoOpenCatvCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestBs4k = isAutoOpenBs4kCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestSphd = isAutoOpenSphdCheckBox.Checked;
-            _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService = isAutoOpenFavoriteServiceCheckBox.Checked;
-            _configManager.RockbarSetting.AutoOpenMargin = (uint) autoOpenMarginNumericUpDown.Value;
-            _configManager.RockbarSetting.AutoCloseMargin = (uint) autoCloseMarginNumericUpDown.Value;
-            _configManager.RockbarSetting.ShowTaskTrayIcon = showTaskTrayIconCheckBox.Checked;
-            _configManager.RockbarSetting.StoreTaskTrayByClosing = storeTaskTrayByClosingCheckBox.Checked;
-            _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick = toggleVisibleTaskTrayIconClickCheckBox.Checked;
-            _configManager.RockbarSetting.IsHorizontalSplit = isHorizontalSplitCheckBox.Checked;
-            _configManager.RockbarSetting.FixNoRecToServiceOnly = fixNoRecToServiceOnlyCheckBox.Checked;
-            _configManager.RockbarSetting.RecListMaxCount = (int) recListMaxCountNumericUpDown.Value;
-
-            _configManager.RockbarSetting.TaskTrayIconLeftClick = taskTrayIconLeftClickComboBox.SelectedItem.ToString();
-            _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick = taskTrayIconLeftDoubleClickComboBox.SelectedItem.ToString();
-            _configManager.RockbarSetting.TaskTrayIconRightClick = taskTrayIconRightClickComboBox.SelectedItem.ToString();
-            _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString();
-
-            _configManager.RockbarSetting.Font = fontTextBox.Text;
-            _configManager.RockbarSetting.FormBackColor = formBackColorTextBox.Text;
-            _configManager.RockbarSetting.ListBackColor = listBackColorTextBox.Text;
-            _configManager.RockbarSetting.OkReserveListBackColor = okReserveListBackColorTextBox.Text;
-            _configManager.RockbarSetting.PartialReserveListBackColor = partialReserveListBackColorTextBox.Text;
-            _configManager.RockbarSetting.NgReserveListBackColor = ngReserveListBackColorTextBox.Text;
-            _configManager.RockbarSetting.DisabledReserveListBackColor = disabledReserveListBackColorTextBox.Text;
-            _configManager.RockbarSetting.ListHeaderForeColor = listHeaderForeColorTextBox.Text;
-            _configManager.RockbarSetting.ListHeaderBackColor = listHeaderBackColorTextBox.Text;
-            _configManager.RockbarSetting.ForeColor = foreColorTextBox.Text;
-
-            _configManager.RockbarSetting.MenuFont = menuFontTextBox.Text;
-            _configManager.RockbarSetting.MenuBackColor = menuBackColorTextBox.Text;
-            _configManager.RockbarSetting.OkReserveMenuBackColor = okReserveMenuBackColorTextBox.Text;
-            _configManager.RockbarSetting.PartialReserveMenuBackColor = partialReserveMenuBackColorTextBox.Text;
-            _configManager.RockbarSetting.NgReserveMenuBackColor = ngReserveMenuBackColorTextBox.Text;
-            _configManager.RockbarSetting.DisabledReserveMenuBackColor = disabledReserveMenuBackColorTextBox.Text;
-
-            _configManager.RockbarSetting.TabFont = tabFontTextBox.Text;
-            _configManager.RockbarSetting.ButtonFont = buttonFontTextBox.Text;
-            _configManager.RockbarSetting.LabelFont = labelFontTextBox.Text;
-            _configManager.RockbarSetting.TextBoxFont = textBoxFontTextBox.Text;
-
+        /// <summary>
+        /// チューナー名設定の書き込み
+        /// </summary>
+        private void SaveTunerNameSettings()
+        {
             _configManager.RockbarSetting.BonDriverNameToTunerName = new Dictionary<string, string>();
 
             foreach (ListViewItem item in tunerNameListView.Items)
@@ -1868,11 +1936,138 @@ namespace RockbarForEDCB
                     item.SubItems[tunerNameTunerNameColumnHeader.Index].Text
                 );
             }
+        }
 
-            _configManager.SaveFromFile();
+        /// <summary>
+        /// 選択サービス設定の書き込み
+        /// </summary>
+        private void SaveSelectServiceSettings()
+        {
+            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
+            _configManager.SelectedServiceList.Clear();
 
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            foreach (ListViewItem item in selectedServiceListView.Items)
+            {
+                _configManager.SelectedServiceList.Add(new Service
+                {
+                    Tsid = item.SubItems[selectedServiceTsidColumnHeader.Index].Text,
+                    Sid = item.SubItems[selectedServiceSidColumnHeader.Index].Text,
+                    Name = item.SubItems[selectedServiceNameColumnHeader.Index].Text,
+                    TypeName = item.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text,
+                    TvtestOption = item.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text
+                });
+            }
+        }
+
+        /// <summary>
+        /// お気に入りサービス設定の書き込み
+        /// </summary>
+        private void SaveFavoriteServiceSettings()
+        {
+            RefreshFavoriteService();
+
+            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
+            _configManager.FavoriteServiceList.Clear();
+
+            foreach (ListViewItem item in favoriteServiceListView.Items)
+            {
+                _configManager.FavoriteServiceList.Add(new Service
+                {
+                    Tsid = item.SubItems[favoriteServiceTsidColumnHeader.Index].Text,
+                    Sid = item.SubItems[favoriteServiceSidColumnHeader.Index].Text,
+                    Name = item.SubItems[favoriteServiceNameColumnHeader.Index].Text,
+                    TypeName = item.SubItems[favoriteServiceNetworkTypeColumnHeader.Index].Text,
+                    TvtestOption = item.SubItems[favoriteServiceTvtestOptionColumnHeader.Index].Text
+                });
+            }
+        }
+
+        /// <summary>
+        /// TVTest連携設定の書き込み
+        /// </summary>
+        private void SaveTvTestLinkageSettings()
+        {
+            _configManager.RockbarSetting.TvtestPath = tvtestPathTextBox.Text;
+            _configManager.RockbarSetting.TvtestDttvOption = tvtestDttvOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestBscsOption = tvtestBscsOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestCatvOption = tvtestCatvOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestSphdOption = tvtestSphdOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestBs4kOption = tvtestBs4kOptionTextBox.Text;
+            _configManager.RockbarSetting.TvtestTsFileOption = tvtestTsFileOptionTextBox.Text;
+
+            _configManager.RockbarSetting.UseDoubleClickTvtest = useDoubleClickTvtestCheckBox.Checked;
+
+            _configManager.RockbarSetting.IsAutoOpenTvtest = isAutoOpenTvtestCheckBox.Checked;
+
+            _configManager.RockbarSetting.IsAutoOpenTvtestDttv = isAutoOpenDttvCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestBs = isAutoOpenBsCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestCs = isAutoOpenCsCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestCatv = isAutoOpenCatvCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestBs4k = isAutoOpenBs4kCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestSphd = isAutoOpenSphdCheckBox.Checked;
+            _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService = isAutoOpenFavoriteServiceCheckBox.Checked;
+            _configManager.RockbarSetting.AutoOpenMargin = (uint)autoOpenMarginNumericUpDown.Value;
+            _configManager.RockbarSetting.AutoCloseMargin = (uint)autoCloseMarginNumericUpDown.Value;
+        }
+
+        /// <summary>
+        /// フォント・色(ListView)の設定の書き込み
+        /// </summary>
+        private void SaveListViewFontColor()
+        {
+            _configManager.RockbarSetting.Font = fontTextBox.Text;
+            _configManager.RockbarSetting.FormBackColor = formBackColorTextBox.Text;
+            _configManager.RockbarSetting.ForeColor = foreColorTextBox.Text;
+            _configManager.RockbarSetting.ListBackColor = listBackColorTextBox.Text;
+            _configManager.RockbarSetting.OkReserveListBackColor = okReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.PartialReserveListBackColor = partialReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.NgReserveListBackColor = ngReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.DisabledReserveListBackColor = disabledReserveListBackColorTextBox.Text;
+            _configManager.RockbarSetting.ListHeaderForeColor = listHeaderForeColorTextBox.Text;
+            _configManager.RockbarSetting.ListHeaderBackColor = listHeaderBackColorTextBox.Text;
+        }
+
+        /// <summary>
+        /// フォント・色(右クリック)の設定の書き込み
+        /// </summary>
+        private void SaveContextMenuFontColor()
+        {
+            _configManager.RockbarSetting.MenuFont = menuFontTextBox.Text;
+            _configManager.RockbarSetting.MenuBackColor = menuBackColorTextBox.Text;
+            _configManager.RockbarSetting.OkReserveMenuBackColor = okReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.PartialReserveMenuBackColor = partialReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.NgReserveMenuBackColor = ngReserveMenuBackColorTextBox.Text;
+            _configManager.RockbarSetting.DisabledReserveMenuBackColor = disabledReserveMenuBackColorTextBox.Text;
+        }
+
+        /// <summary>
+        /// フォント(コントロールUI)の設定の書き込み
+        /// </summary>
+        private void SaveControlUiFontColor()
+        {
+            _configManager.RockbarSetting.TabFont = tabFontTextBox.Text;
+            _configManager.RockbarSetting.ButtonFont = buttonFontTextBox.Text;
+            _configManager.RockbarSetting.LabelFont = labelFontTextBox.Text;
+            _configManager.RockbarSetting.TextBoxFont = textBoxFontTextBox.Text;
+        }
+
+        /// <summary>
+        /// その他の設定の書き込み
+        /// </summary>
+        private void SaveOtherSettings()
+        {
+            _configManager.RockbarSetting.ShowTaskTrayIcon = showTaskTrayIconCheckBox.Checked;
+            _configManager.RockbarSetting.StoreTaskTrayByClosing = storeTaskTrayByClosingCheckBox.Checked;
+            _configManager.RockbarSetting.ToggleVisibleTaskTrayIconClick = toggleVisibleTaskTrayIconClickCheckBox.Checked;
+            _configManager.RockbarSetting.IsHorizontalSplit = isHorizontalSplitCheckBox.Checked;
+            _configManager.RockbarSetting.FixNoRecToServiceOnly = fixNoRecToServiceOnlyCheckBox.Checked;
+
+            _configManager.RockbarSetting.RecListMaxCount = (int)recListMaxCountNumericUpDown.Value;
+
+            _configManager.RockbarSetting.TaskTrayIconLeftClick = taskTrayIconLeftClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick = taskTrayIconLeftDoubleClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconRightClick = taskTrayIconRightClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString();
         }
 
         /// <summary>

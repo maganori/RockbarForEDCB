@@ -153,7 +153,7 @@ namespace RockbarForEDCB
             this.tunerNameTunerIdColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tunerNameBonDriverNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tunerNameTunerNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.allServiceTabPage = new System.Windows.Forms.TabPage();
+            this.selectServiceTabPage = new System.Windows.Forms.TabPage();
             this.selectedServiceListLabel = new System.Windows.Forms.Label();
             this.allServiceListLabel = new System.Windows.Forms.Label();
             this.favoriteServiceTabPage = new System.Windows.Forms.TabPage();
@@ -210,7 +210,7 @@ namespace RockbarForEDCB
             this.tvtestPathLabel = new System.Windows.Forms.Label();
             this.tvtestOpenButton = new System.Windows.Forms.Button();
             this.tvtestPathTextBox = new System.Windows.Forms.TextBox();
-            this.listViewContColorTabPage = new System.Windows.Forms.TabPage();
+            this.listViewFontColorTabPage = new System.Windows.Forms.TabPage();
             this.ngReserveListBackColorLabel = new System.Windows.Forms.Label();
             this.ngReserveListBackColorTextBox = new System.Windows.Forms.TextBox();
             this.selectNgReserveListBackColorButton = new System.Windows.Forms.Button();
@@ -310,13 +310,13 @@ namespace RockbarForEDCB
             ((System.ComponentModel.ISupportInitialize)(this.endRecMarginNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.startRecMarginNumericUpDown)).BeginInit();
             this.tunerTabPage.SuspendLayout();
-            this.allServiceTabPage.SuspendLayout();
+            this.selectServiceTabPage.SuspendLayout();
             this.favoriteServiceTabPage.SuspendLayout();
             this.tvtestLinkageTabPage.SuspendLayout();
             this.autoStartTargetGroupBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.autoCloseMarginNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoOpenMarginNumericUpDown)).BeginInit();
-            this.listViewContColorTabPage.SuspendLayout();
+            this.listViewFontColorTabPage.SuspendLayout();
             this.contextMenuFontColorTabPage.SuspendLayout();
             this.controlUiFontColorTabPage.SuspendLayout();
             this.otherTabPage.SuspendLayout();
@@ -502,10 +502,10 @@ namespace RockbarForEDCB
             this.settingTabControl.Controls.Add(this.edcbLinkageTabPage);
             this.settingTabControl.Controls.Add(this.reserveTabPage);
             this.settingTabControl.Controls.Add(this.tunerTabPage);
-            this.settingTabControl.Controls.Add(this.allServiceTabPage);
+            this.settingTabControl.Controls.Add(this.selectServiceTabPage);
             this.settingTabControl.Controls.Add(this.favoriteServiceTabPage);
             this.settingTabControl.Controls.Add(this.tvtestLinkageTabPage);
-            this.settingTabControl.Controls.Add(this.listViewContColorTabPage);
+            this.settingTabControl.Controls.Add(this.listViewFontColorTabPage);
             this.settingTabControl.Controls.Add(this.contextMenuFontColorTabPage);
             this.settingTabControl.Controls.Add(this.controlUiFontColorTabPage);
             this.settingTabControl.Controls.Add(this.otherTabPage);
@@ -1399,25 +1399,25 @@ namespace RockbarForEDCB
             this.tunerNameTunerNameColumnHeader.Text = "表示名";
             this.tunerNameTunerNameColumnHeader.Width = 140;
             // 
-            // allServiceTabPage
+            // selectServiceTabPage
             // 
-            this.allServiceTabPage.Controls.Add(this.selectedServiceListLabel);
-            this.allServiceTabPage.Controls.Add(this.allServiceListLabel);
-            this.allServiceTabPage.Controls.Add(this.allServiceListView);
-            this.allServiceTabPage.Controls.Add(this.moveUpSelectedServiceButton);
-            this.allServiceTabPage.Controls.Add(this.moveDownSelectedServiceButton);
-            this.allServiceTabPage.Controls.Add(this.removeSelectedServiceButton);
-            this.allServiceTabPage.Controls.Add(this.selectedServiceListView);
-            this.allServiceTabPage.Controls.Add(this.addSelectedServiceButton);
-            this.allServiceTabPage.Controls.Add(this.addNewServiceButton);
-            this.allServiceTabPage.Controls.Add(this.editServiceButton);
-            this.allServiceTabPage.Location = new System.Drawing.Point(4, 22);
-            this.allServiceTabPage.Name = "allServiceTabPage";
-            this.allServiceTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.allServiceTabPage.Size = new System.Drawing.Size(791, 384);
-            this.allServiceTabPage.TabIndex = 2;
-            this.allServiceTabPage.Text = "選択チャンネル";
-            this.allServiceTabPage.UseVisualStyleBackColor = true;
+            this.selectServiceTabPage.Controls.Add(this.selectedServiceListLabel);
+            this.selectServiceTabPage.Controls.Add(this.allServiceListLabel);
+            this.selectServiceTabPage.Controls.Add(this.allServiceListView);
+            this.selectServiceTabPage.Controls.Add(this.moveUpSelectedServiceButton);
+            this.selectServiceTabPage.Controls.Add(this.moveDownSelectedServiceButton);
+            this.selectServiceTabPage.Controls.Add(this.removeSelectedServiceButton);
+            this.selectServiceTabPage.Controls.Add(this.selectedServiceListView);
+            this.selectServiceTabPage.Controls.Add(this.addSelectedServiceButton);
+            this.selectServiceTabPage.Controls.Add(this.addNewServiceButton);
+            this.selectServiceTabPage.Controls.Add(this.editServiceButton);
+            this.selectServiceTabPage.Location = new System.Drawing.Point(4, 22);
+            this.selectServiceTabPage.Name = "selectServiceTabPage";
+            this.selectServiceTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.selectServiceTabPage.Size = new System.Drawing.Size(791, 384);
+            this.selectServiceTabPage.TabIndex = 2;
+            this.selectServiceTabPage.Text = "選択チャンネル";
+            this.selectServiceTabPage.UseVisualStyleBackColor = true;
             // 
             // selectedServiceListLabel
             // 
@@ -1955,48 +1955,48 @@ namespace RockbarForEDCB
             this.tvtestPathTextBox.Size = new System.Drawing.Size(312, 19);
             this.tvtestPathTextBox.TabIndex = 0;
             // 
-            // listViewContColorTabPage
+            // listViewFontColorTabPage
             // 
-            this.listViewContColorTabPage.Controls.Add(this.ngReserveListBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.ngReserveListBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectNgReserveListBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.partialReserveListBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.partialReserveListBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectPartialReserveListBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.okReserveListBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.okReserveListBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectOkReserveListBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.disabledReserveListBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.disabledReserveListBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectDisabledReserveListBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.listHeaderForeColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.listHeaderForeColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectListHeaderForeColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.listHeaderBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.listHeaderBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectListHeaderBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.previewListView);
-            this.listViewContColorTabPage.Controls.Add(this.previewLabel);
-            this.listViewContColorTabPage.Controls.Add(this.foreColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.foreColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectForeColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.listBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.listBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectListBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.previewFormPanel);
-            this.listViewContColorTabPage.Controls.Add(this.formBackColorLabel);
-            this.listViewContColorTabPage.Controls.Add(this.formBackColorTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectFormBackColorButton);
-            this.listViewContColorTabPage.Controls.Add(this.fontLabel);
-            this.listViewContColorTabPage.Controls.Add(this.fontTextBox);
-            this.listViewContColorTabPage.Controls.Add(this.selectFontButton);
-            this.listViewContColorTabPage.Location = new System.Drawing.Point(4, 22);
-            this.listViewContColorTabPage.Name = "listViewContColorTabPage";
-            this.listViewContColorTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.listViewContColorTabPage.Size = new System.Drawing.Size(791, 384);
-            this.listViewContColorTabPage.TabIndex = 6;
-            this.listViewContColorTabPage.Text = "フォント・色";
-            this.listViewContColorTabPage.UseVisualStyleBackColor = true;
+            this.listViewFontColorTabPage.Controls.Add(this.ngReserveListBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.ngReserveListBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectNgReserveListBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.partialReserveListBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.partialReserveListBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectPartialReserveListBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.okReserveListBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.okReserveListBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectOkReserveListBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.disabledReserveListBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.disabledReserveListBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectDisabledReserveListBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.listHeaderForeColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.listHeaderForeColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectListHeaderForeColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.listHeaderBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.listHeaderBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectListHeaderBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.previewListView);
+            this.listViewFontColorTabPage.Controls.Add(this.previewLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.foreColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.foreColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectForeColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.listBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.listBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectListBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.previewFormPanel);
+            this.listViewFontColorTabPage.Controls.Add(this.formBackColorLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.formBackColorTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectFormBackColorButton);
+            this.listViewFontColorTabPage.Controls.Add(this.fontLabel);
+            this.listViewFontColorTabPage.Controls.Add(this.fontTextBox);
+            this.listViewFontColorTabPage.Controls.Add(this.selectFontButton);
+            this.listViewFontColorTabPage.Location = new System.Drawing.Point(4, 22);
+            this.listViewFontColorTabPage.Name = "listViewFontColorTabPage";
+            this.listViewFontColorTabPage.Padding = new System.Windows.Forms.Padding(3);
+            this.listViewFontColorTabPage.Size = new System.Drawing.Size(791, 384);
+            this.listViewFontColorTabPage.TabIndex = 6;
+            this.listViewFontColorTabPage.Text = "フォント・色";
+            this.listViewFontColorTabPage.UseVisualStyleBackColor = true;
             // 
             // ngReserveListBackColorLabel
             // 
@@ -2915,8 +2915,8 @@ namespace RockbarForEDCB
             ((System.ComponentModel.ISupportInitialize)(this.startRecMarginNumericUpDown)).EndInit();
             this.tunerTabPage.ResumeLayout(false);
             this.tunerTabPage.PerformLayout();
-            this.allServiceTabPage.ResumeLayout(false);
-            this.allServiceTabPage.PerformLayout();
+            this.selectServiceTabPage.ResumeLayout(false);
+            this.selectServiceTabPage.PerformLayout();
             this.favoriteServiceTabPage.ResumeLayout(false);
             this.favoriteServiceTabPage.PerformLayout();
             this.tvtestLinkageTabPage.ResumeLayout(false);
@@ -2925,8 +2925,8 @@ namespace RockbarForEDCB
             this.autoStartTargetGroupBox.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.autoCloseMarginNumericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.autoOpenMarginNumericUpDown)).EndInit();
-            this.listViewContColorTabPage.ResumeLayout(false);
-            this.listViewContColorTabPage.PerformLayout();
+            this.listViewFontColorTabPage.ResumeLayout(false);
+            this.listViewFontColorTabPage.PerformLayout();
             this.contextMenuFontColorTabPage.ResumeLayout(false);
             this.contextMenuFontColorTabPage.PerformLayout();
             this.controlUiFontColorTabPage.ResumeLayout(false);
@@ -2964,7 +2964,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.ColumnHeader selectedServiceSidColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceTvtestOptionColumnHeader;
         private System.Windows.Forms.TabControl settingTabControl;
-        private System.Windows.Forms.TabPage allServiceTabPage;
+        private System.Windows.Forms.TabPage selectServiceTabPage;
         private System.Windows.Forms.TabPage edcbLinkageTabPage;
         private System.Windows.Forms.OpenFileDialog tvtestOpenFileDialog;
         private System.Windows.Forms.Label webLinkUrlExampleLabel;
@@ -3049,7 +3049,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label tunerNameNoteLabel;
         private System.Windows.Forms.Label tunerNameLabel;
         private System.Windows.Forms.ColumnHeader tunerNameMarkColumnHeader;
-        private System.Windows.Forms.TabPage listViewContColorTabPage;
+        private System.Windows.Forms.TabPage listViewFontColorTabPage;
         private System.Windows.Forms.Label previewLabel;
         private System.Windows.Forms.Label fontLabel;
         private System.Windows.Forms.TextBox fontTextBox;
