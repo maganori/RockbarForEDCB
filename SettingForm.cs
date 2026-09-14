@@ -214,254 +214,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 録画フォルダ追加処理
-        /// </summary>
-        private void addRecFolderButton_Click(object sender, EventArgs e)
-        {
-            ShowRecFolderEditDialog(null);
-        }
-
-        /// <summary>
-        /// 録画フォルダ変更処理
-        /// </summary>
-        private void editRecFolderButton_Click(object sender, EventArgs e)
-        {
-            if (recFolderListView.SelectedItems.Count > 0)
-            {
-                ShowRecFolderEditDialog(recFolderListView.SelectedItems[0]);
-            }
-        }
-
-        /// <summary>
-        /// 録画フォルダの追加・編集ダイアログ表示共通処理
-        /// </summary>
-        private void ShowRecFolderEditDialog(ListViewItem targetItem)
-        {
-            // PlugIn 一覧の取得
-            var writePlugIns = new List<string>();
-            var fileNamePlugIns = new List<string>();
-            if (ctrlCmdUtil != null)
-            {
-                ctrlCmdUtil.SendEnumPlugIn(2, ref writePlugIns);
-                ctrlCmdUtil.SendEnumPlugIn(1, ref fileNamePlugIns);
-            }
-
-            // 編集時は対象アイテムからデータを取り出す（新規の場合は初期値）
-            bool isPartial = targetItem?.SubItems[0].Text == "はい";
-            string folderPath = targetItem?.SubItems.Count > 1 ? targetItem.SubItems[1].Text : "";
-            string writePlugIn = targetItem?.SubItems.Count > 2 ? targetItem.SubItems[2].Text : "";
-
-            string combinedFileName = targetItem?.SubItems.Count > 3 ? targetItem.SubItems[3].Text : "";
-            string[] nameParts = combinedFileName.Split(new[] { '?' }, 2);
-            string fileNamePlugIn = nameParts.Length > 0 ? nameParts[0] : "";
-            string fileNamePlugInOption = nameParts.Length > 1 ? nameParts[1] : "";
-
-            using (var dialog = targetItem == null
-                ? new RecFolderEditDialog(writePlugIns, fileNamePlugIns)
-                : new RecFolderEditDialog(writePlugIns, fileNamePlugIns, isPartial, folderPath, writePlugIn, fileNamePlugIn, fileNamePlugInOption))
-            {
-                if (dialog.ShowDialog(this) != DialogResult.OK) return;
-
-                // FileNamePlugIn や FileNamePlugInOption の有無で結合方法を制御
-                string fileNamePlugInCombined;
-                if (string.IsNullOrWhiteSpace(dialog.FileNamePlugIn))
-                {
-                    fileNamePlugInCombined = "";
-                }
-                else if (string.IsNullOrWhiteSpace(dialog.FileNamePlugInOption))
-                {
-                    fileNamePlugInCombined = dialog.FileNamePlugIn;
-                }
-                else
-                {
-                    fileNamePlugInCombined = $"{dialog.FileNamePlugIn}?{dialog.FileNamePlugInOption}";
-                }
-
-                string[] subItemTexts = {
-                    dialog.IsPartialRec ? "はい" : "いいえ",
-                    dialog.RecFolderPath,
-                    dialog.WritePlugIn,
-                    fileNamePlugInCombined
-                };
-
-                if (targetItem == null)
-                {
-                    // 新規追加
-                    recFolderListView.Items.Add(new ListViewItem(subItemTexts));
-                }
-                else
-                {
-                    // 既存更新
-                    for (int i = 0; i < subItemTexts.Length; i++)
-                    {
-                        if (i < targetItem.SubItems.Count)
-                            targetItem.SubItems[i].Text = subItemTexts[i];
-                        else
-                            targetItem.SubItems.Add(subItemTexts[i]);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 録画フォルダコピー処理
-        /// </summary>
-        private void copyRecFolderButton_Click(object sender, EventArgs e)
-        {
-            // リストで項目が選択されていない場合は何もしない
-            if (recFolderListView.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            // 選択中の行のデータを取得
-            ListViewItem selectedItem = recFolderListView.SelectedItems[0];
-
-            // 取得したデータで新しい ListViewItem を複製してリストに追加
-            ListViewItem newItem = (ListViewItem)selectedItem.Clone();
-            recFolderListView.Items.Add(newItem);
-
-            // コピーされた新しい項目を選択状態にする（任意）
-            newItem.Selected = true;
-            recFolderListView.EnsureVisible(newItem.Index);
-        }
-
-        /// <summary>
-        /// 録画フォルダ削除処理
-        /// </summary>
-        private void delRecFolderButton_Click(object sender, EventArgs e)
-        {
-            // リストで項目が選択されていない場合は何もしない
-            if (recFolderListView.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            // 選択中の行を削除
-            ListViewItem selectedItem = recFolderListView.SelectedItems[0];
-            recFolderListView.Items.Remove(selectedItem);
-        }
-
-        /// <summary>
-        /// バッチファイル参照ボタン処理
-        /// </summary>
-        private void browseBatFileButton_Click(object sender, EventArgs e)
-        {
-            using (OpenFileDialog ofd = new OpenFileDialog())
-            {
-                // 選択可能な拡張子のフィルタを設定
-                ofd.Filter = "実行可能スクリプト (*.bat;*.ps1;*.lua)|*.bat;*.ps1;*.lua" +
-                             "|Batchファイル (*.bat)|*.bat" +
-                             "|PowerShellスクリプト (*.ps1)|*.ps1" +
-                             "|Luaスクリプト (*.lua)|*.lua" +
-                             "|すべてのファイル (*.*)|*.*";
-
-                ofd.FilterIndex = 1; // デフォルトで最初のフィルタを選択
-                ofd.Title = "バッチ/スクリプトファイルの選択";
-
-                // すでにテキストボックスにパスが入力されていれば、そのフォルダを初期表示に設定
-                if (!string.IsNullOrWhiteSpace(recBatFilePathTextBox.Text) && System.IO.File.Exists(recBatFilePathTextBox.Text))
-                {
-                    ofd.InitialDirectory = System.IO.Path.GetDirectoryName(recBatFilePathTextBox.Text);
-                    ofd.FileName = System.IO.Path.GetFileName(recBatFilePathTextBox.Text);
-                }
-
-                if (ofd.ShowDialog(this) == DialogResult.OK)
-                {
-                    recBatFilePathTextBox.Text = ofd.FileName;
-                }
-            }
-        }
-
-        // 「予約追加」チェックボックスの制御
-        private void useRockbarReserveAddCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdateEdcbReserveSettingControlsEnableState();
-        }
-
-        // 「予約追加」チェックボックスがONの場合は、予約内容全体が入力不可
-        private void UpdateEdcbReserveSettingControlsEnableState()
-        {
-            // チェックが入っていない場合は GroupBox 全体を編集不可 (Enabled = false)
-            edcbReserveSettingGroupBox.Enabled = useRockbarReserveAddCheckBox.Checked;
-        }
-
-        // 「予約削除」チェックボックスの制御
-        private void useRockbarReserveDelCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdateUseRockbarReserveDelConfirmControlsEnableState();
-        }
-
-        // 「予約削除」チェックボックスがONの場合は、「削除前確認表示」が入力不可
-        private void UpdateUseRockbarReserveDelConfirmControlsEnableState()
-        {
-            // チェックされている場合は入力不可 (Enabled = false)
-            bool isInputEnabled = useRockbarReserveDelCheckBox.Checked;
-
-            useRockbarReserveDelConfirmCheckBox.Enabled = isInputEnabled;
-        }
-
-        // 録画マージンのデフォルトチェックボックスの制御
-        private void defaultMarginCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdateMarginControlsEnableState();
-        }
-
-        // 録画マージンのデフォルトチェックボックスがONの場合は開始、終了の入力は不可
-        private void UpdateMarginControlsEnableState()
-        {
-            // チェックされている場合は入力不可 (Enabled = false)
-            bool isInputEnabled = !useDefaultRecMarginCheckBox.Checked;
-
-            startRecMarginNumericUpDown.Enabled = isInputEnabled;
-            endRecMarginNumericUpDown.Enabled = isInputEnabled;
-        }
-
-        // サービス対象データのデフォルトチェックボックスの制御
-        private void defaultServiceDataCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdateServiceDataControlsEnableState();
-        }
-
-        // サービス対象データのデフォルトチェックボックスがONの場合は、字幕を含めるとデータカルーセルを含めるは入力不可
-        private void UpdateServiceDataControlsEnableState()
-        {
-            // チェックされている場合は入力不可 (Enabled = false)
-            bool isInputEnabled = !useDefaultRecServiceDataCheckBox.Checked;
-
-            recServiceDataCaptionCheckBox.Enabled = isInputEnabled;
-            recServiceDataCarouselCheckBox.Enabled = isInputEnabled;
-        }
-
-        // 録画後動作のデフォルトチェックボックスの制御
-        private void defaultPostRecActionCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            UpdatePostRecActionControlsEnableState();
-        }
-
-        // 録画後動作のデフォルトチェックボックスがONの場合は、各ラジオボタンと復帰後再起動するチェックボックスは入力不可
-        private void UpdatePostRecActionControlsEnableState()
-        {
-            // チェックが入っている場合は編集不可 (Enabled = false)
-            bool isInputEnabled = !defaultSuspendModeAfterRecCheckBox.Checked;
-
-            afterRecNoActionRadioButton.Enabled = isInputEnabled;
-            afterRecStandbyRadioButton.Enabled = isInputEnabled;
-            afterRecSuspendRadioButton.Enabled = isInputEnabled;
-            afterRecShutdownRadioButton.Enabled = isInputEnabled;
-            rebootAfterReturnCheckBox.Enabled = isInputEnabled;
-        }
-
-        // 録画フォルダListViewダブルクリック動作
-        private void recFolderListView_DoubleClick(object sender, EventArgs e)
-        {
-            if (recFolderListView.SelectedItems.Count > 0)
-            {
-                ShowRecFolderEditDialog(recFolderListView.SelectedItems[0]);
-            }
-        }
-
-        /// <summary>
         /// コンストラクタ
         /// 設定ファイルを読み込み画面表示する。
         /// サービス一覧を取得し、全サービスとしてリストに表示する。
@@ -1051,126 +803,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 選択サービス追加処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void addSelectedServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.AddService(allServiceListView, selectedServiceListView);
-        }
-
-        /// <summary>
-        /// 選択サービス新規追加処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void addNewServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, null);
-        }
-
-        /// <summary>
-        /// 選択サービス編集処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void editServiceButton_Click(object sender, EventArgs e)
-        {
-            if (selectedServiceListView.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
-        }
-
-        /// <summary>
-        /// 選択サービス編集処理(ダブルクリック)
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void selectedServiceListView_DoubleClick(object sender, EventArgs e)
-        {
-            if (selectedServiceListView.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
-        }
-
-        /// <summary>
-        /// お気に入りサービス追加処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void addFavoriteServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.AddService(selectedServiceListView2, favoriteServiceListView);
-        }
-
-        /// <summary>
-        /// 選択サービス削除処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void removeServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.RemoveService(allServiceListView, selectedServiceListView);
-        }
-
-        /// <summary>
-        /// お気に入りサービス削除処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void removeFavoriteServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.RemoveService(selectedServiceListView2, favoriteServiceListView);
-        }
-
-        /// <summary>
-        /// 選択サービス上移動処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void moveUpSelectedServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.MoveUp(selectedServiceListView);
-        }
-
-        /// <summary>
-        /// お気に入りサービス上移動処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void moveUpFavoriteServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.MoveUp(favoriteServiceListView);
-        }
-
-        /// <summary>
-        /// 選択サービス下移動処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void moveDownSelectedServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.MoveDown(selectedServiceListView);
-        }
-
-        /// <summary>
-        /// お気に入りサービス下移動処理
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void moveDownFavoriteServiceButton_Click(object sender, EventArgs e)
-        {
-            ServiceListViewHelper.MoveDown(favoriteServiceListView);
-        }
-
-        /// <summary>
         /// キャンセルボタン押下処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -1517,26 +1149,372 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString();
         }
 
-        /// <summary>
-        /// TVTest参照ボタン押下処理
-        /// ファイル選択ダイアログを開く。
-        /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
-        private void tvtestOpenButton_Click(object sender, EventArgs e)
+        // 「予約追加」チェックボックスの制御
+        private void useRockbarReserveAddCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            tvtestOpenFileDialog.ShowDialog();
+            UpdateEdcbReserveSettingControlsEnableState();
+        }
+
+        // 「予約追加」チェックボックスがONの場合は、予約内容全体が入力不可
+        private void UpdateEdcbReserveSettingControlsEnableState()
+        {
+            // チェックが入っていない場合は GroupBox 全体を編集不可 (Enabled = false)
+            edcbReserveSettingGroupBox.Enabled = useRockbarReserveAddCheckBox.Checked;
+        }
+
+        // 「予約削除」チェックボックスの制御
+        private void useRockbarReserveDelCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateUseRockbarReserveDelConfirmControlsEnableState();
+        }
+
+        // 「予約削除」チェックボックスがONの場合は、「削除前確認表示」が入力不可
+        private void UpdateUseRockbarReserveDelConfirmControlsEnableState()
+        {
+            // チェックされている場合は入力不可 (Enabled = false)
+            bool isInputEnabled = useRockbarReserveDelCheckBox.Checked;
+
+            useRockbarReserveDelConfirmCheckBox.Enabled = isInputEnabled;
+        }
+
+        // 録画マージンのデフォルトチェックボックスの制御
+        private void defaultMarginCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateMarginControlsEnableState();
+        }
+
+        // 録画マージンのデフォルトチェックボックスがONの場合は開始、終了の入力は不可
+        private void UpdateMarginControlsEnableState()
+        {
+            // チェックされている場合は入力不可 (Enabled = false)
+            bool isInputEnabled = !useDefaultRecMarginCheckBox.Checked;
+
+            startRecMarginNumericUpDown.Enabled = isInputEnabled;
+            endRecMarginNumericUpDown.Enabled = isInputEnabled;
+        }
+
+        // サービス対象データのデフォルトチェックボックスの制御
+        private void defaultServiceDataCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateServiceDataControlsEnableState();
+        }
+
+        // サービス対象データのデフォルトチェックボックスがONの場合は、字幕を含めるとデータカルーセルを含めるは入力不可
+        private void UpdateServiceDataControlsEnableState()
+        {
+            // チェックされている場合は入力不可 (Enabled = false)
+            bool isInputEnabled = !useDefaultRecServiceDataCheckBox.Checked;
+
+            recServiceDataCaptionCheckBox.Enabled = isInputEnabled;
+            recServiceDataCarouselCheckBox.Enabled = isInputEnabled;
+        }
+
+        // 録画後動作のデフォルトチェックボックスの制御
+        private void defaultPostRecActionCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdatePostRecActionControlsEnableState();
+        }
+
+        // 録画後動作のデフォルトチェックボックスがONの場合は、各ラジオボタンと復帰後再起動するチェックボックスは入力不可
+        private void UpdatePostRecActionControlsEnableState()
+        {
+            // チェックが入っている場合は編集不可 (Enabled = false)
+            bool isInputEnabled = !defaultSuspendModeAfterRecCheckBox.Checked;
+
+            afterRecNoActionRadioButton.Enabled = isInputEnabled;
+            afterRecStandbyRadioButton.Enabled = isInputEnabled;
+            afterRecSuspendRadioButton.Enabled = isInputEnabled;
+            afterRecShutdownRadioButton.Enabled = isInputEnabled;
+            rebootAfterReturnCheckBox.Enabled = isInputEnabled;
         }
 
         /// <summary>
-        /// ファイル選択ダイアログ選択完了処理
-        /// TVTest.exeパスを設定する。
+        /// 録画フォルダ追加処理
+        /// </summary>
+        private void addRecFolderButton_Click(object sender, EventArgs e)
+        {
+            ShowRecFolderEditDialog(null);
+        }
+
+        /// <summary>
+        /// 録画フォルダ変更処理
+        /// </summary>
+        private void editRecFolderButton_Click(object sender, EventArgs e)
+        {
+            if (recFolderListView.SelectedItems.Count > 0)
+            {
+                ShowRecFolderEditDialog(recFolderListView.SelectedItems[0]);
+            }
+        }
+
+        // 録画フォルダListViewダブルクリック動作
+        private void recFolderListView_DoubleClick(object sender, EventArgs e)
+        {
+            if (recFolderListView.SelectedItems.Count > 0)
+            {
+                ShowRecFolderEditDialog(recFolderListView.SelectedItems[0]);
+            }
+        }
+
+        /// <summary>
+        /// 録画フォルダの追加・編集ダイアログ表示共通処理
+        /// </summary>
+        private void ShowRecFolderEditDialog(ListViewItem targetItem)
+        {
+            // PlugIn 一覧の取得
+            var writePlugIns = new List<string>();
+            var fileNamePlugIns = new List<string>();
+            if (ctrlCmdUtil != null)
+            {
+                ctrlCmdUtil.SendEnumPlugIn(2, ref writePlugIns);
+                ctrlCmdUtil.SendEnumPlugIn(1, ref fileNamePlugIns);
+            }
+
+            // 編集時は対象アイテムからデータを取り出す（新規の場合は初期値）
+            bool isPartial = targetItem?.SubItems[0].Text == "はい";
+            string folderPath = targetItem?.SubItems.Count > 1 ? targetItem.SubItems[1].Text : "";
+            string writePlugIn = targetItem?.SubItems.Count > 2 ? targetItem.SubItems[2].Text : "";
+
+            string combinedFileName = targetItem?.SubItems.Count > 3 ? targetItem.SubItems[3].Text : "";
+            string[] nameParts = combinedFileName.Split(new[] { '?' }, 2);
+            string fileNamePlugIn = nameParts.Length > 0 ? nameParts[0] : "";
+            string fileNamePlugInOption = nameParts.Length > 1 ? nameParts[1] : "";
+
+            using (var dialog = targetItem == null
+                ? new RecFolderEditDialog(writePlugIns, fileNamePlugIns)
+                : new RecFolderEditDialog(writePlugIns, fileNamePlugIns, isPartial, folderPath, writePlugIn, fileNamePlugIn, fileNamePlugInOption))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+                // FileNamePlugIn や FileNamePlugInOption の有無で結合方法を制御
+                string fileNamePlugInCombined;
+                if (string.IsNullOrWhiteSpace(dialog.FileNamePlugIn))
+                {
+                    fileNamePlugInCombined = "";
+                }
+                else if (string.IsNullOrWhiteSpace(dialog.FileNamePlugInOption))
+                {
+                    fileNamePlugInCombined = dialog.FileNamePlugIn;
+                }
+                else
+                {
+                    fileNamePlugInCombined = $"{dialog.FileNamePlugIn}?{dialog.FileNamePlugInOption}";
+                }
+
+                string[] subItemTexts = {
+                    dialog.IsPartialRec ? "はい" : "いいえ",
+                    dialog.RecFolderPath,
+                    dialog.WritePlugIn,
+                    fileNamePlugInCombined
+                };
+
+                if (targetItem == null)
+                {
+                    // 新規追加
+                    recFolderListView.Items.Add(new ListViewItem(subItemTexts));
+                }
+                else
+                {
+                    // 既存更新
+                    for (int i = 0; i < subItemTexts.Length; i++)
+                    {
+                        if (i < targetItem.SubItems.Count)
+                            targetItem.SubItems[i].Text = subItemTexts[i];
+                        else
+                            targetItem.SubItems.Add(subItemTexts[i]);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 録画フォルダコピー処理
+        /// </summary>
+        private void copyRecFolderButton_Click(object sender, EventArgs e)
+        {
+            // リストで項目が選択されていない場合は何もしない
+            if (recFolderListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            // 選択中の行のデータを取得
+            ListViewItem selectedItem = recFolderListView.SelectedItems[0];
+
+            // 取得したデータで新しい ListViewItem を複製してリストに追加
+            ListViewItem newItem = (ListViewItem)selectedItem.Clone();
+            recFolderListView.Items.Add(newItem);
+
+            // コピーされた新しい項目を選択状態にする（任意）
+            newItem.Selected = true;
+            recFolderListView.EnsureVisible(newItem.Index);
+        }
+
+        /// <summary>
+        /// 録画フォルダ削除処理
+        /// </summary>
+        private void delRecFolderButton_Click(object sender, EventArgs e)
+        {
+            // リストで項目が選択されていない場合は何もしない
+            if (recFolderListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            // 選択中の行を削除
+            ListViewItem selectedItem = recFolderListView.SelectedItems[0];
+            recFolderListView.Items.Remove(selectedItem);
+        }
+
+        /// <summary>
+        /// バッチファイル参照ボタン処理
+        /// </summary>
+        private void browseBatFileButton_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                // 選択可能な拡張子のフィルタを設定
+                ofd.Filter = "実行可能スクリプト (*.bat;*.ps1;*.lua)|*.bat;*.ps1;*.lua" +
+                             "|Batchファイル (*.bat)|*.bat" +
+                             "|PowerShellスクリプト (*.ps1)|*.ps1" +
+                             "|Luaスクリプト (*.lua)|*.lua" +
+                             "|すべてのファイル (*.*)|*.*";
+
+                ofd.FilterIndex = 1; // デフォルトで最初のフィルタを選択
+                ofd.Title = "バッチ/スクリプトファイルの選択";
+
+                // すでにテキストボックスにパスが入力されていれば、そのフォルダを初期表示に設定
+                if (!string.IsNullOrWhiteSpace(recBatFilePathTextBox.Text) && System.IO.File.Exists(recBatFilePathTextBox.Text))
+                {
+                    ofd.InitialDirectory = System.IO.Path.GetDirectoryName(recBatFilePathTextBox.Text);
+                    ofd.FileName = System.IO.Path.GetFileName(recBatFilePathTextBox.Text);
+                }
+
+                if (ofd.ShowDialog(this) == DialogResult.OK)
+                {
+                    recBatFilePathTextBox.Text = ofd.FileName;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 選択サービス追加処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void tvtestOpenFileDialog_FileOk(object sender, CancelEventArgs e)
+        private void addSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            tvtestPathTextBox.Text = tvtestOpenFileDialog.FileName;
+            ServiceListViewHelper.AddService(allServiceListView, selectedServiceListView);
+        }
+
+        /// <summary>
+        /// お気に入りサービス追加処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void addFavoriteServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.AddService(selectedServiceListView2, favoriteServiceListView);
+        }
+
+        /// <summary>
+        /// 選択サービス削除処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void removeServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.RemoveService(allServiceListView, selectedServiceListView);
+        }
+
+        /// <summary>
+        /// お気に入りサービス削除処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void removeFavoriteServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.RemoveService(selectedServiceListView2, favoriteServiceListView);
+        }
+
+        /// <summary>
+        /// 選択サービス上移動処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void moveUpSelectedServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.MoveUp(selectedServiceListView);
+        }
+
+        /// <summary>
+        /// お気に入りサービス上移動処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void moveUpFavoriteServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.MoveUp(favoriteServiceListView);
+        }
+
+        /// <summary>
+        /// 選択サービス下移動処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void moveDownSelectedServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.MoveDown(selectedServiceListView);
+        }
+
+        /// <summary>
+        /// お気に入りサービス下移動処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void moveDownFavoriteServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.MoveDown(favoriteServiceListView);
+        }
+
+        /// <summary>
+        /// 選択サービス新規追加処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void addNewServiceButton_Click(object sender, EventArgs e)
+        {
+            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, null);
+        }
+
+        /// <summary>
+        /// 選択サービス編集処理
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void editServiceButton_Click(object sender, EventArgs e)
+        {
+            if (selectedServiceListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
+        }
+
+        /// <summary>
+        /// 選択サービス編集処理(ダブルクリック)
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void selectedServiceListView_DoubleClick(object sender, EventArgs e)
+        {
+            if (selectedServiceListView.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
         }
 
         /// <summary>
@@ -1643,6 +1621,28 @@ namespace RockbarForEDCB
             {
                 tunerNameListView.SelectedItems[0].SubItems[tunerNameTunerNameColumnHeader.Index].Text = tunerNameTextBox.Text;
             }
+        }
+
+        /// <summary>
+        /// TVTest参照ボタン押下処理
+        /// ファイル選択ダイアログを開く。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void tvtestOpenButton_Click(object sender, EventArgs e)
+        {
+            tvtestOpenFileDialog.ShowDialog();
+        }
+
+        /// <summary>
+        /// ファイル選択ダイアログ選択完了処理
+        /// TVTest.exeパスを設定する。
+        /// </summary>
+        /// <param name="sender">イベントソース</param>
+        /// <param name="e">イベントパラメータ</param>
+        private void tvtestOpenFileDialog_FileOk(object sender, CancelEventArgs e)
+        {
+            tvtestPathTextBox.Text = tvtestOpenFileDialog.FileName;
         }
 
         /// <summary>
