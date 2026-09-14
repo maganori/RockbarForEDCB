@@ -320,6 +320,65 @@ namespace RockbarForEDCB
 
 
         /// <summary>
+        /// サービス追加処理
+        /// 左リストビューで選択中のサービスを右リストビューに追加し、左リストビューのアイテムにチェックをつけて選択をクリアする。
+        /// </summary>
+        /// <param name="leftListView">左ListView</param>
+        /// <param name="rightListView">右ListView</param>
+        public static void AddService(ListView leftListView, ListView rightListView)
+        {
+            // >>ボタン
+            foreach (ListViewItem item in leftListView.SelectedItems)
+            {
+                string key = item.Name;
+
+                if (!rightListView.Items.ContainsKey(key))
+                {
+                    ListViewItem targetItem = leftListView.Items[key];
+
+                    ListViewItem newItem = (ListViewItem)targetItem.Clone();
+                    newItem.Name = key;
+
+                    // TVTestOption 列まで SubItems を揃える
+                    while (newItem.SubItems.Count < rightListView.Columns.Count)
+                    {
+                        newItem.SubItems.Add("");
+                    }
+
+                    rightListView.Items.Add(newItem);
+
+                    CheckServiceItem(targetItem);
+                }
+            }
+
+            leftListView.SelectedItems.Clear();
+        }
+
+        /// <summary>
+        /// サービス削除処理
+        /// 右リストビューで選択中のサービスを右リストビューから削除し、左リストビューのアイテムのチェックを外して選択をクリアする。
+        /// </summary>
+        /// <param name="leftListView">左ListView</param>
+        /// <param name="rightListView">右ListView</param>
+        public static void RemoveService(ListView leftListView, ListView rightListView)
+        {
+            // <<ボタン
+            foreach (ListViewItem item in rightListView.SelectedItems)
+            {
+                rightListView.Items.Remove(item);
+
+                if (leftListView.Items.ContainsKey(item.Name))
+                {
+                    // 左リストに同じチャンネルがあれば印を外す。
+                    UncheckServiceItem(leftListView.Items[item.Name]);
+                }
+            }
+
+            // 選択をクリア
+            rightListView.SelectedItems.Clear();
+        }
+
+        /// <summary>
         /// アイテム上移動処理
         /// 対象ListViewの選択中のItemをひとつ上に移動する。複数箇所の選択に対応する。
         /// </summary>
@@ -398,110 +457,6 @@ namespace RockbarForEDCB
                 listview.Items.Remove(tempItem);
                 listview.Items.Insert(startIndex, tempItem);
             }
-        }
-
-        /// <summary>
-        /// サービス追加処理
-        /// 左リストビューで選択中のサービスを右リストビューに追加し、左リストビューのアイテムにチェックをつけて選択をクリアする。
-        /// </summary>
-        /// <param name="leftListView">左ListView</param>
-        /// <param name="rightListView">右ListView</param>
-        public static void AddService(ListView leftListView, ListView rightListView)
-        {
-            // >>ボタン
-            foreach (ListViewItem item in leftListView.SelectedItems)
-            {
-                string key = item.Name;
-
-                if (!rightListView.Items.ContainsKey(key))
-                {
-                    ListViewItem targetItem = leftListView.Items[key];
-
-                    ListViewItem newItem = (ListViewItem)targetItem.Clone();
-                    newItem.Name = key;
-
-                    // TVTestOption 列まで SubItems を揃える
-                    while (newItem.SubItems.Count < rightListView.Columns.Count)
-                    {
-                        newItem.SubItems.Add("");
-                    }
-
-                    rightListView.Items.Add(newItem);
-
-                    CheckServiceItem(targetItem);
-                }
-            }
-
-            leftListView.SelectedItems.Clear();
-        }
-
-        /// <summary>
-        /// サービス削除処理
-        /// 右リストビューで選択中のサービスを右リストビューから削除し、左リストビューのアイテムのチェックを外して選択をクリアする。
-        /// </summary>
-        /// <param name="leftListView">左ListView</param>
-        /// <param name="rightListView">右ListView</param>
-        public static void RemoveService(ListView leftListView, ListView rightListView)
-        {
-            // <<ボタン
-            foreach (ListViewItem item in rightListView.SelectedItems)
-            {
-                rightListView.Items.Remove(item);
-
-                if (leftListView.Items.ContainsKey(item.Name))
-                {
-                    // 左リストに同じチャンネルがあれば印を外す。
-                    UncheckServiceItem(leftListView.Items[item.Name]);
-                }
-            }
-
-            // 選択をクリア
-            rightListView.SelectedItems.Clear();
-        }
-
-        /// <summary>
-        /// 選択サービスをリフレッシュしお気に入りサービスキー情報以外を更新する。
-        /// </summary>
-        public static void RefreshFavoriteService(ListView selectedListView, ListView selectedListView2, ListView favoriteListView)
-        {
-            // 選択サービスを選択サービスタブからコピーし直す
-            selectedListView2.Items.Clear();
-
-            foreach (ListViewItem item in selectedListView.Items)
-            {
-                ListViewItem copiedItem = (ListViewItem)item.Clone();
-                copiedItem.Name = item.Name;
-                selectedListView2.Items.Add(copiedItem);
-            }
-            ;
-
-            // 設定ファイルの選択サービス一覧の表示
-            List<ListViewItem> needCheckItems = new List<ListViewItem>();
-
-            foreach (ListViewItem favoriteItem in favoriteListView.Items)
-            {
-                string key = favoriteItem.Name;
-
-                if (selectedListView2.Items.ContainsKey(key))
-                {
-                    // 登録済みはチェック表示
-                    ListViewItem service2Item = selectedListView2.Items[key];
-
-                    favoriteItem.SubItems[markColumnIndex].Text = service2Item.SubItems[markColumnIndex].Text;
-                    favoriteItem.SubItems[networkTypeColumnIndex].Text = service2Item.SubItems[networkTypeColumnIndex].Text;
-                    favoriteItem.SubItems[nameColumnIndex].Text = service2Item.SubItems[nameColumnIndex].Text;
-                    favoriteItem.SubItems[tvtestOptionColumnIndex].Text = service2Item.SubItems[tvtestOptionColumnIndex].Text;
-
-                    needCheckItems.Add(service2Item);
-                }
-                else
-                {
-                    favoriteItem.SubItems[markColumnIndex].Text = "！";
-                }
-            }
-
-            // チェックする
-            needCheckItems.ForEach(x => CheckServiceItem(x));
         }
 
         /// <summary>
@@ -610,6 +565,50 @@ namespace RockbarForEDCB
                     CheckServiceItem(allServiceListView.Items[newKey]);
                 }
             }
+        }
+
+        /// <summary>
+        /// 選択サービスをリフレッシュしお気に入りサービスキー情報以外を更新する。
+        /// </summary>
+        public static void RefreshFavoriteService(ListView selectedListView, ListView selectedListView2, ListView favoriteListView)
+        {
+            // 選択サービスを選択サービスタブからコピーし直す
+            selectedListView2.Items.Clear();
+
+            foreach (ListViewItem item in selectedListView.Items)
+            {
+                ListViewItem copiedItem = (ListViewItem)item.Clone();
+                copiedItem.Name = item.Name;
+                selectedListView2.Items.Add(copiedItem);
+            }
+
+            // 設定ファイルの選択サービス一覧の表示
+            List<ListViewItem> needCheckItems = new List<ListViewItem>();
+
+            foreach (ListViewItem favoriteItem in favoriteListView.Items)
+            {
+                string key = favoriteItem.Name;
+
+                if (selectedListView2.Items.ContainsKey(key))
+                {
+                    // 登録済みはチェック表示
+                    ListViewItem service2Item = selectedListView2.Items[key];
+
+                    favoriteItem.SubItems[markColumnIndex].Text = service2Item.SubItems[markColumnIndex].Text;
+                    favoriteItem.SubItems[networkTypeColumnIndex].Text = service2Item.SubItems[networkTypeColumnIndex].Text;
+                    favoriteItem.SubItems[nameColumnIndex].Text = service2Item.SubItems[nameColumnIndex].Text;
+                    favoriteItem.SubItems[tvtestOptionColumnIndex].Text = service2Item.SubItems[tvtestOptionColumnIndex].Text;
+
+                    needCheckItems.Add(service2Item);
+                }
+                else
+                {
+                    favoriteItem.SubItems[markColumnIndex].Text = "！";
+                }
+            }
+
+            // チェックする
+            needCheckItems.ForEach(x => CheckServiceItem(x));
         }
     }
 }
