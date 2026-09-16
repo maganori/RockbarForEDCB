@@ -23,11 +23,11 @@ namespace RockbarForEDCB
         // 設定とサービスリスト
         private ConfigManager _configManager;
 
+        // 各ListViewManager
+        private SelectedServiceListViewManager _selectedServiceListViewManager;
+        private FavoriteServiceListViewManager _favoriteServiceListViewManager;
+
         // ListViewのソーター。ListViewにセットすると自動整列解除できないため、適宜ListViewにセットする。
-        private ListViewItemComparer allServiceListViewSorter = new ListViewItemComparer();
-        private ListViewItemComparer selectedServiceListViewSorter = new ListViewItemComparer();
-        private ListViewItemComparer selectedServiceListView2Sorter = new ListViewItemComparer();
-        private ListViewItemComparer favoriteServiceListViewSorter = new ListViewItemComparer();
         private ListViewItemComparer tunerNameListViewSorter = new ListViewItemComparer();
 
         // CtrlCmdUtil
@@ -239,34 +239,42 @@ namespace RockbarForEDCB
                 ctrlCmdUtil.SendEnumService(ref serviceInfos);
             }
 
-            // EDCB連携設定
+            // 選択チャンネルタブ用のオブジェクト作成
+            _selectedServiceListViewManager = new SelectedServiceListViewManager
+                (_configManager, serviceInfos, allServiceListView, selectedServiceListView);
+
+            // お気に入りチャンネルタブ用のオブジェクト作成
+            _favoriteServiceListViewManager = new FavoriteServiceListViewManager
+                (_configManager, selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
+
+            // EDCB連携設定の読み込み
             LoadEdcbLinkageSettings();
 
-            // 予約動作設定
+            // 予約動作設定の読み込み
             LoadReserveSettings();
 
-            // チューナー名設定
+            // チューナー名設定の読み込み
             LoadTunerNameSettings();
 
-            // 選択サービス設定
-            LoadSelectServiceSettings();
+            // 選択サービス設定の読み込み
+            _selectedServiceListViewManager.Load();
 
-            // お気に入りサービス設定
-            LoadFavoriteServiceSettings();
+            // お気に入りサービス設定の読み込み
+            _favoriteServiceListViewManager.Load();
 
-            // TVTest連携関連設定
+            // TVTest連携設定の読み込み
             LoadTvTestLinkageSettings();
 
-            // フォント・色(ListView)設定
+            // フォント・色(ListView)設定の読み込み
             LoadListViewFontColor();
 
-            // フォント・色(右クリック)設定
+            // フォント・色(右クリック)設定の読み込み
             LoadContextMenuFontColor();
 
-            // フォント(コントロールUI)設定
+            // フォント(コントロールUI)設定の読み込み
             LoadControlUiFontColor();
 
-            // その他設定
+            // その他設定の読み込み
             LoadOtherSettings();
 
             // コントロールUIのフォント設定を適用
@@ -506,115 +514,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 選択サービス設定の読み込み
-        /// </summary>
-        private void LoadSelectServiceSettings()
-        {
-            // 全チャンネルの表示
-            foreach (EpgServiceInfo epgServiceInfo in serviceInfos)
-            {
-                NetworkType networkType = RockbarUtility.GetNetworkType(epgServiceInfo.ONID);
-
-                string type = RockbarUtility.GetShortNetworkTypeName(networkType);
-
-                String[] data = {
-                    "",
-                    type,
-                    epgServiceInfo.service_name,
-                    epgServiceInfo.TSID.ToString(),
-                    epgServiceInfo.SID.ToString()
-                };
-
-                ListViewItem item = new ListViewItem(data);
-                item.Name = RockbarUtility.GetKey(epgServiceInfo.TSID, epgServiceInfo.SID);
-
-                allServiceListView.Items.Add(item);
-            }
-
-            // 設定ファイルの選択サービス一覧の表示
-            List<ListViewItem> needCheckItems = new List<ListViewItem>();
-
-            foreach (Service service in _configManager.SelectedServiceList)
-            {
-                string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
-
-                if (allServiceListView.Items.ContainsKey(key))
-                {
-                    ListViewItem allServiceItem = allServiceListView.Items[key];
-                    ListViewItem targetItem = (ListViewItem)allServiceItem.Clone();
-                    targetItem.Name = allServiceItem.Name;
-
-                    // NetworkType指定があれば上書きする
-                    if (!string.IsNullOrWhiteSpace(service.TypeName))
-                    {
-                        targetItem.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text = RockbarUtility.GetShortNetworkTypeName(
-                            RockbarUtility.GetNetworkType(service.TypeName, null)
-                        );
-                    }
-
-                    // チャンネル名指定があれば上書きする
-                    if (!string.IsNullOrWhiteSpace(service.Name))
-                    {
-                        targetItem.SubItems[selectedServiceNameColumnHeader.Index].Text = service.Name;
-                    }
-
-                    // Tvtestオプションカラムを作成し設定
-                    while (targetItem.SubItems.Count <= selectedServiceTvtestOptionColumnHeader.Index)
-                    {
-                        targetItem.SubItems.Add("");
-                    }
-
-                    targetItem.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text = service.TvtestOption ?? "";
-
-                    // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
-                    ServiceListViewHelper.ApplyModMarkIfChanged(allServiceItem, targetItem);
-
-                    selectedServiceListView.Items.Add(targetItem);
-
-                    // 選択チャンネルにあるチャンネルはチェック表示
-                    needCheckItems.Add(allServiceItem);
-                }
-                else
-                {
-                    ListViewItem manualAddItem = ServiceListViewHelper.CreateServiceListItem(service);
-                    manualAddItem.Name = key;
-
-                    // 左リストに存在しないためadd印を付ける
-                    ServiceListViewHelper.ApplyManualAddMark(manualAddItem);
-
-                    selectedServiceListView.Items.Add(manualAddItem);
-                }
-            }
-
-            // チェックする
-            needCheckItems.ForEach(x => ServiceListViewHelper.CheckServiceItem(x));
-        }
-
-        /// <summary>
-        /// お気に入りサービス設定の読み込み
-        /// </summary>
-        private void LoadFavoriteServiceSettings()
-        {
-            // 設定ファイルのお気に入りサービス一覧の仮表示
-            foreach (Service service in _configManager.FavoriteServiceList)
-            {
-                // 1回キーとTSID, SIDだけで追加
-                String[] data = {
-                    "",
-                    "",
-                    "",
-                    service.Tsid.ToString(),
-                    service.Sid.ToString(),
-                    ""
-                };
-
-                ListViewItem item = new ListViewItem(data);
-                item.Name = RockbarUtility.GetKey(service.Tsid, service.Sid);
-                favoriteServiceListView.Items.Add(item);
-            }
-        }
-
-        /// <summary>
         /// TVTest連携設定の読み込み
         /// </summary>
         private void LoadTvTestLinkageSettings()
@@ -820,34 +719,34 @@ namespace RockbarForEDCB
         /// <param name="e"></param>
         private void applyButton_Click(object sender, EventArgs e)
         {
-            // EDCB連携設定
+            // EDCB連携設定の保存
             SaveEdcbLinkageSettings();
 
-            // 予約動作設定
+            // 予約動作設定の保存
             SaveReserveSettings();
 
-            // チューナー名設定
+            // チューナー名設定の保存
             SaveTunerNameSettings();
 
-            // 選択サービス設定
-            SaveSelectServiceSettings();
+            // 選択サービス設定の保存
+            _selectedServiceListViewManager.Save();
 
-            // お気に入りサービス設定
-            SaveFavoriteServiceSettings();
+            // お気に入りサービス設定の保存
+            _favoriteServiceListViewManager.Save();
 
-            // TVTest連携関連設定
+            // TVTest連携設定の保存
             SaveTvTestLinkageSettings();
 
-            // フォント・色(ListView)設定
+            // フォント・色(ListView)設定の保存
             SaveListViewFontColor();
 
-            // フォント・色(右クリック)設定
+            // フォント・色(右クリック)設定の保存
             SaveContextMenuFontColor();
 
-            // フォント(コントロールUI)設定
+            // フォント(コントロールUI)設定の保存
             SaveControlUiFontColor();
 
-            // その他設定
+            // その他設定の保存
             SaveOtherSettings();
 
             // 設定ファイルに書き込み
@@ -858,7 +757,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// EDCB連携設定の書き込み
+        /// EDCB連携設定の保存
         /// </summary>
         private void SaveEdcbLinkageSettings()
         {
@@ -872,7 +771,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 予約動作設定の書き込み
+        /// 予約動作設定の保存
         /// </summary>
         private void SaveReserveSettings()
         {
@@ -1002,7 +901,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// チューナー名設定の書き込み
+        /// チューナー名設定の保存
         /// </summary>
         private void SaveTunerNameSettings()
         {
@@ -1018,51 +917,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 選択サービス設定の書き込み
-        /// </summary>
-        private void SaveSelectServiceSettings()
-        {
-            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
-            _configManager.SelectedServiceList.Clear();
-
-            foreach (ListViewItem item in selectedServiceListView.Items)
-            {
-                _configManager.SelectedServiceList.Add(new Service
-                {
-                    Tsid = item.SubItems[selectedServiceTsidColumnHeader.Index].Text,
-                    Sid = item.SubItems[selectedServiceSidColumnHeader.Index].Text,
-                    Name = item.SubItems[selectedServiceNameColumnHeader.Index].Text,
-                    TypeName = item.SubItems[selectedServiceNetworkTypeColumnHeader.Index].Text,
-                    TvtestOption = item.SubItems[selectedServiceTvtestOptionColumnHeader.Index].Text
-                });
-            }
-        }
-
-        /// <summary>
-        /// お気に入りサービス設定の書き込み
-        /// </summary>
-        private void SaveFavoriteServiceSettings()
-        {
-            ServiceListViewHelper.RefreshFavoriteService(selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
-
-            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
-            _configManager.FavoriteServiceList.Clear();
-
-            foreach (ListViewItem item in favoriteServiceListView.Items)
-            {
-                _configManager.FavoriteServiceList.Add(new Service
-                {
-                    Tsid = item.SubItems[favoriteServiceTsidColumnHeader.Index].Text,
-                    Sid = item.SubItems[favoriteServiceSidColumnHeader.Index].Text,
-                    Name = item.SubItems[favoriteServiceNameColumnHeader.Index].Text,
-                    TypeName = item.SubItems[favoriteServiceNetworkTypeColumnHeader.Index].Text,
-                    TvtestOption = item.SubItems[favoriteServiceTvtestOptionColumnHeader.Index].Text
-                });
-            }
-        }
-
-        /// <summary>
-        /// TVTest連携設定の書き込み
+        /// TVTest連携設定の保存
         /// </summary>
         private void SaveTvTestLinkageSettings()
         {
@@ -1090,7 +945,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント・色(ListView)の設定の書き込み
+        /// フォント・色(ListView)の設定の保存
         /// </summary>
         private void SaveListViewFontColor()
         {
@@ -1107,7 +962,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント・色(右クリック)の設定の書き込み
+        /// フォント・色(右クリック)の設定の保存
         /// </summary>
         private void SaveContextMenuFontColor()
         {
@@ -1120,7 +975,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント(コントロールUI)の設定の書き込み
+        /// フォント(コントロールUI)の設定の保存
         /// </summary>
         private void SaveControlUiFontColor()
         {
@@ -1131,7 +986,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// その他の設定の書き込み
+        /// その他の設定の保存
         /// </summary>
         private void SaveOtherSettings()
         {
@@ -1404,7 +1259,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void addSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.AddService(allServiceListView, selectedServiceListView);
+            _selectedServiceListViewManager.AddService();
         }
 
         /// <summary>
@@ -1414,7 +1269,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void addFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.AddService(selectedServiceListView2, favoriteServiceListView);
+            _favoriteServiceListViewManager.AddService();
         }
 
         /// <summary>
@@ -1424,7 +1279,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void removeServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.RemoveService(allServiceListView, selectedServiceListView);
+            _selectedServiceListViewManager.RemoveService();
         }
 
         /// <summary>
@@ -1434,7 +1289,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void removeFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.RemoveService(selectedServiceListView2, favoriteServiceListView);
+            _favoriteServiceListViewManager.RemoveService();
         }
 
         /// <summary>
@@ -1444,7 +1299,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveUpSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.MoveUp(selectedServiceListView);
+            _selectedServiceListViewManager.MoveUp();
         }
 
         /// <summary>
@@ -1454,7 +1309,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveUpFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.MoveUp(favoriteServiceListView);
+            _favoriteServiceListViewManager.MoveUp();
         }
 
         /// <summary>
@@ -1464,7 +1319,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveDownSelectedServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.MoveDown(selectedServiceListView);
+            _selectedServiceListViewManager.MoveDown();
         }
 
         /// <summary>
@@ -1474,7 +1329,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void moveDownFavoriteServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.MoveDown(favoriteServiceListView);
+            _favoriteServiceListViewManager.MoveDown();
         }
 
         /// <summary>
@@ -1484,7 +1339,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void addNewServiceButton_Click(object sender, EventArgs e)
         {
-            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, null);
+            _selectedServiceListViewManager.EditService(null);
         }
 
         /// <summary>
@@ -1499,7 +1354,7 @@ namespace RockbarForEDCB
                 return;
             }
 
-            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
+            _selectedServiceListViewManager.EditService(selectedServiceListView.SelectedItems[0]);
         }
 
         /// <summary>
@@ -1509,12 +1364,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void selectedServiceListView_DoubleClick(object sender, EventArgs e)
         {
-            if (selectedServiceListView.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            ServiceListViewHelper.EditServiceItem(this.serviceInfos, allServiceListView, selectedServiceListView, selectedServiceListView.SelectedItems[0]);
+            editServiceButton_Click(sender, e);
         }
 
         /// <summary>
@@ -1526,7 +1376,7 @@ namespace RockbarForEDCB
         {
             if (settingTabControl.SelectedTab == favoriteServiceTabPage)
             {
-                ServiceListViewHelper.RefreshFavoriteService(selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
+                _favoriteServiceListViewManager.RefreshRefreshFrom();
             }
         }
 
@@ -1538,9 +1388,7 @@ namespace RockbarForEDCB
         private void allServiceListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             // ソートする
-            allServiceListViewSorter.setColumn(e.Column, e.Column >= 3);
-            allServiceListView.ListViewItemSorter = allServiceListViewSorter;
-            allServiceListView.ListViewItemSorter = null;
+            _selectedServiceListViewManager.SortAllServiceList(e.Column);
         }
 
         /// <summary>
@@ -1551,9 +1399,7 @@ namespace RockbarForEDCB
         private void selectedServiceListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             // ソートする
-            selectedServiceListViewSorter.setColumn(e.Column, e.Column >= 3 && e.Column <= 4);
-            selectedServiceListView.ListViewItemSorter = selectedServiceListViewSorter;
-            selectedServiceListView.ListViewItemSorter = null;
+            _selectedServiceListViewManager.SortSelectedServiceList(e.Column);
         }
 
         /// <summary>
@@ -1564,9 +1410,7 @@ namespace RockbarForEDCB
         private void selectedServiceListView2_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             // ソートする
-            selectedServiceListView2Sorter.setColumn(e.Column, e.Column >= 3 && e.Column <= 4);
-            selectedServiceListView2.ListViewItemSorter = selectedServiceListView2Sorter;
-            selectedServiceListView2.ListViewItemSorter = null;
+            _favoriteServiceListViewManager.SortSelectedService2List(e.Column);
         }
 
         /// <summary>
@@ -1577,9 +1421,7 @@ namespace RockbarForEDCB
         private void favoriteServiceListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             // ソートする
-            favoriteServiceListViewSorter.setColumn(e.Column, e.Column >= 3 && e.Column <= 4);
-            favoriteServiceListView.ListViewItemSorter = favoriteServiceListViewSorter;
-            favoriteServiceListView.ListViewItemSorter = null;
+            _favoriteServiceListViewManager.SortFavoriteServiceList(e.Column);
         }
 
         /// <summary>
