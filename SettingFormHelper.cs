@@ -16,36 +16,40 @@ namespace RockbarForEDCB
     /// </summary>
     public class ListViewItemComparer : IComparer
     {
-        private int columnIndex = -1;
-        private SortOrder sortOrder = SortOrder.Ascending;
-        private bool isNumber = false;
+        private int _columnIndex = -1;
+        private SortOrder _sortOrder = SortOrder.Ascending;
+        private bool _isNumber = false;
+        private bool _isNetworkTypeColumn = false;
 
         /// <summary>
         /// 列index更新処理
         /// </summary>
         /// <param name="columnIndex">列index</param>
-        public void setColumn(int columnIndex, bool isNumber = false)
+        /// <param name="isNumber">数値列の場合はtrueにする</param>
+        /// <param name="isNumber">ネットワーク種別列の場合はtrueにする</param>
+        public void SetColumn(int columnIndex, bool isNumber = false, bool isNetworkTypeColumn = false)
         {
-            this.isNumber = isNumber;
+            _isNumber = isNumber;
+            _isNetworkTypeColumn = isNetworkTypeColumn;
 
             // 同じカラムがクリックされた場合はソート方向を反転
-            if (this.columnIndex == columnIndex)
+            if (_columnIndex == columnIndex)
             {
-                if (this.sortOrder == SortOrder.Ascending)
+                if (_sortOrder == SortOrder.Ascending)
                 {
-                    this.sortOrder = SortOrder.Descending;
+                    _sortOrder = SortOrder.Descending;
                 }
                 else
                 {
-                    this.sortOrder = SortOrder.Ascending;
+                    _sortOrder = SortOrder.Ascending;
                 }
             }
             else
             {
-                this.sortOrder = SortOrder.Ascending;
+                _sortOrder = SortOrder.Ascending;
             }
 
-            this.columnIndex = columnIndex;
+            _columnIndex = columnIndex;
         }
 
         /// <summary>
@@ -57,7 +61,7 @@ namespace RockbarForEDCB
         /// <returns>比較結果</returns>
         public int Compare(object x1, object x2)
         {
-            if (columnIndex < 0)
+            if (_columnIndex < 0)
             {
                 return 0;
             }
@@ -65,31 +69,81 @@ namespace RockbarForEDCB
             ListViewItem item1 = (ListViewItem)x1;
             ListViewItem item2 = (ListViewItem)x2;
 
-            // 1回文字列比較
-            int result = string.Compare(item1.SubItems[columnIndex].Text, item2.SubItems[columnIndex].Text);
+            string text1 = item1.SubItems[_columnIndex].Text;
+            string text2 = item2.SubItems[_columnIndex].Text;
 
-            // 数値の場合の比較
-            if (this.isNumber)
+            int result = 0;
+
+            // ネットワーク種別カラムの場合
+            if (_isNetworkTypeColumn)
             {
-                try
+                // ネットワーク種別文字列に応じた並び順インデックスを取得して並べ替え
+                int order1 = GetNetworkTypeOrder(text1);
+                int order2 = GetNetworkTypeOrder(text2);
+                result = order1.CompareTo(order2);
+
+                // 同じ種別（地デジ同士など）なら名前で比較
+                if (result == 0)
                 {
-                    result = int.Parse(item1.SubItems[columnIndex].Text) - int.Parse(item2.SubItems[columnIndex].Text);
-                }
-                catch
-                {
-                    // 数値変換で比較が失敗した場合は文字列比較の結果を残す
+                    result = string.Compare(text1, text2);
                 }
             }
+            // 数値カラムの場合
+            else if (_isNumber)
+            {
+                if (int.TryParse(text1, out int num1) && int.TryParse(text2, out int num2))
+                {
+                    result = num1.CompareTo(num2);
+                }
+                else
+                {
+                    result = string.Compare(text1, text2);
+                }
+            }
+            // その他(文字列カラム)の場合
+            else
+            {
+                result = string.Compare(text1, text2);
+            }
 
-            if (this.sortOrder == SortOrder.Descending)
+            if (_sortOrder == SortOrder.Descending)
             {
                 result *= -1;
             }
 
             return result;
         }
+
+        /// <summary>
+        /// ネットワーク種別文字列に応じた表示優先度（並び順インデックス）を取得する
+        /// </summary>
+        private int GetNetworkTypeOrder(string value)
+        {
+            if (value.StartsWith("地"))
+                return 0;
+
+            if (value.StartsWith("BS"))
+                return 1;
+
+            if (value.StartsWith("CS"))
+                return 2;
+
+            if (value.StartsWith("CATV"))
+                return 3;
+
+            if (value.StartsWith("SPHD"))
+                return 4;
+
+            if (value.StartsWith("BS4K"))
+                return 5;
+
+            return 99;
+        }
     }
 
+    /// <summary>
+    /// サービス一覧 ListView の列インデックス定義
+    /// </summary>
     public static class ServiceListViewColumns
     {
         public const int Mark = 0;
@@ -330,6 +384,9 @@ namespace RockbarForEDCB
 
                 _allServiceListView.Items.Add(item);
             }
+
+            // ネットワーク種別順で並べ替える
+            SortAllServiceList(ServiceListViewColumns.NetworkType);
         }
 
         /// <summary>
@@ -561,9 +618,11 @@ namespace RockbarForEDCB
         /// </summary>
         public void SortAllServiceList(int column)
         {
-            _allServiceListViewSorter.setColumn(column, column >= 3);
+            _allServiceListViewSorter.SetColumn(column,
+                column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
+                column == ServiceListViewColumns.NetworkType);
             _allServiceListView.ListViewItemSorter = _allServiceListViewSorter;
-            _allServiceListView.ListViewItemSorter = null;
+            _allServiceListView.Sort();
         }
 
         /// <summary>
@@ -571,9 +630,11 @@ namespace RockbarForEDCB
         /// </summary>
         public void SortSelectedServiceList(int column)
         {
-            _selectedServiceListViewSorter.setColumn(column, column >= 3 && column <= 4);
+            _selectedServiceListViewSorter.SetColumn(column,
+                column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
+                column == ServiceListViewColumns.NetworkType);
             _selectedServiceListView.ListViewItemSorter = _selectedServiceListViewSorter;
-            _selectedServiceListView.ListViewItemSorter = null;
+            _selectedServiceListView.Sort();
         }
     }
 
@@ -598,8 +659,8 @@ namespace RockbarForEDCB
             ListView favoriteServiceListView)
         {
             _configManager = configManager;
-
             _selectedServiceListView = selectedServiceListView;
+
             _selectedServiceListView2 = selectedServiceListView2;
             _favoriteServiceListView = favoriteServiceListView;
 
@@ -733,9 +794,11 @@ namespace RockbarForEDCB
         /// </summary>
         public void SortSelectedService2List(int column)
         {
-            _selectedServiceListView2Sorter.setColumn(column, column >= 3 && column <= 4);
+            _selectedServiceListView2Sorter.SetColumn(column,
+                column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
+                column == ServiceListViewColumns.NetworkType);
             _selectedServiceListView2.ListViewItemSorter = _selectedServiceListView2Sorter;
-            _selectedServiceListView2.ListViewItemSorter = null;
+            _selectedServiceListView2.Sort();
         }
 
         /// <summary>
@@ -743,9 +806,11 @@ namespace RockbarForEDCB
         /// </summary>
         public void SortFavoriteServiceList(int column)
         {
-            _favoriteServiceListViewSorter.setColumn(column, column >= 3 && column <= 4);
+            _favoriteServiceListViewSorter.SetColumn(column,
+                column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
+                column == ServiceListViewColumns.NetworkType);
             _favoriteServiceListView.ListViewItemSorter = _favoriteServiceListViewSorter;
-            _favoriteServiceListView.ListViewItemSorter = null;
+            _favoriteServiceListView.Sort();
         }
     }
 
