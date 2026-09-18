@@ -1432,9 +1432,9 @@ namespace RockbarForEDCB
         private void tunerNameListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             // ソートする
-            tunerNameListViewSorter.setColumn(e.Column);
+            tunerNameListViewSorter.SetColumn(e.Column);
             tunerNameListView.ListViewItemSorter = tunerNameListViewSorter;
-            tunerNameListView.ListViewItemSorter = null;
+            tunerNameListView.Sort();
         }
 
         /// <summary>
