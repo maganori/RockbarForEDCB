@@ -1010,4 +1010,147 @@ namespace RockbarForEDCB
             }
         }
     }
+
+    /// <summary>
+    /// チューナー名設定のListViewを管理するクラス
+    /// </summary>
+    public class TunerNameListViewManager
+    {
+        private readonly ConfigManager _configManager;
+        private readonly List<TunerReserveInfo> _tunerReserveInfos;
+        private readonly ListView _tunerNameListView;
+
+        private readonly ListViewItemComparer _listViewSorter;
+        private const int _bonDriverNameColumnIndex = 2;
+        private const int _tunerNameColumnIndex = 3;
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        public TunerNameListViewManager(
+            ConfigManager configManager,
+            List<TunerReserveInfo> tunerReserveInfos,
+            ListView tunerNameListView)
+        {
+            _configManager = configManager;
+            _tunerReserveInfos = tunerReserveInfos;
+            _tunerNameListView = tunerNameListView;
+
+            _listViewSorter = new ListViewItemComparer();
+        }
+
+        /// <summary>
+        /// チューナー名設定の読み込み
+        /// </summary>
+        public void Load()
+        {
+            _tunerNameListView.Items.Clear();
+
+            // チューナー名タブのListView作成
+            foreach (TunerReserveInfo tunerReserveInfo in _tunerReserveInfos)
+            {
+                // ListView作成
+                if (!_tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName))
+                {
+                    string[] data;
+                    if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
+                    {
+                        data = new[]
+                        {
+                            "",
+                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
+                            tunerReserveInfo.tunerName,
+                            _configManager.RockbarSetting.BonDriverNameToTunerName[tunerReserveInfo.tunerName]
+                        };
+                    }
+                    else
+                    {
+                        data = new[]
+                        {
+                            "",
+                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
+                            tunerReserveInfo.tunerName,
+                            RockbarUtility.GetDefaultTunerName(tunerReserveInfo.tunerName)
+                        };
+                    }
+
+                    ListViewItem item = new ListViewItem(data)
+                    {
+                        Name = tunerReserveInfo.tunerName
+                    };
+                    _tunerNameListView.Items.Add(item);
+                }
+            }
+
+            // 取得したチューナに含まれず、設定にだけあるものを表示
+            foreach (var kv in _configManager.RockbarSetting.BonDriverNameToTunerName)
+            {
+                // ListView上になければ追加しておく
+                if (!_tunerNameListView.Items.ContainsKey(kv.Key))
+                {
+                    string[] data =
+                    {
+                        "！",
+                        "",
+                        kv.Key,
+                        kv.Value
+                    };
+
+                    ListViewItem item = new ListViewItem(data)
+                    {
+                        Name = kv.Key
+                    };
+                    _tunerNameListView.Items.Add(item);
+                }
+            }
+        }
+
+        /// <summary>
+        /// チューナー名設定の保存
+        /// </summary>
+        public void Save()
+        {
+            _configManager.RockbarSetting.BonDriverNameToTunerName = new Dictionary<string, string>();
+
+            foreach (ListViewItem item in _tunerNameListView.Items)
+            {
+                _configManager.RockbarSetting.BonDriverNameToTunerName.Add(
+                    item.SubItems[_bonDriverNameColumnIndex].Text,
+                    item.SubItems[_tunerNameColumnIndex].Text
+                );
+            }
+        }
+
+        /// <summary>
+        /// 列ヘッダクリック時のソート処理
+        /// </summary>
+        public void Sort(int columnIndex)
+        {
+            _listViewSorter.SetColumn(columnIndex);
+            _tunerNameListView.ListViewItemSorter = _listViewSorter;
+            _tunerNameListView.Sort();
+        }
+
+        /// <summary>
+        /// 選択されているチューナー名をテキストボックスに反映する
+        /// </summary>
+        public void DisplaySelectedNameTo(TextBox targetTextBox)
+        {
+            if (_tunerNameListView.SelectedItems.Count > 0)
+            {
+                targetTextBox.Text = _tunerNameListView.SelectedItems[0].SubItems[_tunerNameColumnIndex].Text;
+            }
+        }
+
+        /// <summary>
+        /// テキストボックスの値を選択中アイテムのチューナー名に反映する
+        /// </summary>
+        public void UpdateSelectedNameFrom(TextBox sourceTextBox)
+        {
+            if (_tunerNameListView.SelectedItems.Count > 0)
+            {
+                _tunerNameListView.SelectedItems[0].SubItems[_tunerNameColumnIndex].Text = sourceTextBox.Text;
+            }
+        }
+    }
 }
