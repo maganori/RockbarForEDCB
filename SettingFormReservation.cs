@@ -18,7 +18,6 @@ namespace RockbarForEDCB
         private readonly ConfigManager _configManager;
         private readonly ListView _recFolderListView;
         private readonly CtrlCmdUtil _ctrlCmdUtil;
-        private readonly IWin32Window _owner;
 
         /// <summary>
         /// 録画フォルダ追加・編集用ダイアログクラス
@@ -107,8 +106,6 @@ namespace RockbarForEDCB
                 Button okButton = new Button { Left = 235, Top = 170, Width = 80, Text = "OK", DialogResult = DialogResult.OK };
                 Button cancelButton = new Button { Left = 330, Top = 170, Width = 80, Text = "キャンセル", DialogResult = DialogResult.Cancel };
 
-                okButton.Click += okButton_Click;
-
                 this.Controls.AddRange(new Control[] {
                     partialCheckBox, folderLabel, recFolderTextBox, browseButton,
                     writePlugInLabel, writePlugInComboBox,
@@ -165,15 +162,6 @@ namespace RockbarForEDCB
 
                 this.fileNamePlugInOptionTextBox.Text = fileNamePlugInOption;
             }
-
-            private void okButton_Click(object sender, EventArgs e)
-            {
-                //if (string.IsNullOrWhiteSpace(recFolderTextBox.Text))
-                //{
-                //    MessageBox.Show("録画フォルダを指定してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                //    this.DialogResult = DialogResult.None;
-                //}
-            }
         }
 
         /// <summary>
@@ -182,13 +170,11 @@ namespace RockbarForEDCB
         public RecFolderListViewManager(
             ConfigManager configManager,
             ListView recFolderListView,
-            CtrlCmdUtil ctrlCmdUtil,
-            IWin32Window owner)
+            CtrlCmdUtil ctrlCmdUtil)
         {
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _recFolderListView = recFolderListView ?? throw new ArgumentNullException(nameof(recFolderListView));
             _ctrlCmdUtil = ctrlCmdUtil;
-            _owner = owner;
         }
 
         /// <summary>
@@ -350,7 +336,7 @@ namespace RockbarForEDCB
                 ? new RecFolderEditDialog(writePlugIns, fileNamePlugIns)
                 : new RecFolderEditDialog(writePlugIns, fileNamePlugIns, isPartial, folderPath, writePlugIn, fileNamePlugIn, fileNamePlugInOption))
             {
-                if (dialog.ShowDialog(_owner) != DialogResult.OK) return;
+                if (dialog.ShowDialog() != DialogResult.OK) return;
 
                 // FileNamePlugIn や FileNamePlugInOption の有無で結合方法を制御
                 string fileNamePlugInCombined;
@@ -488,7 +474,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// バッチ/スクリプト選択ダイアログを表示し、選択結果をテキストボックスにセットする
         /// </summary>
-        public static void BrowseScriptFile(TextBox targetTextBox, IWin32Window owner)
+        public static void BrowseScriptFile(TextBox targetTextBox)
         {
             using (OpenFileDialog ofd = new OpenFileDialog())
             {
@@ -509,7 +495,7 @@ namespace RockbarForEDCB
                     ofd.FileName = Path.GetFileName(currentPath);
                 }
 
-                if (ofd.ShowDialog(owner) == DialogResult.OK)
+                if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     targetTextBox.Text = ofd.FileName;
                 }
