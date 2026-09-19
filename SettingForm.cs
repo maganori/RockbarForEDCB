@@ -27,9 +27,7 @@ namespace RockbarForEDCB
         private SelectedServiceListViewManager _selectedServiceListViewManager;
         private FavoriteServiceListViewManager _favoriteServiceListViewManager;
         private RecFolderListViewManager _recFolderListViewManager;
-
-        // ListViewのソーター。ListViewにセットすると自動整列解除できないため、適宜ListViewにセットする。
-        private ListViewItemComparer tunerNameListViewSorter = new ListViewItemComparer();
+        private TunerNameListViewManager _tunerNameListViewManager;
 
         // 予約タブ tunerComboBoxManager
         private TunerComboBoxManager _tunerComboBoxManager;
@@ -81,6 +79,9 @@ namespace RockbarForEDCB
             // 予約タブ TunerComboBoxManagerのオブジェクト作成
             _tunerComboBoxManager = new TunerComboBoxManager(_configManager, tunerReserveInfos, recTunerIdComboBox);
 
+            // チューナー名タブ用のオブジェクト作成
+            _tunerNameListViewManager = new TunerNameListViewManager(_configManager, tunerReserveInfos, tunerNameListView);
+
             // EDCB連携設定の読み込み
             LoadEdcbLinkageSettings();
 
@@ -88,7 +89,7 @@ namespace RockbarForEDCB
             LoadReserveSettings();
 
             // チューナー名設定の読み込み
-            LoadTunerNameSettings();
+            _tunerNameListViewManager.Load();
 
             // 選択サービス設定の読み込み
             _selectedServiceListViewManager.Load();
@@ -218,65 +219,6 @@ namespace RockbarForEDCB
             UpdateMarginControlsEnableState();
             UpdateServiceDataControlsEnableState();
             UpdatePostRecActionControlsEnableState();
-        }
-
-        /// <summary>
-        /// チューナー名設定の読み込み
-        /// </summary>
-        private void LoadTunerNameSettings()
-        {
-            // チューナー名タブのListView作成
-            foreach (TunerReserveInfo tunerReserveInfo in tunerReserveInfos)
-            {
-                // ListView作成
-                if (!tunerNameListView.Items.ContainsKey(tunerReserveInfo.tunerName))
-                {
-                    String[] data = null;
-
-                    if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tunerReserveInfo.tunerName))
-                    {
-                        data = new[]{
-                            "",
-                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
-                            tunerReserveInfo.tunerName,
-                            _configManager.RockbarSetting.BonDriverNameToTunerName[tunerReserveInfo.tunerName]
-                        };
-
-                    }
-                    else
-                    {
-                        data = new[]{
-                            "",
-                            (tunerReserveInfo.tunerID & 0xffff0000).ToString("x8").Substring(0, 4),
-                            tunerReserveInfo.tunerName,
-                            RockbarUtility.GetDefaultTunerName(tunerReserveInfo.tunerName)
-                        };
-                    }
-
-                    ListViewItem item = new ListViewItem(data);
-                    item.Name = tunerReserveInfo.tunerName;
-                    tunerNameListView.Items.Add(item);
-                }
-            }
-
-            // 取得したチューナに含まれず、設定にだけあるものを一応表示
-            foreach (var kv in _configManager.RockbarSetting.BonDriverNameToTunerName)
-            {
-                // ListView上になければ追加しておく
-                if (!tunerNameListView.Items.ContainsKey(kv.Key))
-                {
-                    String[] data = {
-                        "！",
-                        "",
-                        kv.Key,
-                        kv.Value
-                    };
-
-                    ListViewItem item = new ListViewItem(data);
-                    item.Name = kv.Key;
-                    tunerNameListView.Items.Add(item);
-                }
-            }
         }
 
         /// <summary>
@@ -492,7 +434,7 @@ namespace RockbarForEDCB
             SaveReserveSettings();
 
             // チューナー名設定の保存
-            SaveTunerNameSettings();
+            _tunerNameListViewManager.Save();
 
             // 選択サービス設定の保存
             _selectedServiceListViewManager.Save();
@@ -620,22 +562,6 @@ namespace RockbarForEDCB
 
             // 録画コメント
             _configManager.RockbarSetting.RecComment = recCommentTextBox.Text;
-        }
-
-        /// <summary>
-        /// チューナー名設定の保存
-        /// </summary>
-        private void SaveTunerNameSettings()
-        {
-            _configManager.RockbarSetting.BonDriverNameToTunerName = new Dictionary<string, string>();
-
-            foreach (ListViewItem item in tunerNameListView.Items)
-            {
-                _configManager.RockbarSetting.BonDriverNameToTunerName.Add(
-                    item.SubItems[tunerNameBonDriverNameColumnHeader.Index].Text,
-                    item.SubItems[tunerNameTunerNameColumnHeader.Index].Text
-                );
-            }
         }
 
         /// <summary>
@@ -1030,10 +956,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void tunerNameListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            // ソートする
-            tunerNameListViewSorter.SetColumn(e.Column);
-            tunerNameListView.ListViewItemSorter = tunerNameListViewSorter;
-            tunerNameListView.Sort();
+            _tunerNameListViewManager.Sort(e.Column);
         }
 
         /// <summary>
@@ -1044,10 +967,7 @@ namespace RockbarForEDCB
         private void tunerNameListView_SelectedIndexChanged(object sender, EventArgs e)
         {
             // テキストボックスに選択したチューナー名を表示
-            if (tunerNameListView.SelectedItems.Count > 0)
-            {
-                tunerNameTextBox.Text = tunerNameListView.SelectedItems[0].SubItems[tunerNameTunerNameColumnHeader.Index].Text;
-            }
+            _tunerNameListViewManager.DisplaySelectedNameTo(tunerNameTextBox);
         }
 
         /// <summary>
@@ -1058,10 +978,7 @@ namespace RockbarForEDCB
         private void updateTunerNameButton_Click(object sender, EventArgs e)
         {
             // ListViewに反映
-            if (tunerNameListView.SelectedItems.Count > 0)
-            {
-                tunerNameListView.SelectedItems[0].SubItems[tunerNameTunerNameColumnHeader.Index].Text = tunerNameTextBox.Text;
-            }
+            _tunerNameListViewManager.UpdateSelectedNameFrom(tunerNameTextBox);
         }
 
         /// <summary>
