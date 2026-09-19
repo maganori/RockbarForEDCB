@@ -26,7 +26,7 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="columnIndex">列index</param>
         /// <param name="isNumber">数値列の場合はtrueにする</param>
-        /// <param name="isNumber">ネットワーク種別列の場合はtrueにする</param>
+        /// <param name="isNetworkTypeColumn">ネットワーク種別列の場合はtrueにする</param>
         public void SetColumn(int columnIndex, bool isNumber = false, bool isNetworkTypeColumn = false)
         {
             _isNumber = isNumber;
@@ -122,6 +122,10 @@ namespace RockbarForEDCB
             if (value.StartsWith("地"))
                 return 0;
 
+            // BSで引っかかる前に設定
+            if (value.StartsWith("BS4K"))
+                return 5;
+
             if (value.StartsWith("BS"))
                 return 1;
 
@@ -133,9 +137,6 @@ namespace RockbarForEDCB
 
             if (value.StartsWith("SPHD"))
                 return 4;
-
-            if (value.StartsWith("BS4K"))
-                return 5;
 
             return 99;
         }
@@ -159,6 +160,15 @@ namespace RockbarForEDCB
     /// </summary>
     public class SelectedServiceListViewManager
     {
+        private readonly ConfigManager _configManager;
+        private readonly List<EpgServiceInfo> _serviceInfos;
+
+        private readonly ListView _allServiceListView;
+        private readonly ListView _selectedServiceListView;
+
+        private readonly ListViewItemComparer _allServiceListViewSorter;
+        private readonly ListViewItemComparer _selectedServiceListViewSorter;
+
         /// <summary>
         /// サービス新規追加編集フォームクラス
         /// </summary>
@@ -305,13 +315,13 @@ namespace RockbarForEDCB
                 // 種別指定が正しいか判定。誤りがあれば全チャンネル側の情報を使用
                 if (matchedService != null)
                 {
-                    var stype = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), matchedService.ONID);
-                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(stype);
+                    var networkType = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), matchedService.ONID);
+                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
                 else
                 {
-                    var stype = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), null);
-                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(stype);
+                    var networkType = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), null);
+                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
 
                 ResultService = new Service
@@ -325,26 +335,20 @@ namespace RockbarForEDCB
             }
         }
 
-        private readonly ConfigManager _configManager;
-        private readonly List<EpgServiceInfo> _serviceInfos;
-
-        private readonly ListView _allServiceListView;
-        private readonly ListView _selectedServiceListView;
-
-        private readonly ListViewItemComparer _allServiceListViewSorter;
-        private readonly ListViewItemComparer _selectedServiceListViewSorter;
-
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public SelectedServiceListViewManager(
             ConfigManager configManager,
             List<EpgServiceInfo> serviceInfos,
             ListView allServiceListView,
             ListView selectedServiceListView)
         {
-            _configManager = configManager;
-            _serviceInfos = serviceInfos;
+            _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
+            _serviceInfos = serviceInfos ?? throw new ArgumentNullException(nameof(serviceInfos));
 
-            _allServiceListView = allServiceListView;
-            _selectedServiceListView = selectedServiceListView;
+            _allServiceListView = allServiceListView ?? throw new ArgumentNullException(nameof(allServiceListView));
+            _selectedServiceListView = selectedServiceListView ?? throw new ArgumentNullException(nameof(selectedServiceListView));
 
             _allServiceListViewSorter = new ListViewItemComparer();
             _selectedServiceListViewSorter = new ListViewItemComparer();
@@ -556,10 +560,10 @@ namespace RockbarForEDCB
 
                 ListViewItem newItem = CreateServiceListItem(service);
 
-                ListViewItem originalItem = _allServiceListView.Items[newKey];
-                if (originalItem != null)
+                if (_allServiceListView.Items.ContainsKey(newKey))
                 {
                     // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
+                    ListViewItem originalItem = _allServiceListView.Items[newKey];
                     ServiceListViewHelper.ApplyModMarkIfChanged(originalItem, newItem);
                 }
                 else
@@ -652,17 +656,20 @@ namespace RockbarForEDCB
         private readonly ListViewItemComparer _selectedServiceListView2Sorter;
         private readonly ListViewItemComparer _favoriteServiceListViewSorter;
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public FavoriteServiceListViewManager(
             ConfigManager configManager,
             ListView selectedServiceListView,
             ListView selectedServiceListView2,
             ListView favoriteServiceListView)
         {
-            _configManager = configManager;
-            _selectedServiceListView = selectedServiceListView;
+            _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
+            _selectedServiceListView = selectedServiceListView ?? throw new ArgumentNullException(nameof(selectedServiceListView));
 
-            _selectedServiceListView2 = selectedServiceListView2;
-            _favoriteServiceListView = favoriteServiceListView;
+            _selectedServiceListView2 = selectedServiceListView2 ?? throw new ArgumentNullException(nameof(selectedServiceListView2));
+            _favoriteServiceListView = favoriteServiceListView ?? throw new ArgumentNullException(nameof(favoriteServiceListView));
 
             _selectedServiceListView2Sorter = new ListViewItemComparer();
             _favoriteServiceListViewSorter = new ListViewItemComparer();
@@ -697,7 +704,7 @@ namespace RockbarForEDCB
         /// </summary>
         public void Save()
         {
-            RefreshRefreshFrom();
+            RefreshServiceListView();
 
             // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
             _configManager.FavoriteServiceList.Clear();
@@ -750,7 +757,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス一覧を指定されたListViewからコピーし、お気に入りサービスの表示を更新する
         /// </summary>
-        public void RefreshRefreshFrom()
+        public void RefreshServiceListView()
         {
             // 選択サービスを選択サービスタブからコピーし直す
             _selectedServiceListView2.Items.Clear();
@@ -1032,9 +1039,9 @@ namespace RockbarForEDCB
             List<TunerReserveInfo> tunerReserveInfos,
             ListView tunerNameListView)
         {
-            _configManager = configManager;
-            _tunerReserveInfos = tunerReserveInfos;
-            _tunerNameListView = tunerNameListView;
+            _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
+            _tunerReserveInfos = tunerReserveInfos ?? throw new ArgumentNullException(nameof(tunerReserveInfos));
+            _tunerNameListView = tunerNameListView ?? throw new ArgumentNullException(nameof(tunerNameListView));
 
             _listViewSorter = new ListViewItemComparer();
         }

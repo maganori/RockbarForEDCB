@@ -29,20 +29,23 @@ namespace RockbarForEDCB
         private RecFolderListViewManager _recFolderListViewManager;
         private TunerNameListViewManager _tunerNameListViewManager;
 
-        // 予約タブ tunerComboBoxManager
+        // 予約タブ TunerComboBoxManager
         private TunerComboBoxManager _tunerComboBoxManager;
 
         // CtrlCmdUtil
-        private CtrlCmdUtil ctrlCmdUtil = null;
+        private CtrlCmdUtil _ctrlCmdUtil;
 
         // CtrlCmdの結果格納用
-        private List<EpgServiceInfo> serviceInfos = new List<EpgServiceInfo>();
-        private List<TunerReserveInfo> tunerReserveInfos = new List<TunerReserveInfo>();
+        private List<EpgServiceInfo> _serviceInfos = new List<EpgServiceInfo>();
+        private List<TunerReserveInfo> _tunerReserveInfos = new List<TunerReserveInfo>();
+
+        // TypeConverterのキャッシュ
+        private readonly TypeConverter _fontConverter = TypeDescriptor.GetConverter(typeof(Font));
+        private readonly TypeConverter _colorConverter = TypeDescriptor.GetConverter(typeof(Color));
 
         /// <summary>
         /// コンストラクタ
         /// 設定ファイルを読み込み画面表示する。
-        /// サービス一覧を取得し、全サービスとしてリストに表示する。
         /// </summary>
         /// <param name="ctrlCmdUtil"></param>
         /// <param name="canConnect"></param>
@@ -50,37 +53,37 @@ namespace RockbarForEDCB
         {
             InitializeComponent();
 
-            this.ctrlCmdUtil = ctrlCmdUtil;
+            _ctrlCmdUtil = ctrlCmdUtil;
 
             // セッティングを読み込んで画面表示
             _configManager = new ConfigManager();
 
             // サービス一覧取得
-            serviceInfos.Clear();
-            tunerReserveInfos.Clear();
+            _serviceInfos.Clear();
+            _tunerReserveInfos.Clear();
 
             if (canConnect)
             {
-                ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
-                ctrlCmdUtil.SendEnumService(ref serviceInfos);
+                _ctrlCmdUtil.SendEnumTunerReserve(ref _tunerReserveInfos);
+                _ctrlCmdUtil.SendEnumService(ref _serviceInfos);
             }
 
             // 選択チャンネルタブ用のオブジェクト作成
             _selectedServiceListViewManager = new SelectedServiceListViewManager
-                (_configManager, serviceInfos, allServiceListView, selectedServiceListView);
+                (_configManager, _serviceInfos, allServiceListView, selectedServiceListView);
 
             // お気に入りチャンネルタブ用のオブジェクト作成
             _favoriteServiceListViewManager = new FavoriteServiceListViewManager
                 (_configManager, selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
 
             // 予約タブ RecFolderListViewManagerのオブジェクト作成
-            _recFolderListViewManager = new RecFolderListViewManager(_configManager, recFolderListView, ctrlCmdUtil, this);
+            _recFolderListViewManager = new RecFolderListViewManager(_configManager, recFolderListView, _ctrlCmdUtil);
 
             // 予約タブ TunerComboBoxManagerのオブジェクト作成
-            _tunerComboBoxManager = new TunerComboBoxManager(_configManager, tunerReserveInfos, recTunerIdComboBox);
+            _tunerComboBoxManager = new TunerComboBoxManager(_configManager, _tunerReserveInfos, recTunerIdComboBox);
 
             // チューナー名タブ用のオブジェクト作成
-            _tunerNameListViewManager = new TunerNameListViewManager(_configManager, tunerReserveInfos, tunerNameListView);
+            _tunerNameListViewManager = new TunerNameListViewManager(_configManager, _tunerReserveInfos, tunerNameListView);
 
             // EDCB連携設定の読み込み
             LoadEdcbLinkageSettings();
@@ -125,7 +128,8 @@ namespace RockbarForEDCB
             ipAddressTextBox.Text = _configManager.RockbarSetting.IpAddress;
 
             // port番号が異常の場合、下限にする
-            if (_configManager.RockbarSetting.PortNumber > portNumberNumericUpDown.Maximum || _configManager.RockbarSetting.PortNumber < portNumberNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.PortNumber > portNumberNumericUpDown.Maximum
+                || _configManager.RockbarSetting.PortNumber < portNumberNumericUpDown.Minimum)
             {
                 portNumberNumericUpDown.Value = portNumberNumericUpDown.Minimum;
             }
@@ -156,18 +160,25 @@ namespace RockbarForEDCB
             prioritizeViewRadioButton.Checked = _configManager.RockbarSetting.PrioritizeView;
             recModeComboBox.SelectedIndex = _configManager.RockbarSetting.RecMode;
 
-            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority - 1; // 優先度1のindexは0のため-1が必要
+            // 優先度1のindexは0のためindexに反映時は-1が必要
+            recPriorityComboBox.SelectedIndex = _configManager.RockbarSetting.RecPriority - 1;
             recTuijyuuCheckBox.Checked = _configManager.RockbarSetting.RecTuijyuu;
             recPittariCheckBox.Checked = _configManager.RockbarSetting.RecPittari;
 
-            useDefaultRecMarginCheckBox.Checked = !_configManager.RockbarSetting.UseCustomRecMargin; // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
+            // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
+            useDefaultRecMarginCheckBox.Checked = !_configManager.RockbarSetting.UseCustomRecMargin;
             startRecMarginNumericUpDown.Value = _configManager.RockbarSetting.StartRecMargin;
             endRecMarginNumericUpDown.Value = _configManager.RockbarSetting.EndRecMargin;
 
             // recServiceMode
-            useDefaultRecServiceDataCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0000_0001) == 0; // 1ビット目(デフォルトを使用(0:ON, 1:OFF))が 0 の場合 true、1 の場合 false
-            recServiceDataCaptionCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0001_0000) != 0; // 5ビット目(字幕を含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
-            recServiceDataCarouselCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0010_0000) != 0; // 6ビット目(データカルーセルを含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
+            // 1ビット目(デフォルトを使用(0:ON, 1:OFF))が 0 の場合 true、1 の場合 false
+            useDefaultRecServiceDataCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0000_0001) == 0;
+
+            // 5ビット目(字幕を含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
+            recServiceDataCaptionCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0001_0000) != 0;
+
+            // 6ビット目(データカルーセルを含める(0:OFF, 1:ON))が 1 の場合 true、0 の場合 false
+            recServiceDataCarouselCheckBox.Checked = (_configManager.RockbarSetting.RecServiceMode & 0b0010_0000) != 0;
 
             // 録画フォルダ
             _recFolderListViewManager.Load();
@@ -247,7 +258,8 @@ namespace RockbarForEDCB
             isAutoOpenFavoriteServiceCheckBox.Checked = _configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService;
 
             // 設定値異常の場合、下限にする
-            if (_configManager.RockbarSetting.AutoOpenMargin > autoOpenMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoOpenMargin < autoOpenMarginNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.AutoOpenMargin > autoOpenMarginNumericUpDown.Maximum
+                || _configManager.RockbarSetting.AutoOpenMargin < autoOpenMarginNumericUpDown.Minimum)
             {
                 autoOpenMarginNumericUpDown.Value = autoOpenMarginNumericUpDown.Minimum;
             }
@@ -257,7 +269,8 @@ namespace RockbarForEDCB
             }
 
             // 設定値異常の場合、下限にする
-            if (_configManager.RockbarSetting.AutoCloseMargin > autoCloseMarginNumericUpDown.Maximum || _configManager.RockbarSetting.AutoCloseMargin < autoCloseMarginNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.AutoCloseMargin > autoCloseMarginNumericUpDown.Maximum
+                || _configManager.RockbarSetting.AutoCloseMargin < autoCloseMarginNumericUpDown.Minimum)
             {
                 autoCloseMarginNumericUpDown.Value = autoCloseMarginNumericUpDown.Minimum;
             }
@@ -283,19 +296,17 @@ namespace RockbarForEDCB
             listHeaderForeColorTextBox.Text = _configManager.RockbarSetting.ListHeaderForeColor;
             listHeaderBackColorTextBox.Text = _configManager.RockbarSetting.ListHeaderBackColor;
 
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            previewListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
+            previewListView.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
 
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-            previewFormPanel.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
-            previewListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
-            previewListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveListBackColor);
-            previewListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveListBackColor);
-            previewListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
-            previewListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
-            previewListView.Items[5].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
-            previewListView.ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
-            previewListView.Items[5].ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
+            previewFormPanel.BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
+            previewListView.BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
+            previewListView.Items[1].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveListBackColor);
+            previewListView.Items[2].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveListBackColor);
+            previewListView.Items[3].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
+            previewListView.Items[4].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
+            previewListView.Items[5].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
+            previewListView.ForeColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
+            previewListView.Items[5].ForeColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
         }
 
         /// <summary>
@@ -310,15 +321,13 @@ namespace RockbarForEDCB
             ngReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveMenuBackColor;
             disabledReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveMenuBackColor;
 
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            previewMenuListView.Font = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
+            previewMenuListView.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
 
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-            previewMenuListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
-            previewMenuListView.Items[1].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveMenuBackColor);
-            previewMenuListView.Items[2].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
-            previewMenuListView.Items[3].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
-            previewMenuListView.Items[4].BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
+            previewMenuListView.BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
+            previewMenuListView.Items[1].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.OkReserveMenuBackColor);
+            previewMenuListView.Items[2].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
+            previewMenuListView.Items[3].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
+            previewMenuListView.Items[4].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
 
         }
 
@@ -345,7 +354,8 @@ namespace RockbarForEDCB
             fixNoRecToServiceOnlyCheckBox.Checked = _configManager.RockbarSetting.FixNoRecToServiceOnly;
 
             // 設定値異常の場合、デフォルトにする
-            if (_configManager.RockbarSetting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum || _configManager.RockbarSetting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
+            if (_configManager.RockbarSetting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum
+                || _configManager.RockbarSetting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
             {
                 recListMaxCountNumericUpDown.Value = RockBarSetting.DEFAULT_REC_LIST_MAX_COUNT;
             }
@@ -368,11 +378,10 @@ namespace RockbarForEDCB
         {
             try
             {
-                TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-                Font tabFont = (Font)fontConverter.ConvertFromString(tabFontTextBox.Text);
-                Font buttonFont = (Font)fontConverter.ConvertFromString(buttonFontTextBox.Text);
-                Font labelFont = (Font)fontConverter.ConvertFromString(labelFontTextBox.Text);
-                Font textBoxFont = (Font)fontConverter.ConvertFromString(textBoxFontTextBox.Text);
+                Font tabFont = (Font)_fontConverter.ConvertFromString(tabFontTextBox.Text);
+                Font buttonFont = (Font)_fontConverter.ConvertFromString(buttonFontTextBox.Text);
+                Font labelFont = (Font)_fontConverter.ConvertFromString(labelFontTextBox.Text);
+                Font textBoxFont = (Font)_fontConverter.ConvertFromString(textBoxFontTextBox.Text);
 
                 Type settingType = this.GetType();
                 FieldInfo[] fieldInfos = settingType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
@@ -494,11 +503,13 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.PrioritizeView = prioritizeViewRadioButton.Checked;
             _configManager.RockbarSetting.RecMode = (byte)recModeComboBox.SelectedIndex;
 
-            _configManager.RockbarSetting.RecPriority = (byte)(recPriorityComboBox.SelectedIndex + 1); // 優先度1のindexは0のため+1が必要
+            // 優先度1のindexは0のため変数に反映時は+1が必要
+            _configManager.RockbarSetting.RecPriority = (byte)(recPriorityComboBox.SelectedIndex + 1);
             _configManager.RockbarSetting.RecTuijyuu = recTuijyuuCheckBox.Checked;
             _configManager.RockbarSetting.RecPittari = recPittariCheckBox.Checked;
 
-            _configManager.RockbarSetting.UseCustomRecMargin = !useDefaultRecMarginCheckBox.Checked;  // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
+            // 設定ファイルのUseCustomRecMarginは個別にStart,EndMargineを使用するかFlag
+            _configManager.RockbarSetting.UseCustomRecMargin = !useDefaultRecMarginCheckBox.Checked;
             _configManager.RockbarSetting.StartRecMargin = (int)startRecMarginNumericUpDown.Value;
             _configManager.RockbarSetting.EndRecMargin = (int)endRecMarginNumericUpDown.Value;
 
@@ -646,10 +657,10 @@ namespace RockbarForEDCB
 
             _configManager.RockbarSetting.RecListMaxCount = (int)recListMaxCountNumericUpDown.Value;
 
-            _configManager.RockbarSetting.TaskTrayIconLeftClick = taskTrayIconLeftClickComboBox.SelectedItem.ToString();
-            _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick = taskTrayIconLeftDoubleClickComboBox.SelectedItem.ToString();
-            _configManager.RockbarSetting.TaskTrayIconRightClick = taskTrayIconRightClickComboBox.SelectedItem.ToString();
-            _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString();
+            _configManager.RockbarSetting.TaskTrayIconLeftClick = taskTrayIconLeftClickComboBox.SelectedItem.ToString() ?? "";
+            _configManager.RockbarSetting.TaskTrayIconLeftDoubleClick = taskTrayIconLeftDoubleClickComboBox.SelectedItem.ToString() ?? "";
+            _configManager.RockbarSetting.TaskTrayIconRightClick = taskTrayIconRightClickComboBox.SelectedItem.ToString() ?? "";
+            _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString() ?? "";
         }
 
         // 「予約追加」チェックボックスの制御
@@ -702,7 +713,8 @@ namespace RockbarForEDCB
             UpdateServiceDataControlsEnableState();
         }
 
-        // サービス対象データのデフォルトチェックボックスがONの場合は、字幕を含めるとデータカルーセルを含めるは入力不可
+        // サービス対象データの「デフォルト」チェックボックスがONの場合は、
+        // 「字幕を含める」と「データカルーセルを含める」は入力不可
         private void UpdateServiceDataControlsEnableState()
         {
             // チェックされている場合は入力不可 (Enabled = false)
@@ -718,7 +730,8 @@ namespace RockbarForEDCB
             UpdatePostRecActionControlsEnableState();
         }
 
-        // 録画後動作のデフォルトチェックボックスがONの場合は、各ラジオボタンと復帰後再起動するチェックボックスは入力不可
+        // 録画後動作の「デフォルト」チェックボックスがONの場合は、
+        // 各ラジオボタンと「復帰後再起動する」チェックボックスは入力不可
         private void UpdatePostRecActionControlsEnableState()
         {
             // チェックが入っている場合は編集不可 (Enabled = false)
@@ -774,14 +787,12 @@ namespace RockbarForEDCB
         /// </summary>
         private void browseBatFileButton_Click(object sender, EventArgs e)
         {
-            SettingFormReservationHelper.BrowseScriptFile(recBatFilePathTextBox, this);
+            SettingFormReservationHelper.BrowseScriptFile(recBatFilePathTextBox);
         }
 
         /// <summary>
         /// 選択サービス追加処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void addSelectedServiceButton_Click(object sender, EventArgs e)
         {
             _selectedServiceListViewManager.AddService();
@@ -790,8 +801,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// お気に入りサービス追加処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void addFavoriteServiceButton_Click(object sender, EventArgs e)
         {
             _favoriteServiceListViewManager.AddService();
@@ -800,8 +809,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス削除処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void removeServiceButton_Click(object sender, EventArgs e)
         {
             _selectedServiceListViewManager.RemoveService();
@@ -810,8 +817,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// お気に入りサービス削除処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void removeFavoriteServiceButton_Click(object sender, EventArgs e)
         {
             _favoriteServiceListViewManager.RemoveService();
@@ -820,8 +825,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス上移動処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void moveUpSelectedServiceButton_Click(object sender, EventArgs e)
         {
             _selectedServiceListViewManager.MoveUp();
@@ -830,8 +833,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// お気に入りサービス上移動処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void moveUpFavoriteServiceButton_Click(object sender, EventArgs e)
         {
             _favoriteServiceListViewManager.MoveUp();
@@ -840,8 +841,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス下移動処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void moveDownSelectedServiceButton_Click(object sender, EventArgs e)
         {
             _selectedServiceListViewManager.MoveDown();
@@ -850,8 +849,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// お気に入りサービス下移動処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void moveDownFavoriteServiceButton_Click(object sender, EventArgs e)
         {
             _favoriteServiceListViewManager.MoveDown();
@@ -860,8 +857,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス新規追加処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void addNewServiceButton_Click(object sender, EventArgs e)
         {
             _selectedServiceListViewManager.EditService(null);
@@ -870,8 +865,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス編集処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void editServiceButton_Click(object sender, EventArgs e)
         {
             if (selectedServiceListView.SelectedItems.Count == 0)
@@ -885,8 +878,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス編集処理(ダブルクリック)
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectedServiceListView_DoubleClick(object sender, EventArgs e)
         {
             editServiceButton_Click(sender, e);
@@ -895,13 +886,11 @@ namespace RockbarForEDCB
         /// <summary>
         /// 設定タブ切り替え処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void settingTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (settingTabControl.SelectedTab == favoriteServiceTabPage)
             {
-                _favoriteServiceListViewManager.RefreshRefreshFrom();
+                _favoriteServiceListViewManager.RefreshServiceListView();
             }
         }
 
@@ -912,7 +901,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void allServiceListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            // ソートする
+
             _selectedServiceListViewManager.SortAllServiceList(e.Column);
         }
 
@@ -923,7 +912,6 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void selectedServiceListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            // ソートする
             _selectedServiceListViewManager.SortSelectedServiceList(e.Column);
         }
 
@@ -934,7 +922,6 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void selectedServiceListView2_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            // ソートする
             _favoriteServiceListViewManager.SortSelectedService2List(e.Column);
         }
 
@@ -945,7 +932,6 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void favoriteServiceListView_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            // ソートする
             _favoriteServiceListViewManager.SortFavoriteServiceList(e.Column);
         }
 
@@ -962,8 +948,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// チューナー名選択項目変更処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void tunerNameListView_SelectedIndexChanged(object sender, EventArgs e)
         {
             // テキストボックスに選択したチューナー名を表示
@@ -973,8 +957,6 @@ namespace RockbarForEDCB
         /// <summary>
         /// チューナー名更新ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void updateTunerNameButton_Click(object sender, EventArgs e)
         {
             // ListViewに反映
@@ -985,8 +967,6 @@ namespace RockbarForEDCB
         /// TVTest参照ボタン押下処理
         /// ファイル選択ダイアログを開く。
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void tvtestOpenButton_Click(object sender, EventArgs e)
         {
             tvtestOpenFileDialog.ShowDialog();
@@ -996,8 +976,6 @@ namespace RockbarForEDCB
         /// ファイル選択ダイアログ選択完了処理
         /// TVTest.exeパスを設定する。
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void tvtestOpenFileDialog_FileOk(object sender, CancelEventArgs e)
         {
             tvtestPathTextBox.Text = tvtestOpenFileDialog.FileName;
@@ -1006,476 +984,222 @@ namespace RockbarForEDCB
         /// <summary>
         /// フォント選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectFontButton_Click(object sender, EventArgs e)
         {
-            // フォント選択ダイアログを開いて設定値を反映
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-
-            if (fontTextBox.Text != null)
-            {
-                fontDialog.Font = (Font)fontConverter.ConvertFromString(fontTextBox.Text);
-            }
-
-            DialogResult result = fontDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                fontTextBox.Text = fontConverter.ConvertToString(fontDialog.Font);
-                previewListView.Font = fontDialog.Font;
-            }
+            SelectFontFor(fontTextBox,
+                font => previewListView.Font = font);
         }
 
         /// <summary>
         /// フォーム背景色選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectFormBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (formBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(formBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                formBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewFormPanel.BackColor = colorDialog.Color;
-            }
+            SelectColorFor(formBackColorTextBox,
+                color => previewFormPanel.BackColor = color);
         }
 
         /// <summary>
         /// 文字色選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectForeColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (foreColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(foreColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                foreColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.ForeColor = colorDialog.Color;
-            }
+            SelectColorFor(foreColorTextBox,
+                color => previewListView.ForeColor = color);
         }
 
         /// <summary>
         /// リスト背景色選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectListBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (listBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(listBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                listBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.BackColor = colorDialog.Color;
-            }
+            SelectColorFor(listBackColorTextBox,
+                color => previewListView.BackColor = color);
         }
 
         /// <summary>
         /// リスト背景色(正常予約)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectOkReserveListBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (okReserveListBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(okReserveListBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                okReserveListBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.Items[1].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(okReserveListBackColorTextBox,
+                color => previewListView.Items[1].BackColor = color);
         }
 
         /// <summary>
         /// リスト背景色(部分予約)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectPartialReserveListBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (partialReserveListBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(partialReserveListBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                partialReserveListBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.Items[2].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(partialReserveListBackColorTextBox,
+                color => previewListView.Items[2].BackColor = color);
         }
 
         /// <summary>
         /// リスト背景色(予約不可)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectNgReserveListBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (ngReserveListBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(ngReserveListBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                ngReserveListBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.Items[3].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(ngReserveListBackColorTextBox,
+                color => previewListView.Items[3].BackColor = color);
         }
 
         /// <summary>
         /// リスト背景色(無効予約)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectDisabledReserveListBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (disabledReserveListBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(disabledReserveListBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                disabledReserveListBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.Items[4].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(disabledReserveListBackColorTextBox,
+                color => previewListView.Items[4].BackColor = color);
         }
 
         /// <summary>
         /// 予約一覧ヘッダ文字色選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectListHeaderForeColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (listHeaderForeColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(listHeaderForeColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                listHeaderForeColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.Items[5].ForeColor = colorDialog.Color;
-            }
+            SelectColorFor(listHeaderForeColorTextBox,
+                color => previewListView.Items[5].ForeColor = color);
         }
 
         /// <summary>
         /// 予約一覧ヘッダ背景色選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectListHeaderBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (listHeaderBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(listHeaderBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                listHeaderBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewListView.Items[5].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(listHeaderBackColorTextBox,
+                color => previewListView.Items[5].BackColor = color);
         }
 
         /// <summary>
         /// メニューフォント選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectMenuFontButton_Click(object sender, EventArgs e)
         {
-            // フォント選択ダイアログを開いて設定値を反映
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-
-            if (menuFontTextBox.Text != null)
-            {
-                fontDialog.Font = (Font)fontConverter.ConvertFromString(menuFontTextBox.Text);
-            }
-
-            DialogResult result = fontDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                menuFontTextBox.Text = fontConverter.ConvertToString(fontDialog.Font);
-                previewMenuListView.Font = fontDialog.Font;
-            }
+            SelectFontFor(menuFontTextBox,
+                font => previewMenuListView.Font = font);
         }
 
         /// <summary>
         /// メニュー背景色選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectMenuBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (menuBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(menuBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                menuBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewMenuListView.BackColor = colorDialog.Color;
-            }
+            SelectColorFor(menuBackColorTextBox,
+                color => previewMenuListView.BackColor = color);
         }
 
         /// <summary>
         /// メニュー背景色(正常予約)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectOkReserveMenuBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (okReserveMenuBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(okReserveMenuBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                okReserveMenuBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewMenuListView.Items[1].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(okReserveMenuBackColorTextBox,
+                color => previewMenuListView.Items[1].BackColor = color);
         }
 
         /// <summary>
         /// メニュー背景色(部分予約)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectPartialReserveMenuBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (partialReserveMenuBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(partialReserveMenuBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                partialReserveMenuBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewMenuListView.Items[2].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(partialReserveMenuBackColorTextBox,
+                color => previewMenuListView.Items[2].BackColor = color);
         }
 
         /// <summary>
         /// メニュー背景色(予約不可)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectNgReserveMenuBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (ngReserveMenuBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(ngReserveMenuBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                ngReserveMenuBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewMenuListView.Items[3].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(ngReserveMenuBackColorTextBox,
+                color => previewMenuListView.Items[3].BackColor = color);
         }
 
         /// <summary>
         /// メニュー背景色(無効予約)選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectDisabledReserveMenuBackColorButton_Click(object sender, EventArgs e)
         {
-            // カラー選択ダイアログを開いて設定値を反映
-            TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-
-            if (disabledReserveMenuBackColorTextBox.Text != null)
-            {
-                colorDialog.Color = (Color)colorConverter.ConvertFromString(disabledReserveMenuBackColorTextBox.Text);
-            }
-
-            DialogResult result = colorDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                disabledReserveMenuBackColorTextBox.Text = colorConverter.ConvertToString(colorDialog.Color);
-                previewMenuListView.Items[4].BackColor = colorDialog.Color;
-            }
+            SelectColorFor(disabledReserveMenuBackColorTextBox,
+                color => previewMenuListView.Items[4].BackColor = color);
         }
 
         /// <summary>
         /// タブのフォント選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectTabFontButton_Click(object sender, EventArgs e)
         {
-            // フォント選択ダイアログを開いて設定値を反映
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-
-            if (tabFontTextBox.Text != null)
-            {
-                fontDialog.Font = (Font)fontConverter.ConvertFromString(tabFontTextBox.Text);
-            }
-
-            DialogResult result = fontDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                tabFontTextBox.Text = fontConverter.ConvertToString(fontDialog.Font);
-            }
+            SelectFontFor(tabFontTextBox);
         }
 
         /// <summary>
         /// ボタンのフォント選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectButtonFontButton_Click(object sender, EventArgs e)
         {
-            // フォント選択ダイアログを開いて設定値を反映
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-
-            if (buttonFontTextBox.Text != null)
-            {
-                fontDialog.Font = (Font)fontConverter.ConvertFromString(buttonFontTextBox.Text);
-            }
-
-            DialogResult result = fontDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                buttonFontTextBox.Text = fontConverter.ConvertToString(fontDialog.Font);
-            }
+            SelectFontFor(buttonFontTextBox);
         }
 
         /// <summary>
         /// ラベルのフォント選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectLabelFontButton_Click(object sender, EventArgs e)
         {
-            // フォント選択ダイアログを開いて設定値を反映
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-
-            if (labelFontTextBox.Text != null)
-            {
-                fontDialog.Font = (Font)fontConverter.ConvertFromString(labelFontTextBox.Text);
-            }
-
-            DialogResult result = fontDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
-            {
-                labelFontTextBox.Text = fontConverter.ConvertToString(fontDialog.Font);
-            }
+            SelectFontFor(labelFontTextBox);
         }
 
         /// <summary>
         /// テキストボックスのフォント選択ボタン押下処理
         /// </summary>
-        /// <param name="sender">イベントソース</param>
-        /// <param name="e">イベントパラメータ</param>
         private void selectTextBoxFontButton_Click(object sender, EventArgs e)
         {
-            // フォント選択ダイアログを開いて設定値を反映
-            TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
+            SelectFontFor(textBoxFontTextBox);
+        }
 
-            if (textBoxFontTextBox.Text != null)
+        /// <summary>
+        /// フォント選択ダイアログを表示し、テキストボックスとプレビューに反映するヘルパー
+        /// </summary>
+        /// <param name="targetTextBox">設定文字列を保持するTextBox</param>
+        /// <param name="applyPreviewAction">プレビューコントロール等への適用アクション</param>
+        private void SelectFontFor(TextBox targetTextBox, Action<Font> applyPreviewAction = null)
+        {
+            if (!string.IsNullOrEmpty(targetTextBox.Text))
             {
-                fontDialog.Font = (Font)fontConverter.ConvertFromString(textBoxFontTextBox.Text);
+                try
+                {
+                    fontDialog.Font = (Font)_fontConverter.ConvertFromString(targetTextBox.Text);
+                }
+                catch { }
             }
 
-            DialogResult result = fontDialog.ShowDialog();
-
-            if (result == DialogResult.OK)
+            if (fontDialog.ShowDialog() == DialogResult.OK)
             {
-                textBoxFontTextBox.Text = fontConverter.ConvertToString(fontDialog.Font);
+                targetTextBox.Text = _fontConverter.ConvertToString(fontDialog.Font);
+                applyPreviewAction?.Invoke(fontDialog.Font);
+            }
+        }
+
+        /// <summary>
+        /// 色選択ダイアログを表示し、テキストボックスとプレビューに反映するヘルパー
+        /// </summary>
+        /// <param name="targetTextBox">設定文字列を保持するTextBox</param>
+        /// <param name="applyPreviewAction">プレビューコントロール等への適用アクション</param>
+        private void SelectColorFor(TextBox targetTextBox, Action<Color> applyPreviewAction = null)
+        {
+            if (!string.IsNullOrEmpty(targetTextBox.Text))
+            {
+                try
+                {
+                    colorDialog.Color = (Color)_colorConverter.ConvertFromString(targetTextBox.Text);
+                }
+                catch { }
+            }
+
+            if (colorDialog.ShowDialog() == DialogResult.OK)
+            {
+                targetTextBox.Text = _colorConverter.ConvertToString(colorDialog.Color);
+                applyPreviewAction?.Invoke(colorDialog.Color);
             }
         }
     }
