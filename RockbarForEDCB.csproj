@@ -274,6 +274,7 @@
     </Compile>
     <Compile Include="SettingFormHelper.cs" />
     <Compile Include="SettingFormReservation.cs" />
+    <Compile Include="SettingFormServiceListView.cs" />
     <Compile Include="TVTestManager.cs" />
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>

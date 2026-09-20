@@ -260,7 +260,7 @@ namespace RockbarForEDCB
             this.selectDisabledReserveMenuBackColorButton = new System.Windows.Forms.Button();
             this.previewMenuListView = new System.Windows.Forms.ListView();
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.label5 = new System.Windows.Forms.Label();
+            this.previewMenuLabel = new System.Windows.Forms.Label();
             this.menuBackColorLabel = new System.Windows.Forms.Label();
             this.menuBackColorTextBox = new System.Windows.Forms.TextBox();
             this.selectMenuBackColorButton = new System.Windows.Forms.Button();
@@ -2329,7 +2329,7 @@ namespace RockbarForEDCB
             this.contextMenuFontColorTabPage.Controls.Add(this.disabledReserveMenuBackColorTextBox);
             this.contextMenuFontColorTabPage.Controls.Add(this.selectDisabledReserveMenuBackColorButton);
             this.contextMenuFontColorTabPage.Controls.Add(this.previewMenuListView);
-            this.contextMenuFontColorTabPage.Controls.Add(this.label5);
+            this.contextMenuFontColorTabPage.Controls.Add(this.previewMenuLabel);
             this.contextMenuFontColorTabPage.Controls.Add(this.menuBackColorLabel);
             this.contextMenuFontColorTabPage.Controls.Add(this.menuBackColorTextBox);
             this.contextMenuFontColorTabPage.Controls.Add(this.selectMenuBackColorButton);
@@ -2480,14 +2480,14 @@ namespace RockbarForEDCB
             // 
             this.columnHeader2.Width = 319;
             // 
-            // label5
+            // previewMenuLabel
             // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(407, 60);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(49, 12);
-            this.label5.TabIndex = 75;
-            this.label5.Text = "プレビュー";
+            this.previewMenuLabel.AutoSize = true;
+            this.previewMenuLabel.Location = new System.Drawing.Point(407, 60);
+            this.previewMenuLabel.Name = "previewMenuLabel";
+            this.previewMenuLabel.Size = new System.Drawing.Size(49, 12);
+            this.previewMenuLabel.TabIndex = 75;
+            this.previewMenuLabel.Text = "プレビュー";
             // 
             // menuBackColorLabel
             // 
@@ -3100,7 +3100,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Button selectDisabledReserveMenuBackColorButton;
         private System.Windows.Forms.ListView previewMenuListView;
         private System.Windows.Forms.ColumnHeader columnHeader2;
-        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label previewMenuLabel;
         private System.Windows.Forms.Label menuBackColorLabel;
         private System.Windows.Forms.TextBox menuBackColorTextBox;
         private System.Windows.Forms.Button selectMenuBackColorButton;
