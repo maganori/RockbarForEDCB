@@ -376,46 +376,16 @@ namespace RockbarForEDCB
         /// </summary>
         private void ApplyUiFontSettings()
         {
-            try
-            {
-                Font tabFont = (Font)_fontConverter.ConvertFromString(tabFontTextBox.Text);
-                Font buttonFont = (Font)_fontConverter.ConvertFromString(buttonFontTextBox.Text);
-                Font labelFont = (Font)_fontConverter.ConvertFromString(labelFontTextBox.Text);
-                Font textBoxFont = (Font)_fontConverter.ConvertFromString(textBoxFontTextBox.Text);
+            UiFontHelper.ApplyUiFontSettings(this, _configManager.RockbarSetting);
 
-                Type settingType = this.GetType();
-                FieldInfo[] fieldInfos = settingType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
-                foreach (FieldInfo fieldInfo in fieldInfos)
-                {
-                    string typeName = fieldInfo.FieldType.Name;
-                    if (typeName == "TabControl")
-                    {
-                        TabControl obj = fieldInfo.GetValue(this) as TabControl;
-                        obj.Font = tabFont;
-                    }
-                    else if (typeName == "Button")
-                    {
-                        Button obj = fieldInfo.GetValue(this) as Button;
-                        obj.Font = buttonFont;
-                    }
-                    else if (typeName == "Label" || typeName == "CheckBox" || typeName == "GroupBox" || typeName == "ListView")
-                    {
-                        Control obj = fieldInfo.GetValue(this) as Control;
-                        obj.Font = labelFont;
-                    }
-                    else if (typeName == "TextBox" || typeName == "NumericUpDown")
-                    {
-                        Control obj = fieldInfo.GetValue(this) as Control;
-                        obj.Font = textBoxFont;
-                    }
-                }
-                foreach (ListViewItem item in selectedServiceListView.Items)
-                {
-                    item.Font = labelFont;
-                }
+            // ListViewItemに対して明示的にFontが指定されているい場合、親であるListView.Fontの変更を自動継承しないため、
+            // ListViewItemに対して明示的にFontを再指定する必要がある
+            // 現状selectedServiceListViewの時だけでよい(allServiceItem.Cloneをしているため必要と思われる)ため、ここで個別適用する
+            Font labelFont = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.LabelFont);
+            foreach (ListViewItem item in selectedServiceListView.Items)
+            {
+                item.Font = labelFont;
             }
-            catch
-            { }
         }
 
         /// <summary>
@@ -757,13 +727,13 @@ namespace RockbarForEDCB
         /// </summary>
         private void editRecFolderButton_Click(object sender, EventArgs e)
         {
-            _recFolderListViewManager.EditSelectedFolder();
+            _recFolderListViewManager.EditFolder();
         }
 
         // 録画フォルダListViewダブルクリック動作
         private void recFolderListView_DoubleClick(object sender, EventArgs e)
         {
-            _recFolderListViewManager.EditSelectedFolder();
+            _recFolderListViewManager.EditFolder();
         }
 
         /// <summary>
@@ -859,7 +829,7 @@ namespace RockbarForEDCB
         /// </summary>
         private void addNewServiceButton_Click(object sender, EventArgs e)
         {
-            _selectedServiceListViewManager.EditService(null);
+            _selectedServiceListViewManager.AddNewService();
         }
 
         /// <summary>
@@ -867,12 +837,7 @@ namespace RockbarForEDCB
         /// </summary>
         private void editServiceButton_Click(object sender, EventArgs e)
         {
-            if (selectedServiceListView.SelectedItems.Count == 0)
-            {
-                return;
-            }
-
-            _selectedServiceListViewManager.EditService(selectedServiceListView.SelectedItems[0]);
+            _selectedServiceListViewManager.EditService();
         }
 
         /// <summary>
@@ -880,7 +845,7 @@ namespace RockbarForEDCB
         /// </summary>
         private void selectedServiceListView_DoubleClick(object sender, EventArgs e)
         {
-            editServiceButton_Click(sender, e);
+            _selectedServiceListViewManager.EditService();
         }
 
         /// <summary>
@@ -890,7 +855,7 @@ namespace RockbarForEDCB
         {
             if (settingTabControl.SelectedTab == favoriteServiceTabPage)
             {
-                _favoriteServiceListViewManager.RefreshServiceListView();
+                _favoriteServiceListViewManager.SyncAndRefresh();
             }
         }
 
