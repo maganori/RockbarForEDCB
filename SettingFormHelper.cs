@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -182,22 +183,32 @@ namespace RockbarForEDCB
             private readonly List<EpgServiceInfo> serviceInfos;
             private readonly HashSet<string> existingKeys;
 
-            public Service ResultService { get; private set; }
+            /// <summary>
+            /// ダイアログ確定後の編集・追加結果（ListViewItem）を取得します。
+            /// </summary>
+            public ListViewItem ResultItem { get; private set; }
 
             /// <summary>
             /// サービス新規追加編集
             /// </summary>
-            /// <param name="initialService">入力済みサービス</param>
-            /// <param name="epgServiceInfos">サービス一覧</param>
-            public ServiceEditDialog(Service initialService, List<EpgServiceInfo> epgServiceInfos, HashSet<string> existingKeys)
+            /// <param name="initialItem">編集対象のListViewItem（新規追加時は null）</param>
+            /// <param name="epgServiceInfos">全サービス情報一覧</param>
+            /// <param name="existingKeys">既に登録されているキー（TSID-SID）の集合</param>
+            /// <param name="rockBarSetting">フォント設定</param>
+            public ServiceEditDialog(
+                ListViewItem initialItem,
+                List<EpgServiceInfo> epgServiceInfos,
+                HashSet<string> existingKeys,
+                RockBarSetting rockBarSetting = null)
             {
-                this.Text = (initialService != null) ? "チャンネル編集" : "チャンネル追加";
+                this.Text = (initialItem != null) ? "チャンネル編集" : "チャンネル追加";
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
                 this.StartPosition = FormStartPosition.CenterParent;
                 this.MinimizeBox = false;
                 this.MaximizeBox = false;
                 this.ShowInTaskbar = false;
                 this.ClientSize = new Size(360, 210);
+
                 this.serviceInfos = epgServiceInfos;
                 this.existingKeys = existingKeys;
 
@@ -222,6 +233,7 @@ namespace RockbarForEDCB
                 typeComboBox.Width = 200;
                 typeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
                 typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
+                typeComboBox.SelectedIndex = 0; // デフォルトは"自動判別"
 
                 Label tvtestOptionLabel = new Label { Left = 16, Top = 138, Width = 100, Text = "TVTestオプション" };
                 tvtestOptionTextBox.Left = 120;
@@ -231,7 +243,7 @@ namespace RockbarForEDCB
                 Button okButton = new Button { Left = 164, Top = 172, Width = 75, Text = "OK", DialogResult = DialogResult.OK };
                 Button cancelButton = new Button { Left = 245, Top = 172, Width = 75, Text = "キャンセル", DialogResult = DialogResult.Cancel };
 
-                okButton.Click += okButton_Click;
+                okButton.Click += OkButton_Click;
 
                 this.Controls.AddRange(new Control[] {
                     tsidLabel, tsidTextBox,
@@ -245,29 +257,37 @@ namespace RockbarForEDCB
                 this.AcceptButton = okButton;
                 this.CancelButton = cancelButton;
 
-                if (initialService != null)
+                // 編集モード：ListViewItem から値を直接展開
+                if (initialItem != null)
                 {
-                    tsidTextBox.Text = initialService.Tsid;
-                    sidTextBox.Text = initialService.Sid;
-                    nameTextBox.Text = initialService.Name;
-                    typeComboBox.SelectedItem = RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(initialService.TypeName, null));
-                    tvtestOptionTextBox.Text = initialService.TvtestOption;
+                    tsidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Tsid].Text;
+                    sidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Sid].Text;
+                    nameTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Name].Text;
+
+                    string networkType = initialItem.SubItems[ServiceListViewColumns.NetworkType].Text;
+                    int typeIndex = typeComboBox.FindStringExact(
+                        RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(networkType, null)));
+                    if (typeIndex >= 0)
+                    {
+                        typeComboBox.SelectedIndex = typeIndex;
+                    }
+
+                    tvtestOptionTextBox.Text = initialItem.SubItems.Count > ServiceListViewColumns.TvtestOption
+                        ? initialItem.SubItems[ServiceListViewColumns.TvtestOption].Text
+                        : "";
                 }
-                else
-                {
-                    typeComboBox.SelectedIndex = 0;
-                }
+
+                UiFontHelper.ApplyUiFontSettings(this, rockBarSetting);
             }
 
             /// <summary>
             /// サービス新規追加編集フォームOKボタン
             /// </summary>
-            private void okButton_Click(object sender, EventArgs e)
+            /// <param name="sender">イベント発生元オブジェクト</param>
+            /// <param name="e">イベント引数</param>
+            private void OkButton_Click(object sender, EventArgs e)
             {
-                ushort tsid;
-                ushort sid;
-
-                if (!ushort.TryParse(tsidTextBox.Text, out tsid) || !ushort.TryParse(sidTextBox.Text, out sid))
+                if (!ushort.TryParse(tsidTextBox.Text, out ushort tsid) || !ushort.TryParse(sidTextBox.Text, out ushort sid))
                 {
                     MessageBox.Show("TSID と SID は有効数値で入力してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     this.DialogResult = DialogResult.None;
@@ -324,14 +344,22 @@ namespace RockbarForEDCB
                     typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
 
-                ResultService = new Service
-                {
-                    Tsid = tsid.ToString(),
-                    Sid = sid.ToString(),
-                    Name = nameTextBox.Text.Trim(),
-                    TypeName = typeComboBox.Text.Trim(),
-                    TvtestOption = string.IsNullOrWhiteSpace(tvtestOptionTextBox.Text) ? null : tvtestOptionTextBox.Text.Trim()
-                };
+                // ListViewItem を生成
+                string typeStr = typeComboBox.Text.Trim();
+                string nameStr = nameTextBox.Text.Trim();
+                string tsidStr = tsid.ToString();
+                string sidStr = sid.ToString();
+                string optionStr = string.IsNullOrWhiteSpace(tvtestOptionTextBox.Text) ? "" : tvtestOptionTextBox.Text.Trim();
+
+                ListViewItem item = new ListViewItem(""); // 0: Mark
+                item.SubItems.Add(typeStr);                // 1: NetworkType
+                item.SubItems.Add(nameStr);                // 2: Name
+                item.SubItems.Add(tsidStr);                // 3: Tsid
+                item.SubItems.Add(sidStr);                 // 4: Sid
+                item.SubItems.Add(optionStr);              // 5: TvtestOption
+                item.Name = key;
+
+                ResultItem = item;
             }
         }
 
@@ -500,22 +528,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// ListViewItem に表示されている各列（TSID / SID / 名前(チャンネル名) / 種別 / TVTestオプション）
-        /// の値をそのまま Service オブジェクトとして組み立てて返す。
-        /// </summary>
-        private static Service GetServiceFromListViewItem(ListViewItem item)
-        {
-            return new Service
-            {
-                Tsid = item.SubItems[ServiceListViewColumns.Tsid].Text,
-                Sid = item.SubItems[ServiceListViewColumns.Sid].Text,
-                Name = item.SubItems[ServiceListViewColumns.Name].Text,
-                TypeName = item.SubItems[ServiceListViewColumns.NetworkType].Text,
-                TvtestOption = item.SubItems[ServiceListViewColumns.TvtestOption].Text
-            };
-        }
-
-        /// <summary>
         /// 選択サービスを全サービスから追加する
         /// </summary>
         public void AddService()
@@ -532,33 +544,49 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// 新規サービスを追加する
+        /// </summary>
+        public void AddNewService()
+        {
+            EditServiceWithDialog(null);
+        }
+
+        /// <summary>
+        /// 選択サービスを編集する
+        /// </summary>
+        public void EditService()
+        {
+            if (_selectedServiceListView.SelectedItems.Count > 0)
+            {
+                EditServiceWithDialog(_selectedServiceListView.SelectedItems[0]);
+            }
+        }
+
+        /// <summary>
         /// 選択サービスの「新規追加」と「編集」処理。
         /// item == null → 新規追加モード
         /// item != null → 編集モード
         /// </summary>
         /// <param name="item">編集する ListViewItem</param>
-        public void EditService(ListViewItem item)
+        private void EditServiceWithDialog(ListViewItem item)
         {
             // 既存キー一覧（編集モードなら自分自身を除外）
             var existingKeys = _selectedServiceListView.Items.Cast<ListViewItem>()
-                .Where(x => x != item)
-                .Select(x => x.Name)
-                .ToHashSet();
+                    .Where(x => x != item)
+                    .Select(x => x.Name)
+                    .ToHashSet();
 
             // 初期値（編集モードなら既存サービス、新規追加モードなら null）
-            Service initialService = item != null ? GetServiceFromListViewItem(item) : null;
-
-            using (ServiceEditDialog dialog = new ServiceEditDialog(initialService, _serviceInfos, existingKeys))
+            using (var dialog = new ServiceEditDialog(
+                    item, _serviceInfos, existingKeys, _configManager.RockbarSetting))
             {
                 if (dialog.ShowDialog() != DialogResult.OK)
                 {
                     return;
                 }
 
-                Service service = dialog.ResultService;
-                string newKey = RockbarUtility.GetKey(service.Tsid, service.Sid);
-
-                ListViewItem newItem = CreateServiceListItem(service);
+                ListViewItem newItem = dialog.ResultItem;
+                string newKey = newItem.Name;
 
                 if (_allServiceListView.Items.ContainsKey(newKey))
                 {
@@ -704,7 +732,8 @@ namespace RockbarForEDCB
         /// </summary>
         public void Save()
         {
-            RefreshServiceListView();
+            // 保存前に選択サービスListViewの変更内容（Name, NetworkType等）をお気に入りListView側に反映
+            SyncAndRefresh();
 
             // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
             _configManager.FavoriteServiceList.Clear();
@@ -757,7 +786,7 @@ namespace RockbarForEDCB
         /// <summary>
         /// 選択サービス一覧を指定されたListViewからコピーし、お気に入りサービスの表示を更新する
         /// </summary>
-        public void RefreshServiceListView()
+        public void SyncAndRefresh()
         {
             // 選択サービスを選択サービスタブからコピーし直す
             _selectedServiceListView2.Items.Clear();
@@ -769,7 +798,7 @@ namespace RockbarForEDCB
                 _selectedServiceListView2.Items.Add(copiedItem);
             }
 
-            // 設定ファイルのお気に入りサービス一覧の表示
+            // お気に入りサービス一覧側へ同期
             List<ListViewItem> needCheckItems = new List<ListViewItem>();
 
             foreach (ListViewItem favoriteItem in _favoriteServiceListView.Items)
@@ -820,7 +849,6 @@ namespace RockbarForEDCB
             _favoriteServiceListView.Sort();
         }
     }
-
 
     public static class ServiceListViewHelper
     {
@@ -1157,6 +1185,110 @@ namespace RockbarForEDCB
             if (_tunerNameListView.SelectedItems.Count > 0)
             {
                 _tunerNameListView.SelectedItems[0].SubItems[_tunerNameColumnIndex].Text = sourceTextBox.Text;
+            }
+        }
+    }
+
+    public static class UiFontHelper
+    {
+        private static readonly TypeConverter FontConverter = TypeDescriptor.GetConverter(typeof(Font));
+
+        /// <summary>
+        /// 設定値に基づいて、フォームおよび配下コントロールのフォントに一括適用
+        /// </summary>
+        public static void ApplyUiFontSettings(Control rootControl, RockBarSetting setting)
+        {
+            if (rootControl == null || setting == null) return;
+
+            try
+            {
+                Font defaultFont = ParseFont(setting.Font);
+                Font menuFont = ParseFont(setting.MenuFont) ?? defaultFont;
+                Font tabFont = ParseFont(setting.TabFont) ?? defaultFont;
+                Font buttonFont = ParseFont(setting.ButtonFont) ?? defaultFont;
+                Font labelFont = ParseFont(setting.LabelFont) ?? defaultFont;
+                Font textBoxFont = ParseFont(setting.TextBoxFont) ?? defaultFont;
+
+                // フォーム全体のベースフォントを設定
+                if (defaultFont != null)
+                {
+                    rootControl.Font = defaultFont;
+                }
+
+                // メニュー類のフォント設定
+                if (rootControl is Form form && form.MainMenuStrip != null && menuFont != null)
+                {
+                    form.MainMenuStrip.Font = menuFont;
+                }
+
+                // コントロールツリーを走査してフォントを上書き適用
+                ApplyFontRecursive(rootControl, menuFont, tabFont, buttonFont, labelFont, textBoxFont);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ApplyUiFontSettings Error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// コントロールとその子コントロールに対して再帰的にフォントを適用する
+        /// </summary>
+        private static void ApplyFontRecursive(
+            Control control,
+            Font menuFont,
+            Font tabFont,
+            Font buttonFont,
+            Font labelFont,
+            Font textBoxFont)
+        {
+            if (control == null) return;
+
+            if (control is ToolStrip toolStrip && menuFont != null)
+            {
+                toolStrip.Font = menuFont;
+            }
+            else if (control is TabControl && tabFont != null)
+            {
+                control.Font = tabFont;
+            }
+            else if (control is Button && buttonFont != null)
+            {
+                control.Font = buttonFont;
+            }
+            else if ((control is Label || control is CheckBox || control is RadioButton ||
+                      control is GroupBox || control is ListView) && labelFont != null)
+            {
+                control.Font = labelFont;
+            }
+            else if ((control is TextBox || control is ComboBox || control is NumericUpDown ||
+                      control is ListBox) && textBoxFont != null)
+            {
+                control.Font = textBoxFont;
+            }
+
+            // 子コントロールを再帰的に走査
+            foreach (Control child in control.Controls)
+            {
+                ApplyFontRecursive(child, menuFont, tabFont, buttonFont, labelFont, textBoxFont);
+            }
+        }
+
+        /// <summary>
+        /// フォント設定文字列を Font オブジェクトに変換
+        /// 変換に失敗した場合や空文字列の場合は null を返す
+        /// </summary>
+        /// <param name="fontString">変換対象のフォント設定文字列</param>
+        /// <returns>生成された Font オブジェクト（失敗時は null）</returns>
+        private static Font ParseFont(string fontString)
+        {
+            if (string.IsNullOrWhiteSpace(fontString)) return null;
+            try
+            {
+                return FontConverter.ConvertFromString(fontString) as Font;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

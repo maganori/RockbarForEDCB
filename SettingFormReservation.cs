@@ -30,18 +30,25 @@ namespace RockbarForEDCB
             private readonly ComboBox fileNamePlugInComboBox = new ComboBox();
             private readonly TextBox fileNamePlugInOptionTextBox = new TextBox();
 
-            public bool IsPartialRec => partialCheckBox.Checked;
-            public string RecFolderPath => recFolderTextBox.Text.Trim();
-            public string WritePlugIn => writePlugInComboBox.Text.Trim();
-            public string FileNamePlugIn => fileNamePlugInComboBox.Text.Trim();
-            public string FileNamePlugInOption => fileNamePlugInOptionTextBox.Text.Trim();
+            /// <summary>
+            /// ダイアログ確定後の結果データ（ListViewItem にセットする SubItem 文字列配列）
+            /// </summary>
+            public string[] ResultSubItems { get; private set; }
 
             /// <summary>
-            /// コンストラクタ（プラグイン一覧を受け取る）
+            /// 録画フォルダ追加・編集用ダイアログクラス
             /// </summary>
-            public RecFolderEditDialog(List<string> writePlugIns, List<string> fileNamePlugIns)
+            /// <param name="writePlugIns">出力PlugInリスト</param>
+            /// <param name="fileNamePlugIns">ファイル名PlugInリスト</param>
+            /// <param name="initialItem">編集対象のListViewItem（新規追加時は null）</param>
+            /// <param name="rockBarSetting">フォント設定</param>
+            public RecFolderEditDialog(
+                List<string> writePlugIns,
+                List<string> fileNamePlugIns,
+                ListViewItem initialItem = null,
+                RockBarSetting rockBarSetting = null)
             {
-                this.Text = "録画フォルダ、使用PlugIn設定";
+                this.Text = (initialItem != null) ? "録画フォルダの変更" : "録画フォルダ、使用PlugIn設定";
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
                 this.StartPosition = FormStartPosition.CenterParent;
                 this.MinimizeBox = false;
@@ -59,7 +66,7 @@ namespace RockbarForEDCB
                 recFolderTextBox.Width = 230;
 
                 Button browseButton = new Button { Left = 365, Top = 34, Width = 70, Text = "開く" };
-                browseButton.Click += (s, e) =>
+                browseButton.Click += (sender, e) =>
                 {
                     using (FolderBrowserDialog fbd = new FolderBrowserDialog())
                     {
@@ -82,7 +89,9 @@ namespace RockbarForEDCB
                     writePlugInComboBox.Items.AddRange(writePlugIns.ToArray());
                 }
                 int defaultWriteIndex = writePlugInComboBox.FindStringExact("Write_Default.dll");
-                writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0 ? defaultWriteIndex : (writePlugInComboBox.Items.Count > 0 ? 0 : -1);
+                writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0
+                    ? defaultWriteIndex
+                    : (writePlugInComboBox.Items.Count > 0 ? 0 : -1);
 
                 Label fileNamePlugInLabel = new Label { Left = 16, Top = 100, Width = 110, Text = "ファイル名PlugIn" };
                 fileNamePlugInComboBox.Left = 130;
@@ -106,6 +115,8 @@ namespace RockbarForEDCB
                 Button okButton = new Button { Left = 235, Top = 170, Width = 80, Text = "OK", DialogResult = DialogResult.OK };
                 Button cancelButton = new Button { Left = 330, Top = 170, Width = 80, Text = "キャンセル", DialogResult = DialogResult.Cancel };
 
+                okButton.Click += OkButton_Click;
+
                 this.Controls.AddRange(new Control[] {
                     partialCheckBox, folderLabel, recFolderTextBox, browseButton,
                     writePlugInLabel, writePlugInComboBox,
@@ -116,51 +127,64 @@ namespace RockbarForEDCB
 
                 this.AcceptButton = okButton;
                 this.CancelButton = cancelButton;
+
+                // 編集モード：ListViewItem から値を展開
+                if (initialItem != null)
+                {
+                    partialCheckBox.Checked = initialItem.SubItems[0].Text == "はい";
+                    recFolderTextBox.Text = initialItem.SubItems[1].Text;
+
+                    string writePlugIn = initialItem.SubItems[2].Text;
+                    int index = writePlugInComboBox.FindStringExact(writePlugIn ?? "");
+                    if (index >= 0)
+                    {
+                        writePlugInComboBox.SelectedIndex = index;
+                    }
+
+                    // ファイル名PlugInは "?" でオプションと分離
+                    string combinedFileName = initialItem.SubItems[3].Text;
+                    string[] nameParts = combinedFileName.Split(new[] { '?' }, 2);
+                    index = fileNamePlugInComboBox.FindStringExact(nameParts[0] ?? "");
+                    if (index >= 0)
+                    {
+                        fileNamePlugInComboBox.SelectedIndex = index;
+                    }
+                    fileNamePlugInOptionTextBox.Text = nameParts.Length > 1 ? nameParts[1] : "";
+                }
+
+                UiFontHelper.ApplyUiFontSettings(this, rockBarSetting);
             }
 
             /// <summary>
-            /// 編集用コンストラクタ（既存の設定値を初期値としてセット）
+            /// OKボタンクリック時の処理。入力値を結果用配列にまとめる。
             /// </summary>
-            public RecFolderEditDialog(List<string> writePlugIns, List<string> fileNamePlugIns, bool isPartial, string folderPath, string writePlugIn, string fileNamePlugIn, string fileNamePlugInOption)
-                : this(writePlugIns, fileNamePlugIns)
+            /// <param name="sender">イベント発生元オブジェクト</param>
+            /// <param name="e">イベント引数</param>
+            private void OkButton_Click(object sender, EventArgs e)
             {
-                this.Text = "録画フォルダの変更";
-                this.partialCheckBox.Checked = isPartial;
-                this.recFolderTextBox.Text = folderPath;
+                string fileNamePlugIn = fileNamePlugInComboBox.Text.Trim();
+                string fileNameOption = fileNamePlugInOptionTextBox.Text.Trim();
 
-                // 出力PlugIn の選択肢合わせ
-                if (!string.IsNullOrEmpty(writePlugIn))
+                string fileNamePlugInCombined;
+                if (string.IsNullOrWhiteSpace(fileNamePlugIn))
                 {
-                    int writeIndex = this.writePlugInComboBox.FindStringExact(writePlugIn);
-                    if (writeIndex >= 0)
-                    {
-                        this.writePlugInComboBox.SelectedIndex = writeIndex;
-                    }
-                    else
-                    {
-                        this.writePlugInComboBox.Items.Add(writePlugIn);
-                        this.writePlugInComboBox.SelectedItem = writePlugIn;
-                    }
+                    fileNamePlugInCombined = "";
+                }
+                else if (string.IsNullOrWhiteSpace(fileNameOption))
+                {
+                    fileNamePlugInCombined = fileNamePlugIn;
                 }
                 else
                 {
-                    int defaultWriteIndex = this.writePlugInComboBox.FindStringExact("Write_Default.dll");
-                    this.writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0 ? defaultWriteIndex : (this.writePlugInComboBox.Items.Count > 0 ? 0 : -1);
+                    fileNamePlugInCombined = $"{fileNamePlugIn}?{fileNameOption}";
                 }
 
-                // ファイル名PlugIn の選択肢合わせ
-                int fileNameIndex = this.fileNamePlugInComboBox.FindStringExact(fileNamePlugIn ?? "");
-                if (fileNameIndex >= 0)
-                {
-                    this.fileNamePlugInComboBox.SelectedIndex = fileNameIndex;
-                }
-                else
-                {
-                    this.fileNamePlugInComboBox.Items.Add(fileNamePlugIn);
-                    this.fileNamePlugInComboBox.SelectedItem = fileNamePlugIn;
-                }
-
-                this.fileNamePlugInOptionTextBox.Text = fileNamePlugInOption;
+                ResultSubItems = new string[] {
+                    partialCheckBox.Checked ? "はい" : "いいえ",
+                    recFolderTextBox.Text.Trim(),
+                    writePlugInComboBox.Text.Trim(),
+                    fileNamePlugInCombined
+                };
             }
         }
 
@@ -261,17 +285,17 @@ namespace RockbarForEDCB
         /// </summary>
         public void AddFolder()
         {
-            ShowEditDialog(null);
+            EditFolderWithDialog(null);
         }
 
         /// <summary>
         /// 選択されている録画フォルダ編集ダイアログを表示
         /// </summary>
-        public void EditSelectedFolder()
+        public void EditFolder()
         {
             if (_recFolderListView.SelectedItems.Count > 0)
             {
-                ShowEditDialog(_recFolderListView.SelectedItems[0]);
+                EditFolderWithDialog(_recFolderListView.SelectedItems[0]);
             }
         }
 
@@ -309,9 +333,11 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 編集ダイアログ表示の内部処理
+        /// 録画フォルダの「新規追加」と「編集」処理。
+        /// targetItem == null → 新規追加モード
+        /// targetItem != null → 編集モード
         /// </summary>
-        private void ShowEditDialog(ListViewItem targetItem)
+        private void EditFolderWithDialog(ListViewItem targetItem)
         {
             // PlugIn 一覧の取得
             var writePlugIns = new List<string>();
@@ -332,33 +358,11 @@ namespace RockbarForEDCB
             string fileNamePlugIn = nameParts.Length > 0 ? nameParts[0] : "";
             string fileNamePlugInOption = nameParts.Length > 1 ? nameParts[1] : "";
 
-            using (var dialog = targetItem == null
-                ? new RecFolderEditDialog(writePlugIns, fileNamePlugIns)
-                : new RecFolderEditDialog(writePlugIns, fileNamePlugIns, isPartial, folderPath, writePlugIn, fileNamePlugIn, fileNamePlugInOption))
+            using (var dialog = new RecFolderEditDialog(writePlugIns, fileNamePlugIns, targetItem, _configManager.RockbarSetting))
             {
                 if (dialog.ShowDialog() != DialogResult.OK) return;
 
-                // FileNamePlugIn や FileNamePlugInOption の有無で結合方法を制御
-                string fileNamePlugInCombined;
-                if (string.IsNullOrWhiteSpace(dialog.FileNamePlugIn))
-                {
-                    fileNamePlugInCombined = "";
-                }
-                else if (string.IsNullOrWhiteSpace(dialog.FileNamePlugInOption))
-                {
-                    fileNamePlugInCombined = dialog.FileNamePlugIn;
-                }
-                else
-                {
-                    fileNamePlugInCombined = $"{dialog.FileNamePlugIn}?{dialog.FileNamePlugInOption}";
-                }
-
-                string[] subItemTexts = {
-                    dialog.IsPartialRec ? "はい" : "いいえ",
-                    dialog.RecFolderPath,
-                    dialog.WritePlugIn,
-                    fileNamePlugInCombined
-                };
+                string[] subItemTexts = dialog.ResultSubItems;
 
                 if (targetItem == null)
                 {
@@ -389,11 +393,26 @@ namespace RockbarForEDCB
         private readonly List<TunerReserveInfo> _tunerReserveInfos;
         private readonly ComboBox _comboBox;
 
+        /// <summary>
+        /// チューナーコンボボックスに表示する要素項目を表す内部クラス
+        /// </summary>
         private class Item
         {
+            /// <summary>
+            /// コンボボックスに表示するテキストを取得します。
+            /// </summary>
             public string DisplayText { get; }
+
+            /// <summary>
+            /// チューナーを識別するIDを取得します。
+            /// </summary>
             public uint TunerID { get; }
 
+            /// <summary>
+            /// <see cref="Item"/> クラスの新しいインスタンスを初期化します。
+            /// </summary>
+            /// <param name="displayText">表示用テキスト</param>
+            /// <param name="tunerID">チューナーID</param>
             public Item(string displayText, uint tunerID)
             {
                 DisplayText = displayText;
