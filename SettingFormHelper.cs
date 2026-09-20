@@ -175,13 +175,14 @@ namespace RockbarForEDCB
         /// </summary>
         private class ServiceEditDialog : Form
         {
-            private readonly TextBox tsidTextBox = new TextBox();
-            private readonly TextBox sidTextBox = new TextBox();
-            private readonly TextBox nameTextBox = new TextBox();
-            private readonly ComboBox typeComboBox = new ComboBox();
-            private readonly TextBox tvtestOptionTextBox = new TextBox();
-            private readonly List<EpgServiceInfo> serviceInfos;
-            private readonly HashSet<string> existingKeys;
+            private readonly TextBox _tsidTextBox = new TextBox();
+            private readonly TextBox _sidTextBox = new TextBox();
+            private readonly TextBox _nameTextBox = new TextBox();
+            private readonly ComboBox _typeComboBox = new ComboBox();
+            private readonly TextBox _tvtestOptionTextBox = new TextBox();
+
+            private readonly List<EpgServiceInfo> _serviceInfos;
+            private readonly HashSet<string> _existingKeys;
 
             /// <summary>
             /// ダイアログ確定後の編集・追加結果（ListViewItem）を取得します。
@@ -209,48 +210,49 @@ namespace RockbarForEDCB
                 this.ShowInTaskbar = false;
                 this.ClientSize = new Size(360, 210);
 
-                this.serviceInfos = epgServiceInfos;
-                this.existingKeys = existingKeys;
+                _serviceInfos = epgServiceInfos;
+                _existingKeys = existingKeys;
 
                 Label tsidLabel = new Label { Left = 16, Top = 18, Width = 100, Text = "TSID" };
-                tsidTextBox.Left = 120;
-                tsidTextBox.Top = 14;
-                tsidTextBox.Width = 200;
+                _tsidTextBox.Left = 120;
+                _tsidTextBox.Top = 14;
+                _tsidTextBox.Width = 200;
 
                 Label sidLabel = new Label { Left = 16, Top = 48, Width = 100, Text = "SID" };
-                sidTextBox.Left = 120;
-                sidTextBox.Top = 44;
-                sidTextBox.Width = 200;
+                _sidTextBox.Left = 120;
+                _sidTextBox.Top = 44;
+                _sidTextBox.Width = 200;
 
                 Label nameLabel = new Label { Left = 16, Top = 78, Width = 100, Text = "名前" };
-                nameTextBox.Left = 120;
-                nameTextBox.Top = 74;
-                nameTextBox.Width = 200;
+                _nameTextBox.Left = 120;
+                _nameTextBox.Top = 74;
+                _nameTextBox.Width = 200;
 
                 Label typeLabel = new Label { Left = 16, Top = 108, Width = 100, Text = "Type" };
-                typeComboBox.Left = 120;
-                typeComboBox.Top = 104;
-                typeComboBox.Width = 200;
-                typeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-                typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
-                typeComboBox.SelectedIndex = 0; // デフォルトは"自動判別"
+                _typeComboBox.Left = 120;
+                _typeComboBox.Top = 104;
+                _typeComboBox.Width = 200;
+                _typeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                _typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
+                _typeComboBox.SelectedIndex = 0; // デフォルトは"自動判別"
 
                 Label tvtestOptionLabel = new Label { Left = 16, Top = 138, Width = 100, Text = "TVTestオプション" };
-                tvtestOptionTextBox.Left = 120;
-                tvtestOptionTextBox.Top = 134;
-                tvtestOptionTextBox.Width = 200;
+                _tvtestOptionTextBox.Left = 120;
+                _tvtestOptionTextBox.Top = 134;
+                _tvtestOptionTextBox.Width = 200;
 
                 Button okButton = new Button { Left = 164, Top = 172, Width = 75, Text = "OK", DialogResult = DialogResult.OK };
-                Button cancelButton = new Button { Left = 245, Top = 172, Width = 75, Text = "キャンセル", DialogResult = DialogResult.Cancel };
+                Button cancelButton = new Button { Left = 245, Top = 172, Width = 75, Text = "キャンセル",
+                                                    DialogResult = DialogResult.Cancel };
 
                 okButton.Click += OkButton_Click;
 
                 this.Controls.AddRange(new Control[] {
-                    tsidLabel, tsidTextBox,
-                    sidLabel, sidTextBox,
-                    nameLabel, nameTextBox,
-                    typeLabel, typeComboBox,
-                    tvtestOptionLabel, tvtestOptionTextBox,
+                    tsidLabel, _tsidTextBox,
+                    sidLabel, _sidTextBox,
+                    nameLabel, _nameTextBox,
+                    typeLabel, _typeComboBox,
+                    tvtestOptionLabel, _tvtestOptionTextBox,
                     okButton, cancelButton
                 });
 
@@ -260,19 +262,19 @@ namespace RockbarForEDCB
                 // 編集モード：ListViewItem から値を直接展開
                 if (initialItem != null)
                 {
-                    tsidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Tsid].Text;
-                    sidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Sid].Text;
-                    nameTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Name].Text;
+                    _tsidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Tsid].Text;
+                    _sidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Sid].Text;
+                    _nameTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Name].Text;
 
                     string networkType = initialItem.SubItems[ServiceListViewColumns.NetworkType].Text;
-                    int typeIndex = typeComboBox.FindStringExact(
+                    int typeIndex = _typeComboBox.FindStringExact(
                         RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(networkType, null)));
                     if (typeIndex >= 0)
                     {
-                        typeComboBox.SelectedIndex = typeIndex;
+                        _typeComboBox.SelectedIndex = typeIndex;
                     }
 
-                    tvtestOptionTextBox.Text = initialItem.SubItems.Count > ServiceListViewColumns.TvtestOption
+                    _tvtestOptionTextBox.Text = initialItem.SubItems.Count > ServiceListViewColumns.TvtestOption
                         ? initialItem.SubItems[ServiceListViewColumns.TvtestOption].Text
                         : "";
                 }
@@ -287,9 +289,10 @@ namespace RockbarForEDCB
             /// <param name="e">イベント引数</param>
             private void OkButton_Click(object sender, EventArgs e)
             {
-                if (!ushort.TryParse(tsidTextBox.Text, out ushort tsid) || !ushort.TryParse(sidTextBox.Text, out ushort sid))
+                if (!ushort.TryParse(_tsidTextBox.Text, out ushort tsid) || !ushort.TryParse(_sidTextBox.Text, out ushort sid))
                 {
-                    MessageBox.Show("TSID と SID は有効数値で入力してください。", "入力エラー", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("TSID と SID は有効数値で入力してください。", "入力エラー",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     this.DialogResult = DialogResult.None;
                     return;
                 }
@@ -297,7 +300,7 @@ namespace RockbarForEDCB
                 string key = RockbarUtility.GetKey(tsid.ToString(), sid.ToString());
 
                 // 重複チェック（追加・編集共通）
-                if (existingKeys.Contains(key))
+                if (_existingKeys.Contains(key))
                 {
                     MessageBox.Show(
                         "同じ TSID / SID のチャンネルが既に登録されています。",
@@ -311,23 +314,23 @@ namespace RockbarForEDCB
 
                 EpgServiceInfo matchedService = null;
                 // 全チャンネル側に同じチャンネルがあれば取得
-                if (serviceInfos != null)
+                if (_serviceInfos != null)
                 {
-                    matchedService = serviceInfos
+                    matchedService = _serviceInfos
                         .FirstOrDefault(x => x.TSID == tsid && x.SID == sid);
                 }
 
                 // 名前補完
                 // 未指定なら全チャンネル側の名前を使用、なければTSID-SID
-                if (string.IsNullOrWhiteSpace(nameTextBox.Text))
+                if (string.IsNullOrWhiteSpace(_nameTextBox.Text))
                 {
                     if (matchedService != null)
                     {
-                        nameTextBox.Text = matchedService.service_name;
+                        _nameTextBox.Text = matchedService.service_name;
                     }
                     else
                     {
-                        nameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
+                        _nameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
                     }
                 }
 
@@ -335,21 +338,21 @@ namespace RockbarForEDCB
                 // 種別指定が正しいか判定。誤りがあれば全チャンネル側の情報を使用
                 if (matchedService != null)
                 {
-                    var networkType = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), matchedService.ONID);
-                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
+                    var networkType = RockbarUtility.GetNetworkType(_typeComboBox.Text.Trim(), matchedService.ONID);
+                    _typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
                 else
                 {
-                    var networkType = RockbarUtility.GetNetworkType(typeComboBox.Text.Trim(), null);
-                    typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
+                    var networkType = RockbarUtility.GetNetworkType(_typeComboBox.Text.Trim(), null);
+                    _typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
 
                 // ListViewItem を生成
-                string typeStr = typeComboBox.Text.Trim();
-                string nameStr = nameTextBox.Text.Trim();
+                string typeStr = _typeComboBox.Text.Trim();
+                string nameStr = _nameTextBox.Text.Trim();
                 string tsidStr = tsid.ToString();
                 string sidStr = sid.ToString();
-                string optionStr = string.IsNullOrWhiteSpace(tvtestOptionTextBox.Text) ? "" : tvtestOptionTextBox.Text.Trim();
+                string optionStr = string.IsNullOrWhiteSpace(_tvtestOptionTextBox.Text) ? "" : _tvtestOptionTextBox.Text.Trim();
 
                 ListViewItem item = new ListViewItem(""); // 0: Mark
                 item.SubItems.Add(typeStr);                // 1: NetworkType
@@ -486,27 +489,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 選択サービス一覧の保存
-        /// </summary>
-        public void Save()
-        {
-            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
-            _configManager.SelectedServiceList.Clear();
-
-            foreach (ListViewItem item in _selectedServiceListView.Items)
-            {
-                _configManager.SelectedServiceList.Add(new Service
-                {
-                    Tsid = item.SubItems[ServiceListViewColumns.Tsid].Text,
-                    Sid = item.SubItems[ServiceListViewColumns.Sid].Text,
-                    Name = item.SubItems[ServiceListViewColumns.Name].Text,
-                    TypeName = item.SubItems[ServiceListViewColumns.NetworkType].Text,
-                    TvtestOption = item.SubItems[ServiceListViewColumns.TvtestOption].Text
-                });
-            }
-        }
-
-        /// <summary>
         /// Service オブジェクトから ListViewItem を生成する。
         /// </summary>
         /// <param name="service">表示対象のサービス情報</param>
@@ -525,6 +507,27 @@ namespace RockbarForEDCB
             });
             item.Name = RockbarUtility.GetKey(service.Tsid, service.Sid);
             return item;
+        }
+
+        /// <summary>
+        /// 選択サービス一覧の保存
+        /// </summary>
+        public void Save()
+        {
+            // TOMLだと編集しづらいかもしれないので、チャンネル系はTSVに保存
+            _configManager.SelectedServiceList.Clear();
+
+            foreach (ListViewItem item in _selectedServiceListView.Items)
+            {
+                _configManager.SelectedServiceList.Add(new Service
+                {
+                    Tsid = item.SubItems[ServiceListViewColumns.Tsid].Text,
+                    Sid = item.SubItems[ServiceListViewColumns.Sid].Text,
+                    Name = item.SubItems[ServiceListViewColumns.Name].Text,
+                    TypeName = item.SubItems[ServiceListViewColumns.NetworkType].Text,
+                    TvtestOption = item.SubItems[ServiceListViewColumns.TvtestOption].Text
+                });
+            }
         }
 
         /// <summary>
@@ -1191,7 +1194,7 @@ namespace RockbarForEDCB
 
     public static class UiFontHelper
     {
-        private static readonly TypeConverter FontConverter = TypeDescriptor.GetConverter(typeof(Font));
+        private static readonly TypeConverter _fontConverter = TypeDescriptor.GetConverter(typeof(Font));
 
         /// <summary>
         /// 設定値に基づいて、フォームおよび配下コントロールのフォントに一括適用
@@ -1284,7 +1287,7 @@ namespace RockbarForEDCB
             if (string.IsNullOrWhiteSpace(fontString)) return null;
             try
             {
-                return FontConverter.ConvertFromString(fontString) as Font;
+                return _fontConverter.ConvertFromString(fontString) as Font;
             }
             catch
             {
