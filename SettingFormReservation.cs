@@ -24,11 +24,11 @@ namespace RockbarForEDCB
         /// </summary>
         private class RecFolderEditDialog : Form
         {
-            private readonly CheckBox partialCheckBox = new CheckBox();
-            private readonly TextBox recFolderTextBox = new TextBox();
-            private readonly ComboBox writePlugInComboBox = new ComboBox();
-            private readonly ComboBox fileNamePlugInComboBox = new ComboBox();
-            private readonly TextBox fileNamePlugInOptionTextBox = new TextBox();
+            private readonly CheckBox _partialCheckBox = new CheckBox();
+            private readonly TextBox _recFolderTextBox = new TextBox();
+            private readonly ComboBox _writePlugInComboBox = new ComboBox();
+            private readonly ComboBox _fileNamePlugInComboBox = new ComboBox();
+            private readonly TextBox _fileNamePlugInOptionTextBox = new TextBox();
 
             /// <summary>
             /// ダイアログ確定後の結果データ（ListViewItem にセットする SubItem 文字列配列）
@@ -56,14 +56,14 @@ namespace RockbarForEDCB
                 this.ShowInTaskbar = false;
                 this.ClientSize = new Size(450, 210);
 
-                partialCheckBox.Text = "部分受信";
-                partialCheckBox.Location = new Point(16, 12);
-                partialCheckBox.AutoSize = true;
+                _partialCheckBox.Text = "部分受信";
+                _partialCheckBox.Location = new Point(16, 12);
+                _partialCheckBox.AutoSize = true;
 
                 Label folderLabel = new Label { Left = 16, Top = 40, Width = 110, Text = "録画フォルダ" };
-                recFolderTextBox.Left = 130;
-                recFolderTextBox.Top = 36;
-                recFolderTextBox.Width = 230;
+                _recFolderTextBox.Left = 130;
+                _recFolderTextBox.Top = 36;
+                _recFolderTextBox.Width = 230;
 
                 Button browseButton = new Button { Left = 365, Top = 34, Width = 70, Text = "開く" };
                 browseButton.Click += (sender, e) =>
@@ -72,56 +72,58 @@ namespace RockbarForEDCB
                     {
                         if (fbd.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
                         {
-                            recFolderTextBox.Text = fbd.SelectedPath;
+                            _recFolderTextBox.Text = fbd.SelectedPath;
                         }
                     }
                 };
 
                 Label writePlugInLabel = new Label { Left = 16, Top = 70, Width = 110, Text = "出力PlugIn" };
-                writePlugInComboBox.Left = 130;
-                writePlugInComboBox.Top = 66;
-                writePlugInComboBox.Width = 230;
-                writePlugInComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                _writePlugInComboBox.Left = 130;
+                _writePlugInComboBox.Top = 66;
+                _writePlugInComboBox.Width = 230;
+                _writePlugInComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 
                 // 出力PlugIn の選択肢設定
                 if (writePlugIns != null && writePlugIns.Count > 0)
                 {
-                    writePlugInComboBox.Items.AddRange(writePlugIns.ToArray());
+                    _writePlugInComboBox.Items.AddRange(writePlugIns.ToArray());
                 }
-                int defaultWriteIndex = writePlugInComboBox.FindStringExact("Write_Default.dll");
-                writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0
+                int defaultWriteIndex = _writePlugInComboBox.FindStringExact("Write_Default.dll");
+                _writePlugInComboBox.SelectedIndex = defaultWriteIndex >= 0
                     ? defaultWriteIndex
-                    : (writePlugInComboBox.Items.Count > 0 ? 0 : -1);
+                    : (_writePlugInComboBox.Items.Count > 0 ? 0 : -1);
 
                 Label fileNamePlugInLabel = new Label { Left = 16, Top = 100, Width = 110, Text = "ファイル名PlugIn" };
-                fileNamePlugInComboBox.Left = 130;
-                fileNamePlugInComboBox.Top = 96;
-                fileNamePlugInComboBox.Width = 230;
-                fileNamePlugInComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                _fileNamePlugInComboBox.Left = 130;
+                _fileNamePlugInComboBox.Top = 96;
+                _fileNamePlugInComboBox.Width = 230;
+                _fileNamePlugInComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
 
                 // ファイル名PlugIn の選択肢設定（未指定 "" を選択可能にする）
-                fileNamePlugInComboBox.Items.Add("");
+                _fileNamePlugInComboBox.Items.Add("");
                 if (fileNamePlugIns != null && fileNamePlugIns.Count > 0)
                 {
-                    fileNamePlugInComboBox.Items.AddRange(fileNamePlugIns.ToArray());
+                    _fileNamePlugInComboBox.Items.AddRange(fileNamePlugIns.ToArray());
                 }
-                fileNamePlugInComboBox.SelectedIndex = 0; // デフォルトは未指定 ("")
+                _fileNamePlugInComboBox.SelectedIndex = 0; // デフォルトは未指定 ("")
 
                 Label fileNameOptionLabel = new Label { Left = 16, Top = 130, Width = 130, Text = "ファイル名PlugInオプション" };
-                fileNamePlugInOptionTextBox.Left = 150;
-                fileNamePlugInOptionTextBox.Top = 126;
-                fileNamePlugInOptionTextBox.Width = 210;
+                _fileNamePlugInOptionTextBox.Left = 150;
+                _fileNamePlugInOptionTextBox.Top = 126;
+                _fileNamePlugInOptionTextBox.Width = 210;
 
-                Button okButton = new Button { Left = 235, Top = 170, Width = 80, Text = "OK", DialogResult = DialogResult.OK };
-                Button cancelButton = new Button { Left = 330, Top = 170, Width = 80, Text = "キャンセル", DialogResult = DialogResult.Cancel };
+                Button okButton = new Button 
+                        { Left = 235, Top = 170, Width = 80, Text = "OK", DialogResult = DialogResult.OK };
+                Button cancelButton = new Button
+                        { Left = 330, Top = 170, Width = 80, Text = "キャンセル", DialogResult = DialogResult.Cancel };
 
                 okButton.Click += OkButton_Click;
 
                 this.Controls.AddRange(new Control[] {
-                    partialCheckBox, folderLabel, recFolderTextBox, browseButton,
-                    writePlugInLabel, writePlugInComboBox,
-                    fileNamePlugInLabel, fileNamePlugInComboBox,
-                    fileNameOptionLabel, fileNamePlugInOptionTextBox,
+                    _partialCheckBox, folderLabel, _recFolderTextBox, browseButton,
+                    writePlugInLabel, _writePlugInComboBox,
+                    fileNamePlugInLabel, _fileNamePlugInComboBox,
+                    fileNameOptionLabel, _fileNamePlugInOptionTextBox,
                     okButton, cancelButton
                 });
 
@@ -131,25 +133,25 @@ namespace RockbarForEDCB
                 // 編集モード：ListViewItem から値を展開
                 if (initialItem != null)
                 {
-                    partialCheckBox.Checked = initialItem.SubItems[0].Text == "はい";
-                    recFolderTextBox.Text = initialItem.SubItems[1].Text;
+                    _partialCheckBox.Checked = initialItem.SubItems[0].Text == "はい";
+                    _recFolderTextBox.Text = initialItem.SubItems[1].Text;
 
                     string writePlugIn = initialItem.SubItems[2].Text;
-                    int index = writePlugInComboBox.FindStringExact(writePlugIn ?? "");
+                    int index = _writePlugInComboBox.FindStringExact(writePlugIn ?? "");
                     if (index >= 0)
                     {
-                        writePlugInComboBox.SelectedIndex = index;
+                        _writePlugInComboBox.SelectedIndex = index;
                     }
 
                     // ファイル名PlugInは "?" でオプションと分離
                     string combinedFileName = initialItem.SubItems[3].Text;
                     string[] nameParts = combinedFileName.Split(new[] { '?' }, 2);
-                    index = fileNamePlugInComboBox.FindStringExact(nameParts[0] ?? "");
+                    index = _fileNamePlugInComboBox.FindStringExact(nameParts[0] ?? "");
                     if (index >= 0)
                     {
-                        fileNamePlugInComboBox.SelectedIndex = index;
+                        _fileNamePlugInComboBox.SelectedIndex = index;
                     }
-                    fileNamePlugInOptionTextBox.Text = nameParts.Length > 1 ? nameParts[1] : "";
+                    _fileNamePlugInOptionTextBox.Text = nameParts.Length > 1 ? nameParts[1] : "";
                 }
 
                 UiFontHelper.ApplyUiFontSettings(this, rockBarSetting);
@@ -162,8 +164,8 @@ namespace RockbarForEDCB
             /// <param name="e">イベント引数</param>
             private void OkButton_Click(object sender, EventArgs e)
             {
-                string fileNamePlugIn = fileNamePlugInComboBox.Text.Trim();
-                string fileNameOption = fileNamePlugInOptionTextBox.Text.Trim();
+                string fileNamePlugIn = _fileNamePlugInComboBox.Text.Trim();
+                string fileNameOption = _fileNamePlugInOptionTextBox.Text.Trim();
 
                 string fileNamePlugInCombined;
                 if (string.IsNullOrWhiteSpace(fileNamePlugIn))
@@ -180,9 +182,9 @@ namespace RockbarForEDCB
                 }
 
                 ResultSubItems = new string[] {
-                    partialCheckBox.Checked ? "はい" : "いいえ",
-                    recFolderTextBox.Text.Trim(),
-                    writePlugInComboBox.Text.Trim(),
+                    _partialCheckBox.Checked ? "はい" : "いいえ",
+                    _recFolderTextBox.Text.Trim(),
+                    _writePlugInComboBox.Text.Trim(),
                     fileNamePlugInCombined
                 };
             }
@@ -300,39 +302,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 選択されている録画フォルダを複製
-        /// </summary>
-        public void CopySelectedFolder()
-        {
-            // リストで項目が選択されていない場合は何もしない
-            if (_recFolderListView.SelectedItems.Count == 0) return;
-
-            // 選択中の行のデータを取得
-            ListViewItem selectedItem = _recFolderListView.SelectedItems[0];
-
-            // 取得したデータで新しい ListViewItem を複製してリストに追加
-            ListViewItem newItem = (ListViewItem)selectedItem.Clone();
-            _recFolderListView.Items.Add(newItem);
-
-            // コピーされた新しい項目を選択状態にする
-            newItem.Selected = true;
-            _recFolderListView.EnsureVisible(newItem.Index);
-        }
-
-        /// <summary>
-        /// 選択されている録画フォルダを削除
-        /// </summary>
-        public void DeleteSelectedFolder()
-        {
-            // リストで項目が選択されていない場合は何もしない
-            if (_recFolderListView.SelectedItems.Count == 0) return;
-
-            // 選択中の行を削除
-            ListViewItem selectedItem = _recFolderListView.SelectedItems[0];
-            _recFolderListView.Items.Remove(selectedItem);
-        }
-
-        /// <summary>
         /// 録画フォルダの「新規追加」と「編集」処理。
         /// targetItem == null → 新規追加モード
         /// targetItem != null → 編集モード
@@ -381,6 +350,39 @@ namespace RockbarForEDCB
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// 選択されている録画フォルダを複製
+        /// </summary>
+        public void CopySelectedFolder()
+        {
+            // リストで項目が選択されていない場合は何もしない
+            if (_recFolderListView.SelectedItems.Count == 0) return;
+
+            // 選択中の行のデータを取得
+            ListViewItem selectedItem = _recFolderListView.SelectedItems[0];
+
+            // 取得したデータで新しい ListViewItem を複製してリストに追加
+            ListViewItem newItem = (ListViewItem)selectedItem.Clone();
+            _recFolderListView.Items.Add(newItem);
+
+            // コピーされた新しい項目を選択状態にする
+            newItem.Selected = true;
+            _recFolderListView.EnsureVisible(newItem.Index);
+        }
+
+        /// <summary>
+        /// 選択されている録画フォルダを削除
+        /// </summary>
+        public void DeleteSelectedFolder()
+        {
+            // リストで項目が選択されていない場合は何もしない
+            if (_recFolderListView.SelectedItems.Count == 0) return;
+
+            // 選択中の行を削除
+            ListViewItem selectedItem = _recFolderListView.SelectedItems[0];
+            _recFolderListView.Items.Remove(selectedItem);
         }
     }
 
