@@ -381,11 +381,19 @@ namespace RockbarForEDCB
             // ListViewItemに対して明示的にFontが指定されているい場合、親であるListView.Fontの変更を自動継承しないため、
             // ListViewItemに対して明示的にFontを再指定する必要がある
             // 現状selectedServiceListViewの時だけでよい(allServiceItem.Cloneをしているため必要と思われる)ため、ここで個別適用する
-            Font labelFont = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.LabelFont);
+            Font labelFont = (Font)_fontConverter.ConvertFromString(labelFontTextBox.Text);
             foreach (ListViewItem item in selectedServiceListView.Items)
             {
                 item.Font = labelFont;
             }
+
+            // プレビュー用を再設定
+            previewListView.Font = (Font)_fontConverter.ConvertFromString(fontTextBox.Text);
+            previewMenuListView.Font = (Font)_fontConverter.ConvertFromString(menuFontTextBox.Text);
+            previewTabFontLabel.Font = (Font)_fontConverter.ConvertFromString(tabFontTextBox.Text);
+            previewButtonFontLabel.Font = (Font)_fontConverter.ConvertFromString(buttonFontTextBox.Text);
+            previewLabelFontLabel.Font = (Font)_fontConverter.ConvertFromString(labelFontTextBox.Text);
+            previewTextBoxFontLabel.Font = (Font)_fontConverter.ConvertFromString(textBoxFontTextBox.Text);
         }
 
         /// <summary>
@@ -929,6 +937,14 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// BonDriver削除処理
+        /// </summary>
+        private void deleteBonDriverButton_Click(object sender, EventArgs e)
+        {
+            _tunerNameListViewManager.DeleteSelectedBonDriver();
+        }
+
+        /// <summary>
         /// TVTest参照ボタン押下処理
         /// ファイル選択ダイアログを開く。
         /// </summary>
@@ -1095,7 +1111,8 @@ namespace RockbarForEDCB
         /// </summary>
         private void selectTabFontButton_Click(object sender, EventArgs e)
         {
-            SelectFontFor(tabFontTextBox);
+            SelectFontFor(tabFontTextBox,
+                font => previewTabFontLabel.Font = font);
         }
 
         /// <summary>
@@ -1103,7 +1120,8 @@ namespace RockbarForEDCB
         /// </summary>
         private void selectButtonFontButton_Click(object sender, EventArgs e)
         {
-            SelectFontFor(buttonFontTextBox);
+            SelectFontFor(buttonFontTextBox,
+                font => previewButtonFontLabel.Font = font);
         }
 
         /// <summary>
@@ -1111,7 +1129,8 @@ namespace RockbarForEDCB
         /// </summary>
         private void selectLabelFontButton_Click(object sender, EventArgs e)
         {
-            SelectFontFor(labelFontTextBox);
+            SelectFontFor(labelFontTextBox,
+                font => previewLabelFontLabel.Font = font);
         }
 
         /// <summary>
@@ -1119,7 +1138,8 @@ namespace RockbarForEDCB
         /// </summary>
         private void selectTextBoxFontButton_Click(object sender, EventArgs e)
         {
-            SelectFontFor(textBoxFontTextBox);
+            SelectFontFor(textBoxFontTextBox,
+                font => previewTextBoxFontLabel.Font = font);
         }
 
         /// <summary>

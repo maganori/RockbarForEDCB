@@ -144,6 +144,7 @@ namespace RockbarForEDCB
             this.recServiceDataCaptionCheckBox = new System.Windows.Forms.CheckBox();
             this.useRockbarReserveAddCheckBox = new System.Windows.Forms.CheckBox();
             this.tunerTabPage = new System.Windows.Forms.TabPage();
+            this.deleteBonDriverButton = new System.Windows.Forms.Button();
             this.tunerNameLabel = new System.Windows.Forms.Label();
             this.tunerNameNoteLabel = new System.Windows.Forms.Label();
             this.updateTunerNameButton = new System.Windows.Forms.Button();
@@ -300,6 +301,10 @@ namespace RockbarForEDCB
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
+            this.previewTabFontLabel = new System.Windows.Forms.Label();
+            this.previewButtonFontLabel = new System.Windows.Forms.Label();
+            this.previewLabelFontLabel = new System.Windows.Forms.Label();
+            this.previewTextBoxFontLabel = new System.Windows.Forms.Label();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
@@ -1312,6 +1317,7 @@ namespace RockbarForEDCB
             // 
             // tunerTabPage
             // 
+            this.tunerTabPage.Controls.Add(this.deleteBonDriverButton);
             this.tunerTabPage.Controls.Add(this.tunerNameLabel);
             this.tunerTabPage.Controls.Add(this.tunerNameNoteLabel);
             this.tunerTabPage.Controls.Add(this.updateTunerNameButton);
@@ -1323,6 +1329,16 @@ namespace RockbarForEDCB
             this.tunerTabPage.TabIndex = 5;
             this.tunerTabPage.Text = "チューナー名";
             this.tunerTabPage.UseVisualStyleBackColor = true;
+            // 
+            // deleteBonDriverButton
+            // 
+            this.deleteBonDriverButton.Location = new System.Drawing.Point(625, 57);
+            this.deleteBonDriverButton.Name = "deleteBonDriverButton";
+            this.deleteBonDriverButton.Size = new System.Drawing.Size(108, 23);
+            this.deleteBonDriverButton.TabIndex = 28;
+            this.deleteBonDriverButton.Text = "BonDriver削除";
+            this.deleteBonDriverButton.UseVisualStyleBackColor = true;
+            this.deleteBonDriverButton.Click += new System.EventHandler(this.deleteBonDriverButton_Click);
             // 
             // tunerNameLabel
             // 
@@ -1336,12 +1352,12 @@ namespace RockbarForEDCB
             // tunerNameNoteLabel
             // 
             this.tunerNameNoteLabel.AutoSize = true;
-            this.tunerNameNoteLabel.Location = new System.Drawing.Point(475, 60);
+            this.tunerNameNoteLabel.Location = new System.Drawing.Point(471, 101);
             this.tunerNameNoteLabel.Name = "tunerNameNoteLabel";
-            this.tunerNameNoteLabel.Size = new System.Drawing.Size(317, 48);
+            this.tunerNameNoteLabel.Size = new System.Drawing.Size(317, 60);
             this.tunerNameNoteLabel.TabIndex = 26;
-            this.tunerNameNoteLabel.Text = "※チューナー一覧に表示名+連番(チューナーID下位2byte)で表示\r\n\r\nデフォルトでBonDriver名から推測した表示名を当て込んでいます。\r\nあっていない" +
-    "場合もあるので適宜更新してください。";
+            this.tunerNameNoteLabel.Text = "※チューナー一覧に表示名+連番(チューナーID下位2byte)で表示\r\nデフォルトでBonDriver名から推測した表示名を当て込んでいます。\r\n\r\n古いBonD" +
+    "riverが残った場合は、\r\n対象にフォーカスを当ててBonDriver削除ボタンを押して下さい";
             // 
             // updateTunerNameButton
             // 
@@ -2545,6 +2561,10 @@ namespace RockbarForEDCB
             // 
             // controlUiFontColorTabPage
             // 
+            this.controlUiFontColorTabPage.Controls.Add(this.previewTextBoxFontLabel);
+            this.controlUiFontColorTabPage.Controls.Add(this.previewLabelFontLabel);
+            this.controlUiFontColorTabPage.Controls.Add(this.previewButtonFontLabel);
+            this.controlUiFontColorTabPage.Controls.Add(this.previewTabFontLabel);
             this.controlUiFontColorTabPage.Controls.Add(this.tabFontLabel);
             this.controlUiFontColorTabPage.Controls.Add(this.tabFontTextBox);
             this.controlUiFontColorTabPage.Controls.Add(this.selectTabFontButton);
@@ -2888,6 +2908,42 @@ namespace RockbarForEDCB
             this.fontDialog.MinSize = 6;
             this.fontDialog.ShowEffects = false;
             // 
+            // previewTabFontLabel
+            // 
+            this.previewTabFontLabel.AutoSize = true;
+            this.previewTabFontLabel.Location = new System.Drawing.Point(551, 15);
+            this.previewTabFontLabel.Name = "previewTabFontLabel";
+            this.previewTabFontLabel.Size = new System.Drawing.Size(109, 12);
+            this.previewTabFontLabel.TabIndex = 65;
+            this.previewTabFontLabel.Text = "タブのフォントプレビュー";
+            // 
+            // previewButtonFontLabel
+            // 
+            this.previewButtonFontLabel.AutoSize = true;
+            this.previewButtonFontLabel.Location = new System.Drawing.Point(551, 53);
+            this.previewButtonFontLabel.Name = "previewButtonFontLabel";
+            this.previewButtonFontLabel.Size = new System.Drawing.Size(119, 12);
+            this.previewButtonFontLabel.TabIndex = 66;
+            this.previewButtonFontLabel.Text = "ボタンのフォントプレビュー";
+            // 
+            // previewLabelFontLabel
+            // 
+            this.previewLabelFontLabel.AutoSize = true;
+            this.previewLabelFontLabel.Location = new System.Drawing.Point(551, 91);
+            this.previewLabelFontLabel.Name = "previewLabelFontLabel";
+            this.previewLabelFontLabel.Size = new System.Drawing.Size(120, 12);
+            this.previewLabelFontLabel.TabIndex = 67;
+            this.previewLabelFontLabel.Text = "ラベルのフォントプレビュー";
+            // 
+            // previewTextBoxFontLabel
+            // 
+            this.previewTextBoxFontLabel.AutoSize = true;
+            this.previewTextBoxFontLabel.Location = new System.Drawing.Point(551, 129);
+            this.previewTextBoxFontLabel.Name = "previewTextBoxFontLabel";
+            this.previewTextBoxFontLabel.Size = new System.Drawing.Size(162, 12);
+            this.previewTextBoxFontLabel.TabIndex = 68;
+            this.previewTextBoxFontLabel.Text = "テキストボックスのフォントプレビュー";
+            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -3193,5 +3249,10 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox useRockbarReserveModCheckBox;
         private System.Windows.Forms.CheckBox useRockbarReserveDelConfirmCheckBox;
         private System.Windows.Forms.Label useRockbarReserveLabel;
+        private System.Windows.Forms.Button deleteBonDriverButton;
+        private System.Windows.Forms.Label previewTextBoxFontLabel;
+        private System.Windows.Forms.Label previewLabelFontLabel;
+        private System.Windows.Forms.Label previewButtonFontLabel;
+        private System.Windows.Forms.Label previewTabFontLabel;
     }
 }

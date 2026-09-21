@@ -153,6 +153,7 @@ namespace RockbarForEDCB
         private readonly ListView _tunerNameListView;
 
         private readonly ListViewItemComparer _listViewSorter;
+        private const int _tunerIdColumnIndex = 1;
         private const int _bonDriverNameColumnIndex = 2;
         private const int _tunerNameColumnIndex = 3;
 
@@ -282,6 +283,20 @@ namespace RockbarForEDCB
             if (_tunerNameListView.SelectedItems.Count > 0)
             {
                 _tunerNameListView.SelectedItems[0].SubItems[_tunerNameColumnIndex].Text = sourceTextBox.Text;
+            }
+        }
+
+        /// <summary>
+        /// 選択されている未使用のBonDriverを削除
+        /// </summary>
+        public void DeleteSelectedBonDriver()
+        {
+            if (_tunerNameListView.SelectedItems.Count > 0
+                && _tunerNameListView.SelectedItems[0].SubItems[_tunerIdColumnIndex].Text == "")
+            {
+                // 選択中の行を削除
+                ListViewItem selectedItem = _tunerNameListView.SelectedItems[0];
+                _tunerNameListView.Items.Remove(selectedItem);
             }
         }
     }
