@@ -38,7 +38,10 @@ namespace RockbarForEDCB
         // CtrlCmdUtil
         private CtrlCmdUtil _ctrlCmdUtil = new CtrlCmdUtil();
 
-        // TVTest管理マネージャー
+        // SettingForm
+        private SettingForm _settingForm = null;
+
+        // TVTestマネージャー
         private TVTestManager _tvtestManager;
 
         // マウスのクリック位置を記憶
@@ -118,7 +121,8 @@ namespace RockbarForEDCB
             {
                 _canConnect = false;
                 MessageBox.Show(
-                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\nオプション設定を見直してアプリケーションを再起動してください。\n\nErrCode: {errCode}",
+                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
+                    $"オプション設定を見直してアプリケーションを再起動してください。\n\nErrCode: {errCode}",
                     "EpgTimerSrv接続チェック失敗",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
@@ -685,16 +689,63 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void settingButton_Click(object sender, EventArgs e)
         {
-            SettingForm settingForm = new SettingForm(_ctrlCmdUtil, _canConnect);
-            DialogResult result = settingForm.ShowDialog();
-            settingForm.Dispose();
+            OpenSettingForm();
+        }
 
-            if (result == DialogResult.OK)
+        /// <summary>
+        /// 設定フォームをモーダレスで開く（既に開いている場合はフォーカスを移動）
+        /// </summary>
+        private void OpenSettingForm()
+        {
+            if (_settingForm == null || _settingForm.IsDisposed)
             {
-                _configManager.LoadFromFile();
-                ApplySetting();
-                RefreshList(true, true, true);
+                _settingForm = new SettingForm(_ctrlCmdUtil, _canConnect);
+
+                // 「設定適用」、「設定保存」ボタンが押されたときのイベントをハンドリング
+                _settingForm.ApplyRequested += SettingForm_ApplyRequested;
+
+                // モーダレスで表示（MainFormの操作が可能）
+                _settingForm.Show(this);
             }
+            else
+            {
+                // 既に開いている場合は前面に移動してフォーカス
+                if (_settingForm.WindowState == FormWindowState.Minimized)
+                {
+                    _settingForm.WindowState = FormWindowState.Normal;
+                }
+                _settingForm.Activate();
+            }
+        }
+
+        /// <summary>
+        /// SettingForm の「設定適用」、「設定保存」ボタンが押された際のイベントハンドラー
+        /// </summary>
+        private void SettingForm_ApplyRequested(object sender, EventArgs e)
+        {
+            ApplyConfigAndRefresh();
+        }
+
+        /// <summary>
+        /// 設定ファイルを再読み込みし、MainForm全体の表示および動作設定を再反映する
+        /// </summary>
+        public void ApplyConfigAndRefresh()
+        {
+            _configManager.LoadFromFile();
+
+            // TCP/IPおよびPipe通信モードの再設定
+            if (_configManager.RockbarSetting.UseTcpIp)
+            {
+                _ctrlCmdUtil.SetSendMode(true);
+                _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
+            }
+            else
+            {
+                _ctrlCmdUtil.SetSendMode(false);
+            }
+
+            ApplySetting();
+            RefreshList(true, true, true);
         }
 
         /// <summary>
@@ -743,6 +794,15 @@ namespace RockbarForEDCB
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        /// <summary>
+        /// タスクトレイ設定コンテキストメニュークリック処理
+        /// 設定フォームを開く。
+        /// </summary>
+        private void openSettingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenSettingForm();
         }
 
         /// <summary>
