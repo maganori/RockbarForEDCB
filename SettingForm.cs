@@ -44,6 +44,11 @@ namespace RockbarForEDCB
         private readonly TypeConverter _colorConverter = TypeDescriptor.GetConverter(typeof(Color));
 
         /// <summary>
+        /// 設定が適用されたときに発生するイベント
+        /// </summary>
+        public event EventHandler ApplyRequested;
+
+        /// <summary>
         /// コンストラクタ
         /// 設定ファイルを読み込み画面表示する。
         /// </summary>
@@ -55,7 +60,7 @@ namespace RockbarForEDCB
 
             _ctrlCmdUtil = ctrlCmdUtil;
 
-            // セッティングを読み込んで画面表示
+            // ConfigManagerで設定を読み込み
             _configManager = new ConfigManager();
 
             // サービス一覧取得
@@ -85,6 +90,18 @@ namespace RockbarForEDCB
             // チューナー名タブ用のオブジェクト作成
             _tunerNameListViewManager = new TunerNameListViewManager(_configManager, _tunerReserveInfos, tunerNameListView);
 
+            // ConfigManagerの全ての設定を読み込み
+            LoadAllSettings();
+
+            // コントロールUIのフォント設定を適用
+            ApplyUiFontSettings();
+        }
+
+        /// <summary>
+        /// ConfigManagerの全ての設定を読み込むヘルパー
+        /// </summary>
+        private void LoadAllSettings()
+        {
             // EDCB連携設定の読み込み
             LoadEdcbLinkageSettings();
 
@@ -114,9 +131,6 @@ namespace RockbarForEDCB
 
             // その他設定の読み込み
             LoadOtherSettings();
-
-            // コントロールUIのフォント設定を適用
-            ApplyUiFontSettings();
         }
 
         /// <summary>
@@ -142,6 +156,10 @@ namespace RockbarForEDCB
             webEpgUrlTextBox.Text = _configManager.RockbarSetting.WebEpgUrl;
             webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
             recInfoWebLinkUrlTextBox.Text = _configManager.RockbarSetting.RecInfoWebLinkUrl;
+
+            // EDCB連携画面の初期表示時の有効/無効状態を反映
+            ApplyUseTcpIpCheckBoxState();
+            ApplyUseWebLinkCheckBoxState();
         }
 
         /// <summary>
@@ -225,11 +243,11 @@ namespace RockbarForEDCB
             recCommentTextBox.Text = _configManager.RockbarSetting.RecComment;
 
             // 予約画面の初期表示時の有効/無効状態を反映
-            UpdateEdcbReserveSettingControlsEnableState();
-            UpdateUseRockbarReserveDelConfirmControlsEnableState();
-            UpdateMarginControlsEnableState();
-            UpdateServiceDataControlsEnableState();
-            UpdatePostRecActionControlsEnableState();
+            ApplyUseRockbarReserveAddCheckBoxState();
+            ApplyUseRockbarReserveDelCheckBoxState();
+            ApplyDefaultMarginCheckBoxState();
+            ApplyDefaultServiceDataCheckBoxState();
+            ApplyDefaultPostRecActionCheckBoxState();
         }
 
         /// <summary>
@@ -278,6 +296,9 @@ namespace RockbarForEDCB
             {
                 autoCloseMarginNumericUpDown.Value = _configManager.RockbarSetting.AutoCloseMargin;
             }
+
+            // TVTest連携画面の初期表示時の有効/無効状態を反映
+            ApplyIsAutoOpenTvtestCheckBoxState();
         }
 
         /// <summary>
@@ -409,10 +430,62 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// 設定保存ボタン押下処理
+        /// 設定ファイルに保存し、フォームを閉じる
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void applyButton_Click(object sender, EventArgs e)
+        private void applyCloseButton_Click(object sender, EventArgs e)
+        {
+            // 各設定をConfigManagerに保存
+            SaveAllSettings();
+
+            // 設定ファイルに書き込み
+            _configManager.SaveFromFile();
+
+            // MainForm側に適用通知を出す
+            ApplyRequested?.Invoke(this, EventArgs.Empty);
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        /// <summary>
+        /// 設定適用ボタン押下処理
+        /// 設定ファイルに保存し、反映する（フォームは閉じない）
+        /// </summary>
+        private async void applyButton_Click(object sender, EventArgs e)
+        {
+            // ボタンを無効化して連続クリックを防止
+            applyButton.Enabled = false;
+
+            try
+            {
+                // 全ての設定をConfigManagerに保存する
+                SaveAllSettings();
+
+                // 設定ファイルに書き込み
+                _configManager.SaveFromFile();
+
+                // MainForm側に適用通知を出す
+                ApplyRequested?.Invoke(this, EventArgs.Empty);
+
+                // SettingForm自身最新状態を画面に反映
+                ApplyUiFontSettings();
+
+                // 1秒間（1000ミリ秒）待機
+                await Task.Delay(1000);
+            }
+            finally
+            {
+                // 例外が発生しても必ずボタンを再度有効化する
+                applyButton.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// 全ての設定をConfigManagerに保存するヘルパー
+        /// </summary>
+        private void SaveAllSettings()
         {
             // EDCB連携設定の保存
             SaveEdcbLinkageSettings();
@@ -443,12 +516,6 @@ namespace RockbarForEDCB
 
             // その他設定の保存
             SaveOtherSettings();
-
-            // 設定ファイルに書き込み
-            _configManager.SaveFromFile();
-
-            this.DialogResult = DialogResult.OK;
-            this.Close();
         }
 
         /// <summary>
@@ -641,27 +708,54 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.TaskTrayIconRightDoubleClick = taskTrayIconRightDoubleClickComboBox.SelectedItem.ToString() ?? "";
         }
 
-        // 「予約追加」チェックボックスの制御
+        // 「EDCBとの通信にTCP/IPを使用する」チェックボックスの変更検知
+        private void useTcpIpCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyUseTcpIpCheckBoxState();
+        }
+
+        //// 「EDCBとの通信にTCP/IPを使用する」チェックボックスがOFFの場合は、予約内容全体が入力不可
+        private void ApplyUseTcpIpCheckBoxState()
+        {
+            ipAddressTextBox.Enabled = useTcpIpCheckBox.Checked;
+            portNumberNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
+        }
+
+        // 「Web番組表機能(WebUI)を使用する」チェックボックスの変更検知
+        private void useWebLinkCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyUseWebLinkCheckBoxState();
+        }
+
+        //// 「Web番組表機能(WebUI)を使用する」チェックボックスがOFFの場合は、URL全体が入力不可
+        private void ApplyUseWebLinkCheckBoxState()
+        {
+            webEpgUrlTextBox.Enabled = useWebLinkCheckBox.Checked;
+            webLinkUrlTextBox.Enabled = useWebLinkCheckBox.Checked;
+            recInfoWebLinkUrlTextBox.Enabled = useWebLinkCheckBox.Checked;
+        }
+
+        // 「予約追加」チェックボックスの変更検知
         private void useRockbarReserveAddCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            UpdateEdcbReserveSettingControlsEnableState();
+            ApplyUseRockbarReserveAddCheckBoxState();
         }
 
         // 「予約追加」チェックボックスがONの場合は、予約内容全体が入力不可
-        private void UpdateEdcbReserveSettingControlsEnableState()
+        private void ApplyUseRockbarReserveAddCheckBoxState()
         {
             // チェックが入っていない場合は GroupBox 全体を編集不可 (Enabled = false)
             edcbReserveSettingGroupBox.Enabled = useRockbarReserveAddCheckBox.Checked;
         }
 
-        // 「予約削除」チェックボックスの制御
+        // 「予約削除」チェックボックスの変更検知
         private void useRockbarReserveDelCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            UpdateUseRockbarReserveDelConfirmControlsEnableState();
+            ApplyUseRockbarReserveDelCheckBoxState();
         }
 
         // 「予約削除」チェックボックスがONの場合は、「削除前確認表示」が入力不可
-        private void UpdateUseRockbarReserveDelConfirmControlsEnableState()
+        private void ApplyUseRockbarReserveDelCheckBoxState()
         {
             // チェックされている場合は入力不可 (Enabled = false)
             bool isInputEnabled = useRockbarReserveDelCheckBox.Checked;
@@ -669,14 +763,14 @@ namespace RockbarForEDCB
             useRockbarReserveDelConfirmCheckBox.Enabled = isInputEnabled;
         }
 
-        // 録画マージンのデフォルトチェックボックスの制御
+        // 録画マージンのデフォルトチェックボックスの変更検知
         private void defaultMarginCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            UpdateMarginControlsEnableState();
+            ApplyDefaultMarginCheckBoxState();
         }
 
         // 録画マージンのデフォルトチェックボックスがONの場合は開始、終了の入力は不可
-        private void UpdateMarginControlsEnableState()
+        private void ApplyDefaultMarginCheckBoxState()
         {
             // チェックされている場合は入力不可 (Enabled = false)
             bool isInputEnabled = !useDefaultRecMarginCheckBox.Checked;
@@ -685,15 +779,15 @@ namespace RockbarForEDCB
             endRecMarginNumericUpDown.Enabled = isInputEnabled;
         }
 
-        // サービス対象データのデフォルトチェックボックスの制御
+        // サービス対象データのデフォルトチェックボックスの変更検知
         private void defaultServiceDataCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            UpdateServiceDataControlsEnableState();
+            ApplyDefaultServiceDataCheckBoxState();
         }
 
         // サービス対象データの「デフォルト」チェックボックスがONの場合は、
         // 「字幕を含める」と「データカルーセルを含める」は入力不可
-        private void UpdateServiceDataControlsEnableState()
+        private void ApplyDefaultServiceDataCheckBoxState()
         {
             // チェックされている場合は入力不可 (Enabled = false)
             bool isInputEnabled = !useDefaultRecServiceDataCheckBox.Checked;
@@ -702,15 +796,15 @@ namespace RockbarForEDCB
             recServiceDataCarouselCheckBox.Enabled = isInputEnabled;
         }
 
-        // 録画後動作のデフォルトチェックボックスの制御
+        // 録画後動作のデフォルトチェックボックスの変更検知
         private void defaultPostRecActionCheckBox_CheckedChanged(object sender, EventArgs e)
         {
-            UpdatePostRecActionControlsEnableState();
+            ApplyDefaultPostRecActionCheckBoxState();
         }
 
         // 録画後動作の「デフォルト」チェックボックスがONの場合は、
         // 各ラジオボタンと「復帰後再起動する」チェックボックスは入力不可
-        private void UpdatePostRecActionControlsEnableState()
+        private void ApplyDefaultPostRecActionCheckBoxState()
         {
             // チェックが入っている場合は編集不可 (Enabled = false)
             bool isInputEnabled = !defaultSuspendModeAfterRecCheckBox.Checked;
@@ -720,6 +814,20 @@ namespace RockbarForEDCB
             afterRecSuspendRadioButton.Enabled = isInputEnabled;
             afterRecShutdownRadioButton.Enabled = isInputEnabled;
             rebootAfterReturnCheckBox.Enabled = isInputEnabled;
+        }
+
+        // 「予約時間に合わせてTVTestを自動起動／終了する」チェックボックスの変更検知
+        private void isAutoOpenTvtestCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyIsAutoOpenTvtestCheckBoxState();
+        }
+
+        //// 「予約時間に合わせてTVTestを自動起動／終了する」チェックボックスがOFFの場合は設定不可
+        private void ApplyIsAutoOpenTvtestCheckBoxState()
+        {
+            autoStartTargetGroupBox.Enabled = isAutoOpenTvtestCheckBox.Checked;
+            autoOpenMarginNumericUpDown.Enabled = isAutoOpenTvtestCheckBox.Checked;
+            autoCloseMarginNumericUpDown.Enabled = isAutoOpenTvtestCheckBox.Checked;
         }
 
         /// <summary>

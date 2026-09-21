@@ -323,26 +323,26 @@
             this.openSettingToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.taskTrayContextMenuStrip.Name = "taskTrayContextMenuStrip";
-            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(152, 70);
+            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(181, 92);
             // 
             // openWebEpgTopToolStripMenuItem
             // 
             this.openWebEpgTopToolStripMenuItem.Name = "openWebEpgTopToolStripMenuItem";
-            this.openWebEpgTopToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.openWebEpgTopToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openWebEpgTopToolStripMenuItem.Text = "テレビ番組表";
             this.openWebEpgTopToolStripMenuItem.Click += new System.EventHandler(this.openWebEpgTopToolStripMenuItem_Click);
             // 
             // openSettingToolStripMenuItem
             // 
             this.openSettingToolStripMenuItem.Name = "openSettingToolStripMenuItem";
-            this.openSettingToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.openSettingToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openSettingToolStripMenuItem.Text = "設定";
-            this.openSettingToolStripMenuItem.Click += new System.EventHandler(this.settingButton_Click);
+            this.openSettingToolStripMenuItem.Click += new System.EventHandler(this.openSettingToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.exitToolStripMenuItem.Text = "Rockbarの終了";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 

@@ -50,6 +50,7 @@ namespace RockbarForEDCB
             System.Windows.Forms.ListViewItem listViewItem10 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  ×  予約不可番組");
             System.Windows.Forms.ListViewItem listViewItem11 = new System.Windows.Forms.ListViewItem("01/01 00:00～00:00  無  無効予約番組");
             this.cancelButton = new System.Windows.Forms.Button();
+            this.applyCloseButton = new System.Windows.Forms.Button();
             this.applyButton = new System.Windows.Forms.Button();
             this.allServiceListView = new System.Windows.Forms.ListView();
             this.allServiceMarkColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -269,6 +270,10 @@ namespace RockbarForEDCB
             this.menuFontTextBox = new System.Windows.Forms.TextBox();
             this.selectMenuFontButton = new System.Windows.Forms.Button();
             this.controlUiFontColorTabPage = new System.Windows.Forms.TabPage();
+            this.previewTextBoxFontLabel = new System.Windows.Forms.Label();
+            this.previewLabelFontLabel = new System.Windows.Forms.Label();
+            this.previewButtonFontLabel = new System.Windows.Forms.Label();
+            this.previewTabFontLabel = new System.Windows.Forms.Label();
             this.tabFontLabel = new System.Windows.Forms.Label();
             this.tabFontTextBox = new System.Windows.Forms.TextBox();
             this.selectTabFontButton = new System.Windows.Forms.Button();
@@ -301,10 +306,6 @@ namespace RockbarForEDCB
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
-            this.previewTabFontLabel = new System.Windows.Forms.Label();
-            this.previewButtonFontLabel = new System.Windows.Forms.Label();
-            this.previewLabelFontLabel = new System.Windows.Forms.Label();
-            this.previewTextBoxFontLabel = new System.Windows.Forms.Label();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
@@ -339,13 +340,23 @@ namespace RockbarForEDCB
             this.cancelButton.UseVisualStyleBackColor = true;
             this.cancelButton.Click += new System.EventHandler(this.cancelButton_Click);
             // 
+            // applyCloseButton
+            // 
+            this.applyCloseButton.Location = new System.Drawing.Point(630, 419);
+            this.applyCloseButton.Name = "applyCloseButton";
+            this.applyCloseButton.Size = new System.Drawing.Size(75, 23);
+            this.applyCloseButton.TabIndex = 1;
+            this.applyCloseButton.Text = "設定保存";
+            this.applyCloseButton.UseVisualStyleBackColor = true;
+            this.applyCloseButton.Click += new System.EventHandler(this.applyCloseButton_Click);
+            // 
             // applyButton
             // 
-            this.applyButton.Location = new System.Drawing.Point(630, 419);
+            this.applyButton.Location = new System.Drawing.Point(534, 419);
             this.applyButton.Name = "applyButton";
             this.applyButton.Size = new System.Drawing.Size(75, 23);
-            this.applyButton.TabIndex = 1;
-            this.applyButton.Text = "設定保存";
+            this.applyButton.TabIndex = 2;
+            this.applyButton.Text = "設定適用";
             this.applyButton.UseVisualStyleBackColor = true;
             this.applyButton.Click += new System.EventHandler(this.applyButton_Click);
             // 
@@ -629,6 +640,7 @@ namespace RockbarForEDCB
             this.useTcpIpCheckBox.TabIndex = 0;
             this.useTcpIpCheckBox.Text = "EDCBとの通信にTCP/IPを使用する";
             this.useTcpIpCheckBox.UseVisualStyleBackColor = true;
+            this.useTcpIpCheckBox.CheckedChanged += new System.EventHandler(this.useTcpIpCheckBox_CheckedChanged);
             // 
             // useWebLinkCheckBox
             // 
@@ -639,6 +651,7 @@ namespace RockbarForEDCB
             this.useWebLinkCheckBox.TabIndex = 3;
             this.useWebLinkCheckBox.Text = "Web番組表機能(WebUI)を使用する";
             this.useWebLinkCheckBox.UseVisualStyleBackColor = true;
+            this.useWebLinkCheckBox.CheckedChanged += new System.EventHandler(this.useWebLinkCheckBox_CheckedChanged);
             // 
             // ipAddressLabel
             // 
@@ -1875,6 +1888,7 @@ namespace RockbarForEDCB
             this.isAutoOpenTvtestCheckBox.TabIndex = 6;
             this.isAutoOpenTvtestCheckBox.Text = "予約時間に合わせてTVTestを自動起動／終了する";
             this.isAutoOpenTvtestCheckBox.UseVisualStyleBackColor = true;
+            this.isAutoOpenTvtestCheckBox.CheckedChanged += new System.EventHandler(this.isAutoOpenTvtestCheckBox_CheckedChanged);
             // 
             // tvTestNoteLabel
             // 
@@ -2585,6 +2599,42 @@ namespace RockbarForEDCB
             this.controlUiFontColorTabPage.Text = "フォント(コントロールUI)";
             this.controlUiFontColorTabPage.UseVisualStyleBackColor = true;
             // 
+            // previewTextBoxFontLabel
+            // 
+            this.previewTextBoxFontLabel.AutoSize = true;
+            this.previewTextBoxFontLabel.Location = new System.Drawing.Point(551, 129);
+            this.previewTextBoxFontLabel.Name = "previewTextBoxFontLabel";
+            this.previewTextBoxFontLabel.Size = new System.Drawing.Size(162, 12);
+            this.previewTextBoxFontLabel.TabIndex = 68;
+            this.previewTextBoxFontLabel.Text = "テキストボックスのフォントプレビュー";
+            // 
+            // previewLabelFontLabel
+            // 
+            this.previewLabelFontLabel.AutoSize = true;
+            this.previewLabelFontLabel.Location = new System.Drawing.Point(551, 91);
+            this.previewLabelFontLabel.Name = "previewLabelFontLabel";
+            this.previewLabelFontLabel.Size = new System.Drawing.Size(120, 12);
+            this.previewLabelFontLabel.TabIndex = 67;
+            this.previewLabelFontLabel.Text = "ラベルのフォントプレビュー";
+            // 
+            // previewButtonFontLabel
+            // 
+            this.previewButtonFontLabel.AutoSize = true;
+            this.previewButtonFontLabel.Location = new System.Drawing.Point(551, 53);
+            this.previewButtonFontLabel.Name = "previewButtonFontLabel";
+            this.previewButtonFontLabel.Size = new System.Drawing.Size(119, 12);
+            this.previewButtonFontLabel.TabIndex = 66;
+            this.previewButtonFontLabel.Text = "ボタンのフォントプレビュー";
+            // 
+            // previewTabFontLabel
+            // 
+            this.previewTabFontLabel.AutoSize = true;
+            this.previewTabFontLabel.Location = new System.Drawing.Point(551, 15);
+            this.previewTabFontLabel.Name = "previewTabFontLabel";
+            this.previewTabFontLabel.Size = new System.Drawing.Size(109, 12);
+            this.previewTabFontLabel.TabIndex = 65;
+            this.previewTabFontLabel.Text = "タブのフォントプレビュー";
+            // 
             // tabFontLabel
             // 
             this.tabFontLabel.AutoSize = true;
@@ -2908,42 +2958,6 @@ namespace RockbarForEDCB
             this.fontDialog.MinSize = 6;
             this.fontDialog.ShowEffects = false;
             // 
-            // previewTabFontLabel
-            // 
-            this.previewTabFontLabel.AutoSize = true;
-            this.previewTabFontLabel.Location = new System.Drawing.Point(551, 15);
-            this.previewTabFontLabel.Name = "previewTabFontLabel";
-            this.previewTabFontLabel.Size = new System.Drawing.Size(109, 12);
-            this.previewTabFontLabel.TabIndex = 65;
-            this.previewTabFontLabel.Text = "タブのフォントプレビュー";
-            // 
-            // previewButtonFontLabel
-            // 
-            this.previewButtonFontLabel.AutoSize = true;
-            this.previewButtonFontLabel.Location = new System.Drawing.Point(551, 53);
-            this.previewButtonFontLabel.Name = "previewButtonFontLabel";
-            this.previewButtonFontLabel.Size = new System.Drawing.Size(119, 12);
-            this.previewButtonFontLabel.TabIndex = 66;
-            this.previewButtonFontLabel.Text = "ボタンのフォントプレビュー";
-            // 
-            // previewLabelFontLabel
-            // 
-            this.previewLabelFontLabel.AutoSize = true;
-            this.previewLabelFontLabel.Location = new System.Drawing.Point(551, 91);
-            this.previewLabelFontLabel.Name = "previewLabelFontLabel";
-            this.previewLabelFontLabel.Size = new System.Drawing.Size(120, 12);
-            this.previewLabelFontLabel.TabIndex = 67;
-            this.previewLabelFontLabel.Text = "ラベルのフォントプレビュー";
-            // 
-            // previewTextBoxFontLabel
-            // 
-            this.previewTextBoxFontLabel.AutoSize = true;
-            this.previewTextBoxFontLabel.Location = new System.Drawing.Point(551, 129);
-            this.previewTextBoxFontLabel.Name = "previewTextBoxFontLabel";
-            this.previewTextBoxFontLabel.Size = new System.Drawing.Size(162, 12);
-            this.previewTextBoxFontLabel.TabIndex = 68;
-            this.previewTextBoxFontLabel.Text = "テキストボックスのフォントプレビュー";
-            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -2951,6 +2965,7 @@ namespace RockbarForEDCB
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.settingTabControl);
             this.Controls.Add(this.cancelButton);
+            this.Controls.Add(this.applyCloseButton);
             this.Controls.Add(this.applyButton);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "SettingForm";
@@ -2999,6 +3014,7 @@ namespace RockbarForEDCB
         #endregion
 
         private System.Windows.Forms.Button cancelButton;
+        private System.Windows.Forms.Button applyCloseButton;
         private System.Windows.Forms.Button applyButton;
         private System.Windows.Forms.ListView allServiceListView;
         private System.Windows.Forms.Button addSelectedServiceButton;
