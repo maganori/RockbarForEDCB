@@ -73,15 +73,6 @@ namespace RockbarForEDCB
             // ConfigManagerのインスタンス化
             _configManager = new ConfigManager();
 
-            // コンフィグファイルにwidth, height指定時のみ前回位置・サイズ・スプリッタ位置で起動
-            if (_configManager.RockbarSetting.Width != 0 && _configManager.RockbarSetting.Height != 0)
-            {
-                this.StartPosition = FormStartPosition.Manual;
-                this.Location = new Point(_configManager.RockbarSetting.X, _configManager.RockbarSetting.Y);
-                this.Size = new Size(_configManager.RockbarSetting.Width, _configManager.RockbarSetting.Height);
-                splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
-            }
-
             // EpgDataManagerのインスタンス化
             _epgDataManager = new EpgDataManager(_ctrlCmdUtil);
 
@@ -104,6 +95,15 @@ namespace RockbarForEDCB
 
             // 設定反映
             ApplySetting();
+
+            // コンフィグファイルにwidth, height指定時のみ前回位置・サイズ・スプリッタ位置で起動
+            if (_configManager.RockbarSetting.Width != 0 && _configManager.RockbarSetting.Height != 0)
+            {
+                this.StartPosition = FormStartPosition.Manual;
+                this.Location = new Point(_configManager.RockbarSetting.X, _configManager.RockbarSetting.Y);
+                this.Size = new Size(_configManager.RockbarSetting.Width, _configManager.RockbarSetting.Height);
+                splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
+            }
 
             if (_configManager.RockbarSetting.UseTcpIp) {
                 // TCP/IP通信にする
@@ -226,28 +226,58 @@ namespace RockbarForEDCB
 
             // フォント
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            Font font = (Font) fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
+            Font mainFormFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MainFormFont);
+            Font listFont = (Font) fontConverter.ConvertFromString(_configManager.RockbarSetting.ListFont);
             Font menuFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
             Font tabFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TabFont);
-            Font buttonFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.ButtonFont);
-            Font labelFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.LabelFont);
             Font textBoxFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TextBoxFont);
+            Font buttonFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.ButtonFont);
 
-            mainListView.Font = font;
-            subListView.Font = font;
+            // OSによるDPI変更(画面拡大)時の考慮
+            if (_configManager.RockbarSetting.UseMainFormFontForScaling)
+            {
+                // 指定したフォントをフォーム全体に設定し、タブやボタンのサイズを変える
+                this.Font = mainFormFont;
+            }
+            else
+            {
+                // システム指定のまま(ボタンの文字が途切れる場合あり)
+                this.Font = SystemFonts.DefaultFont;
+            }
+
+            mainListView.Font = listFont;
+            subListView.Font = listFont;
             listContextMenuStrip.Font = menuFont;
-            mainFormTabControl.Font = tabFont;
-            resetButton.Font = buttonFont;
-            closeButton.Font = buttonFont;
-            filterTextBox.Font = textBoxFont;
-            settingButton.Font = buttonFont;
+
+            if (_configManager.RockbarSetting.UseIndividualMainFormFonts)
+            {
+                mainFormTabControl.Font = tabFont;
+                filterTextBox.Font = textBoxFont;
+                resetButton.Font = buttonFont;
+                settingButton.Font = buttonFont;
+                closeButton.Font = buttonFont;
+            }
+            else
+            {
+                mainFormTabControl.Font = mainFormFont;
+                filterTextBox.Font = mainFormFont;
+                resetButton.Font = mainFormFont;
+                settingButton.Font = mainFormFont;
+                closeButton.Font = mainFormFont;
+            }
+
+            // タブや検索ボックスの位置調整
+            AdjustTopControls();
+
+            // DPI変更(画面拡大)時、最小サイズも伸ばされるためオーバライド
+            this.MinimumSize = new Size(630, 100);
 
             // 色
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
             this.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
 
             mainListView.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
-            mainListView.ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
+            mainListView.ForeColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.ListForeColor);
 
             subListView.BackColor = mainListView.BackColor;
             subListView.ForeColor = mainListView.ForeColor;
@@ -262,6 +292,35 @@ namespace RockbarForEDCB
 
             // 録画済み一覧の最大保持数(表示数)
             _epgDataManager.RecListMaxCount = _configManager.RockbarSetting.RecListMaxCount;
+        }
+
+        /// <summary>
+        /// 上部のタブ・検索ボックス・Resetボタンの位置を調整する
+        /// </summary>
+        private void AdjustTopControls()
+        {
+            int tabWidth = 0;
+
+            foreach (TabPage tabPage in mainFormTabControl.TabPages)
+            {
+                // タブ文字列の幅を取得
+                int textWidth = TextRenderer.MeasureText(
+                    tabPage.Text,
+                    mainFormTabControl.Font
+                ).Width;
+
+                // タブの左右余白を加える
+                tabWidth += textWidth + 15;
+            }
+
+            // TabControl自身の左右の余白を追加
+            mainFormTabControl.Width = tabWidth + 4;
+
+            // 検索ボックスをTabControlの右側へ
+            filterTextBox.Left = mainFormTabControl.Right + 4;
+
+            // Resetボタンを検索ボックスの右側へ
+            resetButton.Left = filterTextBox.Right + 4;
         }
 
         /// <summary>
