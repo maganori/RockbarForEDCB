@@ -153,10 +153,10 @@
             this.mainFormTabControl.Controls.Add(this.newProgramTabPage);
             this.mainFormTabControl.Controls.Add(this.reserveTabPage);
             this.mainFormTabControl.Controls.Add(this.recTabPage);
-            this.mainFormTabControl.Location = new System.Drawing.Point(8, 10);
+            this.mainFormTabControl.Location = new System.Drawing.Point(8, 11);
             this.mainFormTabControl.Name = "mainFormTabControl";
             this.mainFormTabControl.SelectedIndex = 0;
-            this.mainFormTabControl.Size = new System.Drawing.Size(388, 20);
+            this.mainFormTabControl.Size = new System.Drawing.Size(375, 20);
             this.mainFormTabControl.TabIndex = 1;
             this.mainFormTabControl.SelectedIndexChanged += new System.EventHandler(this.mainFormTabControl_SelectedIndexChanged);
             // 
@@ -165,7 +165,7 @@
             this.allTabPage.Location = new System.Drawing.Point(4, 22);
             this.allTabPage.Name = "allTabPage";
             this.allTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.allTabPage.Size = new System.Drawing.Size(380, 0);
+            this.allTabPage.Size = new System.Drawing.Size(367, 0);
             this.allTabPage.TabIndex = 0;
             this.allTabPage.Text = "全て";
             this.allTabPage.UseVisualStyleBackColor = true;
@@ -175,7 +175,7 @@
             this.dttvTabPage.Location = new System.Drawing.Point(4, 22);
             this.dttvTabPage.Name = "dttvTabPage";
             this.dttvTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.dttvTabPage.Size = new System.Drawing.Size(380, 0);
+            this.dttvTabPage.Size = new System.Drawing.Size(367, 0);
             this.dttvTabPage.TabIndex = 1;
             this.dttvTabPage.Text = "地デジ";
             this.dttvTabPage.UseVisualStyleBackColor = true;
@@ -185,7 +185,7 @@
             this.bsTabPage.Location = new System.Drawing.Point(4, 22);
             this.bsTabPage.Name = "bsTabPage";
             this.bsTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.bsTabPage.Size = new System.Drawing.Size(380, 0);
+            this.bsTabPage.Size = new System.Drawing.Size(367, 0);
             this.bsTabPage.TabIndex = 2;
             this.bsTabPage.Text = "BS";
             this.bsTabPage.UseVisualStyleBackColor = true;
@@ -195,7 +195,7 @@
             this.csTabPage.Location = new System.Drawing.Point(4, 22);
             this.csTabPage.Name = "csTabPage";
             this.csTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.csTabPage.Size = new System.Drawing.Size(380, 0);
+            this.csTabPage.Size = new System.Drawing.Size(367, 0);
             this.csTabPage.TabIndex = 3;
             this.csTabPage.Text = "CS";
             this.csTabPage.UseVisualStyleBackColor = true;
@@ -206,7 +206,7 @@
             this.favoriteTabPage.Location = new System.Drawing.Point(4, 22);
             this.favoriteTabPage.Name = "favoriteTabPage";
             this.favoriteTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.favoriteTabPage.Size = new System.Drawing.Size(380, 0);
+            this.favoriteTabPage.Size = new System.Drawing.Size(367, 0);
             this.favoriteTabPage.TabIndex = 4;
             this.favoriteTabPage.Text = "お気に入り";
             this.favoriteTabPage.UseVisualStyleBackColor = true;
@@ -216,7 +216,7 @@
             this.newProgramTabPage.Location = new System.Drawing.Point(4, 22);
             this.newProgramTabPage.Name = "newProgramTabPage";
             this.newProgramTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.newProgramTabPage.Size = new System.Drawing.Size(380, 0);
+            this.newProgramTabPage.Size = new System.Drawing.Size(367, 0);
             this.newProgramTabPage.TabIndex = 7;
             this.newProgramTabPage.Text = "新番組";
             this.newProgramTabPage.UseVisualStyleBackColor = true;
@@ -226,7 +226,7 @@
             this.reserveTabPage.Location = new System.Drawing.Point(4, 22);
             this.reserveTabPage.Name = "reserveTabPage";
             this.reserveTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.reserveTabPage.Size = new System.Drawing.Size(380, 0);
+            this.reserveTabPage.Size = new System.Drawing.Size(367, 0);
             this.reserveTabPage.TabIndex = 5;
             this.reserveTabPage.Text = "予約";
             this.reserveTabPage.UseVisualStyleBackColor = true;
@@ -236,7 +236,7 @@
             this.recTabPage.Location = new System.Drawing.Point(4, 22);
             this.recTabPage.Name = "recTabPage";
             this.recTabPage.Padding = new System.Windows.Forms.Padding(3);
-            this.recTabPage.Size = new System.Drawing.Size(380, 0);
+            this.recTabPage.Size = new System.Drawing.Size(367, 0);
             this.recTabPage.TabIndex = 6;
             this.recTabPage.Text = "録画";
             this.recTabPage.UseVisualStyleBackColor = true;
@@ -271,7 +271,7 @@
             // 
             // filterTextBox
             // 
-            this.filterTextBox.Location = new System.Drawing.Point(440, 9);
+            this.filterTextBox.Location = new System.Drawing.Point(386, 9);
             this.filterTextBox.Name = "filterTextBox";
             this.filterTextBox.Size = new System.Drawing.Size(128, 19);
             this.filterTextBox.TabIndex = 4;
@@ -280,9 +280,9 @@
             // 
             // resetButton
             // 
-            this.resetButton.Location = new System.Drawing.Point(570, 7);
+            this.resetButton.Location = new System.Drawing.Point(516, 7);
             this.resetButton.Name = "resetButton";
-            this.resetButton.Size = new System.Drawing.Size(47, 23);
+            this.resetButton.Size = new System.Drawing.Size(48, 23);
             this.resetButton.TabIndex = 5;
             this.resetButton.Text = "Reset";
             this.resetButton.UseVisualStyleBackColor = true;
@@ -323,26 +323,26 @@
             this.openSettingToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.taskTrayContextMenuStrip.Name = "taskTrayContextMenuStrip";
-            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(181, 92);
+            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(152, 70);
             // 
             // openWebEpgTopToolStripMenuItem
             // 
             this.openWebEpgTopToolStripMenuItem.Name = "openWebEpgTopToolStripMenuItem";
-            this.openWebEpgTopToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openWebEpgTopToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.openWebEpgTopToolStripMenuItem.Text = "テレビ番組表";
             this.openWebEpgTopToolStripMenuItem.Click += new System.EventHandler(this.openWebEpgTopToolStripMenuItem_Click);
             // 
             // openSettingToolStripMenuItem
             // 
             this.openSettingToolStripMenuItem.Name = "openSettingToolStripMenuItem";
-            this.openSettingToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openSettingToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.openSettingToolStripMenuItem.Text = "設定";
             this.openSettingToolStripMenuItem.Click += new System.EventHandler(this.openSettingToolStripMenuItem_Click);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.exitToolStripMenuItem.Text = "Rockbarの終了";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 

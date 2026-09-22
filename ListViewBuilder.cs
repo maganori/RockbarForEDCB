@@ -19,7 +19,7 @@ namespace RockbarForEDCB
         private readonly EpgDataManager _epgDataManager;
 
         // 色設定
-        private Color _foreColor;
+        private Color _listForeColor;
         private Color _listBackColor;
         private Color _okReserveListBackColor;
         private Color _partialReserveListBackColor;
@@ -109,7 +109,7 @@ namespace RockbarForEDCB
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
 
             // 色情報の読み込み・保持
-            _foreColor = (Color)colorConverter.ConvertFromString(setting.ForeColor);
+            _listForeColor = (Color)colorConverter.ConvertFromString(setting.ListForeColor);
             _listBackColor = (Color)colorConverter.ConvertFromString(setting.ListBackColor);
             _okReserveListBackColor = (Color)colorConverter.ConvertFromString(setting.OkReserveListBackColor);
             _partialReserveListBackColor = (Color)colorConverter.ConvertFromString(setting.PartialReserveListBackColor);
@@ -120,11 +120,11 @@ namespace RockbarForEDCB
 
             // フォント情報の読み込みとカラム幅の計算
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            Font font = (Font)fontConverter.ConvertFromString(setting.Font);
+            Font listFont = (Font)fontConverter.ConvertFromString(setting.ListFont);
 
-            _columnPadding = GetColumnPadding(font);
-            _maxServiceNameWidth = GetMaxServiceNameWidth(font);
-            _maxTunerNameWidth = GetMaxTunerNameWidth(font);
+            _columnPadding = GetColumnPadding(listFont);
+            _maxServiceNameWidth = GetMaxServiceNameWidth(listFont);
+            _maxTunerNameWidth = GetMaxTunerNameWidth(listFont);
 
             // チャンネルキー -> サービス名 の辞書生成（キー重複対策に GroupBy を使用）
             RebuildServiceCaches();
@@ -280,7 +280,7 @@ namespace RockbarForEDCB
                         Name = key,
                         Tag = service,
                         ToolTipText = eventTitle,
-                        ForeColor = _foreColor
+                        ForeColor = _listForeColor
                     };
 
                     // 色変更
@@ -401,7 +401,7 @@ namespace RockbarForEDCB
                         Name = eventKey,
                         Tag = ev,
                         ToolTipText = ev.ShortInfo?.text_char ?? eventTitle,
-                        ForeColor = _foreColor,
+                        ForeColor = _listForeColor,
                         BackColor = GetReserveBackColor(reserveStatus, ev.start_time, ev.start_time.AddSeconds(ev.durationSec), now)
                     };
 
@@ -508,7 +508,7 @@ namespace RockbarForEDCB
                     {
                         Name = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID),
                         ToolTipText = $"{startTime:yyyy/MM/dd(ddd) HH:mm}～{endTime:HH:mm} {title}",
-                        ForeColor = _foreColor,
+                        ForeColor = _listForeColor,
                         BackColor = GetReserveBackColor(reserveStatus, startTime, endTime, now)
                     };
 
@@ -577,7 +577,7 @@ namespace RockbarForEDCB
                     {
                         Name = recFile.ID.ToString(),
                         ToolTipText = CreateRecInfoTooltipTexts(recFile),
-                        ForeColor = _foreColor
+                        ForeColor = _listForeColor
                     };
 
                     // --- 背景色の設定 ---
@@ -718,7 +718,7 @@ namespace RockbarForEDCB
                     {
                         Name = tuner.tunerID.ToString(),
                         ToolTipText = $"{toolTipDateTimeText} {serviceName} {title}",
-                        ForeColor = _foreColor
+                        ForeColor = _listForeColor
                     };
 
                     // 背景色判定
