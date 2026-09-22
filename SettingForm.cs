@@ -302,13 +302,13 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント・色(ListView)の設定の読み込み
+        /// フォント・色1(ListView)の設定の読み込みとプレビュー反映
         /// </summary>
         private void LoadListViewFontColor()
         {
-            fontTextBox.Text = _configManager.RockbarSetting.Font;
+            listFontTextBox.Text = _configManager.RockbarSetting.ListFont;
             formBackColorTextBox.Text = _configManager.RockbarSetting.FormBackColor;
-            foreColorTextBox.Text = _configManager.RockbarSetting.ForeColor;
+            listForeColorTextBox.Text = _configManager.RockbarSetting.ListForeColor;
             listBackColorTextBox.Text = _configManager.RockbarSetting.ListBackColor;
             okReserveListBackColorTextBox.Text = _configManager.RockbarSetting.OkReserveListBackColor;
             partialReserveListBackColorTextBox.Text = _configManager.RockbarSetting.PartialReserveListBackColor;
@@ -317,7 +317,8 @@ namespace RockbarForEDCB
             listHeaderForeColorTextBox.Text = _configManager.RockbarSetting.ListHeaderForeColor;
             listHeaderBackColorTextBox.Text = _configManager.RockbarSetting.ListHeaderBackColor;
 
-            previewListView.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.Font);
+            // プレビューへ反映
+            previewListView.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.ListFont);
 
             previewFormPanel.BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.FormBackColor);
             previewListView.BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListBackColor);
@@ -326,12 +327,12 @@ namespace RockbarForEDCB
             previewListView.Items[3].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveListBackColor);
             previewListView.Items[4].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveListBackColor);
             previewListView.Items[5].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderBackColor);
-            previewListView.ForeColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ForeColor);
+            previewListView.ForeColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListForeColor);
             previewListView.Items[5].ForeColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.ListHeaderForeColor);
         }
 
         /// <summary>
-        /// フォント・色(右クリック)の設定の読み込み
+        /// フォント・色2(右クリックメニュー)の設定の読み込みとプレビュー反映
         /// </summary>
         private void LoadContextMenuFontColor()
         {
@@ -342,6 +343,7 @@ namespace RockbarForEDCB
             ngReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.NgReserveMenuBackColor;
             disabledReserveMenuBackColorTextBox.Text = _configManager.RockbarSetting.DisabledReserveMenuBackColor;
 
+            // プレビューへ反映
             previewMenuListView.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
 
             previewMenuListView.BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.MenuBackColor);
@@ -349,18 +351,32 @@ namespace RockbarForEDCB
             previewMenuListView.Items[2].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
             previewMenuListView.Items[3].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
             previewMenuListView.Items[4].BackColor = (Color)_colorConverter.ConvertFromString(_configManager.RockbarSetting.DisabledReserveMenuBackColor);
-
         }
 
         /// <summary>
-        /// フォント(コントロールUI)の設定の読み込み
+        /// フォント・色3(コントロールUI)の設定の読み込みとプレビュー反映
         /// </summary>
         private void LoadControlUiFontColor()
         {
+            mainFormFontTextBox.Text = _configManager.RockbarSetting.MainFormFont;
+
+            useMainFormFontForScalingCheckBox.Checked = _configManager.RockbarSetting.UseMainFormFontForScaling;
+            useIndividualMainFormFontsCheckBox.Checked = _configManager.RockbarSetting.UseIndividualMainFormFonts;
+
             tabFontTextBox.Text = _configManager.RockbarSetting.TabFont;
-            buttonFontTextBox.Text = _configManager.RockbarSetting.ButtonFont;
-            labelFontTextBox.Text = _configManager.RockbarSetting.LabelFont;
             textBoxFontTextBox.Text = _configManager.RockbarSetting.TextBoxFont;
+            buttonFontTextBox.Text = _configManager.RockbarSetting.ButtonFont;
+            settingFormFontTextBox.Text = _configManager.RockbarSetting.SettingFormFont;
+
+            // プレビューへ反映
+            previewMainFormFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.MainFormFont);
+            previewTabFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.TabFont);
+            previewTextBoxFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.TextBoxFont);
+            previewButtonFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.ButtonFont);
+            previewSettingFormFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.SettingFormFont);
+
+            // フォント・色3 画面の初期表示時の有効/無効状態を反映
+            ApplyUseIndividualMainFormFontsCheckBoxState();
         }
 
         /// <summary>
@@ -397,24 +413,16 @@ namespace RockbarForEDCB
         /// </summary>
         private void ApplyUiFontSettings()
         {
-            UiFontHelper.ApplyUiFontSettings(this, _configManager.RockbarSetting);
+            Font settingFormFont = (Font)_fontConverter.ConvertFromString(settingFormFontTextBox.Text);
+            this.Font = settingFormFont;
 
-            // ListViewItemに対して明示的にFontが指定されているい場合、親であるListView.Fontの変更を自動継承しないため、
+            // ListViewItemに対して明示的にFontが指定されている場合、親であるListView.Fontの変更を自動継承しないため、
             // ListViewItemに対して明示的にFontを再指定する必要がある
             // 現状selectedServiceListViewの時だけでよい(allServiceItem.Cloneをしているため必要と思われる)ため、ここで個別適用する
-            Font labelFont = (Font)_fontConverter.ConvertFromString(labelFontTextBox.Text);
             foreach (ListViewItem item in selectedServiceListView.Items)
             {
-                item.Font = labelFont;
+                item.Font = settingFormFont;
             }
-
-            // プレビュー用を再設定
-            previewListView.Font = (Font)_fontConverter.ConvertFromString(fontTextBox.Text);
-            previewMenuListView.Font = (Font)_fontConverter.ConvertFromString(menuFontTextBox.Text);
-            previewTabFontLabel.Font = (Font)_fontConverter.ConvertFromString(tabFontTextBox.Text);
-            previewButtonFontLabel.Font = (Font)_fontConverter.ConvertFromString(buttonFontTextBox.Text);
-            previewLabelFontLabel.Font = (Font)_fontConverter.ConvertFromString(labelFontTextBox.Text);
-            previewTextBoxFontLabel.Font = (Font)_fontConverter.ConvertFromString(textBoxFontTextBox.Text);
         }
 
         /// <summary>
@@ -505,13 +513,13 @@ namespace RockbarForEDCB
             // TVTest連携設定の保存
             SaveTvTestLinkageSettings();
 
-            // フォント・色(ListView)設定の保存
+            // フォント・色1(ListView)設定の保存
             SaveListViewFontColor();
 
-            // フォント・色(右クリック)設定の保存
+            // フォント・色2(右クリックメニュー)設定の保存
             SaveContextMenuFontColor();
 
-            // フォント(コントロールUI)設定の保存
+            // フォント・色3(コントロールUI)設定の保存
             SaveControlUiFontColor();
 
             // その他設定の保存
@@ -649,13 +657,13 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント・色(ListView)の設定の保存
+        /// フォント・色1(ListView)の設定の保存
         /// </summary>
         private void SaveListViewFontColor()
         {
-            _configManager.RockbarSetting.Font = fontTextBox.Text;
+            _configManager.RockbarSetting.ListFont = listFontTextBox.Text;
             _configManager.RockbarSetting.FormBackColor = formBackColorTextBox.Text;
-            _configManager.RockbarSetting.ForeColor = foreColorTextBox.Text;
+            _configManager.RockbarSetting.ListForeColor = listForeColorTextBox.Text;
             _configManager.RockbarSetting.ListBackColor = listBackColorTextBox.Text;
             _configManager.RockbarSetting.OkReserveListBackColor = okReserveListBackColorTextBox.Text;
             _configManager.RockbarSetting.PartialReserveListBackColor = partialReserveListBackColorTextBox.Text;
@@ -666,7 +674,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント・色(右クリック)の設定の保存
+        /// フォント・色2(右クリックメニュー)の設定の保存
         /// </summary>
         private void SaveContextMenuFontColor()
         {
@@ -679,14 +687,17 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント(コントロールUI)の設定の保存
+        /// フォント・色3(コントロールUI)の設定の保存
         /// </summary>
         private void SaveControlUiFontColor()
         {
+            _configManager.RockbarSetting.MainFormFont = mainFormFontTextBox.Text;
+            _configManager.RockbarSetting.UseMainFormFontForScaling = useMainFormFontForScalingCheckBox.Checked;
+            _configManager.RockbarSetting.UseIndividualMainFormFonts = useIndividualMainFormFontsCheckBox.Checked;
             _configManager.RockbarSetting.TabFont = tabFontTextBox.Text;
-            _configManager.RockbarSetting.ButtonFont = buttonFontTextBox.Text;
-            _configManager.RockbarSetting.LabelFont = labelFontTextBox.Text;
             _configManager.RockbarSetting.TextBoxFont = textBoxFontTextBox.Text;
+            _configManager.RockbarSetting.ButtonFont = buttonFontTextBox.Text;
+            _configManager.RockbarSetting.SettingFormFont = settingFormFontTextBox.Text;
         }
 
         /// <summary>
@@ -828,6 +839,19 @@ namespace RockbarForEDCB
             autoStartTargetGroupBox.Enabled = isAutoOpenTvtestCheckBox.Checked;
             autoOpenMarginNumericUpDown.Enabled = isAutoOpenTvtestCheckBox.Checked;
             autoCloseMarginNumericUpDown.Enabled = isAutoOpenTvtestCheckBox.Checked;
+        }
+
+        // 「メイン画面のフォントを個別に指定する」チェックボックスの変更検知
+        private void useIndividualMainFormFontsCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyUseIndividualMainFormFontsCheckBoxState();
+        }
+
+        // 「メイン画面のフォントを個別に指定する」チェックボックスがONの場合は、全体が設定不可
+        private void ApplyUseIndividualMainFormFontsCheckBoxState()
+        {
+            // チェックが入っていない場合は GroupBox 全体を編集不可
+            individualMainFormFontsGroupBox.Enabled = useIndividualMainFormFontsCheckBox.Checked;
         }
 
         /// <summary>
@@ -1071,11 +1095,11 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// フォント選択ボタン押下処理
+        /// リストフォント選択ボタン押下処理
         /// </summary>
-        private void selectFontButton_Click(object sender, EventArgs e)
+        private void selectListFontButton_Click(object sender, EventArgs e)
         {
-            SelectFontFor(fontTextBox,
+            SelectFontFor(listFontTextBox,
                 font => previewListView.Font = font);
         }
 
@@ -1089,11 +1113,11 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 文字色選択ボタン押下処理
+        /// リスト文字色選択ボタン押下処理
         /// </summary>
-        private void selectForeColorButton_Click(object sender, EventArgs e)
+        private void selectListForeColorButton_Click(object sender, EventArgs e)
         {
-            SelectColorFor(foreColorTextBox,
+            SelectColorFor(listForeColorTextBox,
                 color => previewListView.ForeColor = color);
         }
 
@@ -1215,12 +1239,30 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// メイン画面フォント選択ボタン押下処理
+        /// </summary>
+        private void selectMainFormFontButton_Click(object sender, EventArgs e)
+        {
+            SelectFontFor(mainFormFontTextBox,
+                font => previewMainFormFontLabel.Font = font);
+        }
+
+        /// <summary>
         /// タブのフォント選択ボタン押下処理
         /// </summary>
         private void selectTabFontButton_Click(object sender, EventArgs e)
         {
             SelectFontFor(tabFontTextBox,
                 font => previewTabFontLabel.Font = font);
+        }
+
+        /// <summary>
+        /// テキストボックスのフォント選択ボタン押下処理
+        /// </summary>
+        private void selectTextBoxFontButton_Click(object sender, EventArgs e)
+        {
+            SelectFontFor(textBoxFontTextBox,
+                font => previewTextBoxFontLabel.Font = font);
         }
 
         /// <summary>
@@ -1233,21 +1275,12 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// ラベルのフォント選択ボタン押下処理
+        /// 設定画面フォント選択ボタン押下処理
         /// </summary>
-        private void selectLabelFontButton_Click(object sender, EventArgs e)
+        private void selectSettingFormFontButton_Click(object sender, EventArgs e)
         {
-            SelectFontFor(labelFontTextBox,
-                font => previewLabelFontLabel.Font = font);
-        }
-
-        /// <summary>
-        /// テキストボックスのフォント選択ボタン押下処理
-        /// </summary>
-        private void selectTextBoxFontButton_Click(object sender, EventArgs e)
-        {
-            SelectFontFor(textBoxFontTextBox,
-                font => previewTextBoxFontLabel.Font = font);
+            SelectFontFor(settingFormFontTextBox,
+                font => previewSettingFormFontLabel.Font = font);
         }
 
         /// <summary>

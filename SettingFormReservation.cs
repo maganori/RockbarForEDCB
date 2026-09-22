@@ -1,6 +1,7 @@
 ﻿using EpgTimer;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -54,6 +55,8 @@ namespace RockbarForEDCB
                 this.MinimizeBox = false;
                 this.MaximizeBox = false;
                 this.ShowInTaskbar = false;
+                this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+                this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
                 this.ClientSize = new Size(450, 210);
 
                 _partialCheckBox.Text = "部分受信";
@@ -130,6 +133,11 @@ namespace RockbarForEDCB
                 this.AcceptButton = okButton;
                 this.CancelButton = cancelButton;
 
+                // フォントの適用
+                TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
+                Font settingFormFont = (Font)fontConverter.ConvertFromString(rockBarSetting.SettingFormFont);
+                this.Font = settingFormFont;
+
                 // 編集モード：ListViewItem から値を展開
                 if (initialItem != null)
                 {
@@ -153,8 +161,6 @@ namespace RockbarForEDCB
                     }
                     _fileNamePlugInOptionTextBox.Text = nameParts.Length > 1 ? nameParts[1] : "";
                 }
-
-                UiFontHelper.ApplyUiFontSettings(this, rockBarSetting);
             }
 
             /// <summary>

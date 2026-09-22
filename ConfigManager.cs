@@ -280,16 +280,17 @@ namespace RockbarForEDCB
             this.TaskTrayIconRightDoubleClick = "";
 
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-            this.Font = fontConverter.ConvertToString(SystemFonts.DefaultFont);
+            this.ListFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
             this.MenuFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
+            this.MainFormFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
             this.TabFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
-            this.ButtonFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
-            this.LabelFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
             this.TextBoxFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
+            this.ButtonFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
+            this.SettingFormFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
 
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
-            this.ForeColor = colorConverter.ConvertToString(Color.FromArgb(25, 250, 140));
             this.FormBackColor = colorConverter.ConvertToString(Color.FromArgb(163, 216, 232));
+            this.ListForeColor = colorConverter.ConvertToString(Color.FromArgb(25, 250, 140));
             this.ListBackColor = colorConverter.ConvertToString(Color.FromArgb(40, 40, 40));
             this.OkReserveListBackColor = colorConverter.ConvertToString(Color.DarkSlateGray);
             this.PartialReserveListBackColor = colorConverter.ConvertToString(Color.FromArgb(160, 160, 0));
@@ -459,12 +460,12 @@ namespace RockbarForEDCB
         public bool FixNoRecToServiceOnly { get; set; }
         // 録画一覧の最大表示数
         public int RecListMaxCount { get; set; }
-        // フォント(シリアライズしたもの)
-        public string Font { get; set; }
+        // リストフォント(シリアライズしたもの)
+        public string ListFont { get; set; }
         // フォーム背景色(シリアライズしたもの)
         public string FormBackColor { get; set; }
-        // 文字色(シリアライズしたもの)
-        public string ForeColor { get; set; }
+        // リスト文字色(シリアライズしたもの)
+        public string ListForeColor { get; set; }
         // リスト背景色(シリアライズしたもの)
         public string ListBackColor { get; set; }
         // 予約リスト背景色(シリアライズしたもの)
@@ -491,14 +492,20 @@ namespace RockbarForEDCB
         public string NgReserveMenuBackColor { get; set; }
         // 無効予約メニュー背景色(シリアライズしたもの)
         public string DisabledReserveMenuBackColor { get; set; }
+        // メイン画面フォント(シリアライズしたもの)
+        public string MainFormFont { get; set; }
+        // メイン画面フォントをメイン画面スケーリングに使用する
+        public bool UseMainFormFontForScaling { get; set; } = true;
+        // メイン画面のフォントを個別に指定する
+        public bool UseIndividualMainFormFonts { get; set; }
         // タブのフォント(シリアライズしたもの)
         public string TabFont { get; set; }
-        // ボタンのフォント(シリアライズしたもの)
-        public string ButtonFont { get; set; }
-        // ラベルのフォント(シリアライズしたもの)
-        public string LabelFont { get; set; }
         // テキストボックスのフォント(シリアライズしたもの)
         public string TextBoxFont { get; set; }
+        // ボタンのフォント(シリアライズしたもの)
+        public string ButtonFont { get; set; }
+        // 設定画面フォント(シリアライズしたもの)
+        public string SettingFormFont { get; set; }
         // BonDriver名→チューナー名マッピング
         public Dictionary<string, string> BonDriverNameToTunerName { get; set; }
 

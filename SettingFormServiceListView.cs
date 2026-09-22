@@ -1,6 +1,7 @@
 ﻿using EpgTimer;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -74,6 +75,8 @@ namespace RockbarForEDCB
                 this.MinimizeBox = false;
                 this.MaximizeBox = false;
                 this.ShowInTaskbar = false;
+                this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+                this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
                 this.ClientSize = new Size(360, 210);
 
                 _serviceInfos = epgServiceInfos;
@@ -131,6 +134,11 @@ namespace RockbarForEDCB
                 this.AcceptButton = okButton;
                 this.CancelButton = cancelButton;
 
+                // フォントの適用
+                TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
+                Font settingFormFont = (Font)fontConverter.ConvertFromString(rockBarSetting.SettingFormFont);
+                this.Font = settingFormFont;
+
                 // 編集モード：ListViewItem から値を直接展開
                 if (initialItem != null)
                 {
@@ -150,8 +158,6 @@ namespace RockbarForEDCB
                         ? initialItem.SubItems[ServiceListViewColumns.TvtestOption].Text
                         : "";
                 }
-
-                UiFontHelper.ApplyUiFontSettings(this, rockBarSetting);
             }
 
             /// <summary>
