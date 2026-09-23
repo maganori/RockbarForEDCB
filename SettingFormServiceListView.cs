@@ -97,7 +97,7 @@ namespace RockbarForEDCB
                 _nameTextBox.Top = 74;
                 _nameTextBox.Width = 200;
 
-                Label typeLabel = new Label { Left = 16, Top = 108, Width = 100, Text = "Type" };
+                Label typeLabel = new Label { Left = 16, Top = 108, Width = 100, Text = "放送種別" };
                 _typeComboBox.Left = 120;
                 _typeComboBox.Top = 104;
                 _typeComboBox.Width = 200;
