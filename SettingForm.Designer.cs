@@ -270,6 +270,7 @@ namespace RockbarForEDCB
             this.menuFontTextBox = new System.Windows.Forms.TextBox();
             this.selectMenuFontButton = new System.Windows.Forms.Button();
             this.controlUiFontColorTabPage = new System.Windows.Forms.TabPage();
+            this.useMainFormFontForScalingNoteLabel = new System.Windows.Forms.Label();
             this.useIndividualMainFormFontsCheckBox = new System.Windows.Forms.CheckBox();
             this.individualMainFormFontsGroupBox = new System.Windows.Forms.GroupBox();
             this.tabFontTextBox = new System.Windows.Forms.TextBox();
@@ -313,7 +314,6 @@ namespace RockbarForEDCB
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
-            this.useMainFormFontForScalingNoteLabel = new System.Windows.Forms.Label();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
@@ -341,7 +341,7 @@ namespace RockbarForEDCB
             // 
             // cancelButton
             // 
-            this.cancelButton.Location = new System.Drawing.Point(710, 419);
+            this.cancelButton.Location = new System.Drawing.Point(617, 419);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(75, 23);
             this.cancelButton.TabIndex = 0;
@@ -351,21 +351,21 @@ namespace RockbarForEDCB
             // 
             // applyCloseButton
             // 
-            this.applyCloseButton.Location = new System.Drawing.Point(617, 419);
+            this.applyCloseButton.Location = new System.Drawing.Point(530, 419);
             this.applyCloseButton.Name = "applyCloseButton";
             this.applyCloseButton.Size = new System.Drawing.Size(75, 23);
             this.applyCloseButton.TabIndex = 1;
-            this.applyCloseButton.Text = "設定保存";
+            this.applyCloseButton.Text = "OK";
             this.applyCloseButton.UseVisualStyleBackColor = true;
             this.applyCloseButton.Click += new System.EventHandler(this.applyCloseButton_Click);
             // 
             // applyButton
             // 
-            this.applyButton.Location = new System.Drawing.Point(524, 419);
+            this.applyButton.Location = new System.Drawing.Point(704, 419);
             this.applyButton.Name = "applyButton";
             this.applyButton.Size = new System.Drawing.Size(75, 23);
             this.applyButton.TabIndex = 2;
-            this.applyButton.Text = "設定適用";
+            this.applyButton.Text = "適用";
             this.applyButton.UseVisualStyleBackColor = true;
             this.applyButton.Click += new System.EventHandler(this.applyButton_Click);
             // 
@@ -394,7 +394,7 @@ namespace RockbarForEDCB
             // 
             // allServiceNetworkTypeColumnHeader
             // 
-            this.allServiceNetworkTypeColumnHeader.Text = "種類";
+            this.allServiceNetworkTypeColumnHeader.Text = "種別";
             this.allServiceNetworkTypeColumnHeader.Width = 48;
             // 
             // allServiceNameColumnHeader
@@ -499,7 +499,7 @@ namespace RockbarForEDCB
             // 
             // selectedServiceNetworkTypeColumnHeader
             // 
-            this.selectedServiceNetworkTypeColumnHeader.Text = "種類";
+            this.selectedServiceNetworkTypeColumnHeader.Text = "種別";
             this.selectedServiceNetworkTypeColumnHeader.Width = 48;
             // 
             // selectedServiceNameColumnHeader
@@ -853,7 +853,7 @@ namespace RockbarForEDCB
             // 
             this.prioritizeRecRadioButton.AutoSize = true;
             this.prioritizeRecRadioButton.Checked = true;
-            this.prioritizeRecRadioButton.Location = new System.Drawing.Point(60, 6);
+            this.prioritizeRecRadioButton.Location = new System.Drawing.Point(8, 6);
             this.prioritizeRecRadioButton.Name = "prioritizeRecRadioButton";
             this.prioritizeRecRadioButton.Size = new System.Drawing.Size(47, 16);
             this.prioritizeRecRadioButton.TabIndex = 63;
@@ -864,7 +864,7 @@ namespace RockbarForEDCB
             // prioritizeViewRadioButton
             // 
             this.prioritizeViewRadioButton.AutoSize = true;
-            this.prioritizeViewRadioButton.Location = new System.Drawing.Point(8, 6);
+            this.prioritizeViewRadioButton.Location = new System.Drawing.Point(60, 6);
             this.prioritizeViewRadioButton.Name = "prioritizeViewRadioButton";
             this.prioritizeViewRadioButton.Size = new System.Drawing.Size(47, 16);
             this.prioritizeViewRadioButton.TabIndex = 62;
@@ -1464,7 +1464,7 @@ namespace RockbarForEDCB
             this.selectedServiceListLabel.Name = "selectedServiceListLabel";
             this.selectedServiceListLabel.Size = new System.Drawing.Size(346, 12);
             this.selectedServiceListLabel.TabIndex = 9;
-            this.selectedServiceListLabel.Text = "選択チャンネル(\"種類\"が表示タブの決定などに使用されます。編集可。)";
+            this.selectedServiceListLabel.Text = "選択チャンネル(\"種別\"が表示タブの決定などに使用されます。編集可。)";
             // 
             // allServiceListLabel
             // 
@@ -1537,7 +1537,7 @@ namespace RockbarForEDCB
             // 
             // selectedService2NetworkTypeColumnHeader
             // 
-            this.selectedService2NetworkTypeColumnHeader.Text = "種類";
+            this.selectedService2NetworkTypeColumnHeader.Text = "種別";
             this.selectedService2NetworkTypeColumnHeader.Width = 48;
             // 
             // selectedService2NameColumnHeader
@@ -1616,7 +1616,7 @@ namespace RockbarForEDCB
             // 
             // favoriteServiceNetworkTypeColumnHeader
             // 
-            this.favoriteServiceNetworkTypeColumnHeader.Text = "種類";
+            this.favoriteServiceNetworkTypeColumnHeader.Text = "種別";
             this.favoriteServiceNetworkTypeColumnHeader.Width = 48;
             // 
             // favoriteServiceNameColumnHeader
@@ -2604,6 +2604,15 @@ namespace RockbarForEDCB
             this.controlUiFontColorTabPage.Text = "フォント・色3";
             this.controlUiFontColorTabPage.UseVisualStyleBackColor = true;
             // 
+            // useMainFormFontForScalingNoteLabel
+            // 
+            this.useMainFormFontForScalingNoteLabel.AutoSize = true;
+            this.useMainFormFontForScalingNoteLabel.Location = new System.Drawing.Point(371, 43);
+            this.useMainFormFontForScalingNoteLabel.Name = "useMainFormFontForScalingNoteLabel";
+            this.useMainFormFontForScalingNoteLabel.Size = new System.Drawing.Size(228, 12);
+            this.useMainFormFontForScalingNoteLabel.TabIndex = 80;
+            this.useMainFormFontForScalingNoteLabel.Text = "※画面拡大時にレイアウトズレを補正できます。";
+            // 
             // useIndividualMainFormFontsCheckBox
             // 
             this.useIndividualMainFormFontsCheckBox.AutoSize = true;
@@ -2867,9 +2876,9 @@ namespace RockbarForEDCB
             this.storeTaskTrayByClosingCheckBox.AutoSize = true;
             this.storeTaskTrayByClosingCheckBox.Location = new System.Drawing.Point(17, 44);
             this.storeTaskTrayByClosingCheckBox.Name = "storeTaskTrayByClosingCheckBox";
-            this.storeTaskTrayByClosingCheckBox.Size = new System.Drawing.Size(176, 16);
+            this.storeTaskTrayByClosingCheckBox.Size = new System.Drawing.Size(277, 16);
             this.storeTaskTrayByClosingCheckBox.TabIndex = 11;
-            this.storeTaskTrayByClosingCheckBox.Text = "×ボタンでタスクトレイに格納する";
+            this.storeTaskTrayByClosingCheckBox.Text = "×ボタンでタスクトレイに格納する(有効時は ＿ ボタン)";
             this.storeTaskTrayByClosingCheckBox.UseVisualStyleBackColor = true;
             // 
             // showTaskTrayIconCheckBox
@@ -3039,15 +3048,6 @@ namespace RockbarForEDCB
             this.fontDialog.MaxSize = 28;
             this.fontDialog.MinSize = 6;
             this.fontDialog.ShowEffects = false;
-            // 
-            // useMainFormFontForScalingNoteLabel
-            // 
-            this.useMainFormFontForScalingNoteLabel.AutoSize = true;
-            this.useMainFormFontForScalingNoteLabel.Location = new System.Drawing.Point(371, 43);
-            this.useMainFormFontForScalingNoteLabel.Name = "useMainFormFontForScalingNoteLabel";
-            this.useMainFormFontForScalingNoteLabel.Size = new System.Drawing.Size(228, 12);
-            this.useMainFormFontForScalingNoteLabel.TabIndex = 80;
-            this.useMainFormFontForScalingNoteLabel.Text = "※画面拡大時にレイアウトズレを補正できます。";
             // 
             // SettingForm
             // 

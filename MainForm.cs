@@ -227,7 +227,7 @@ namespace RockbarForEDCB
             // フォント
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
             Font mainFormFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MainFormFont);
-            Font listFont = (Font) fontConverter.ConvertFromString(_configManager.RockbarSetting.ListFont);
+            Font listFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.ListFont);
             Font menuFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
             Font tabFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TabFont);
             Font textBoxFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TextBoxFont);
@@ -289,6 +289,16 @@ namespace RockbarForEDCB
 
             // Web番組表機能を使用するときのみタスクトレイアイコンの右クリックメニューに「テレビ番組表」を表示
             this.openWebEpgTopToolStripMenuItem.Visible = _configManager.RockbarSetting.UseWebLink;
+
+            // 「✕ボタンでタスクトレイに格納する」が有効時は＿ボタンにする
+            if (_configManager.RockbarSetting.StoreTaskTrayByClosing)
+            {
+                this.closeButton.Text = "＿";
+            }
+            else
+            {
+                this.closeButton.Text = "×";
+            }
 
             // 録画済み一覧の最大保持数(表示数)
             _epgDataManager.RecListMaxCount = _configManager.RockbarSetting.RecListMaxCount;
@@ -862,6 +872,24 @@ namespace RockbarForEDCB
         private void openSettingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenSettingForm();
+        }
+
+        /// <summary>
+        /// タスクトレイ ReadMe(GitHub) コンテキストメニュークリック処理
+        /// ReadMe(GitHub)を開く。
+        /// </summary>
+        private void readMeGitHubToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RockbarUtility.OpenBrowser("https://github.com/maganori/RockbarForEDCB#rockbar-for-edcb");
+        }
+
+        /// <summary>
+        /// タスクトレイ 更新の確認(GitHub) コンテキストメニュークリック処理
+        /// 更新の確認(GitHub)を開く。
+        /// </summary>
+        private void checkReleaseGitHubToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RockbarUtility.OpenBrowser("https://github.com/maganori/RockbarForEDCB/releases");
         }
 
         /// <summary>
