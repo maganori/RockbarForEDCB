@@ -58,6 +58,9 @@ namespace RockbarForEDCB
         {
             InitializeComponent();
 
+            // バージョン情報ラベルを設定
+            versionLabel.Text =$"Version : {AppVersionAttribute.GetVersion()}";
+
             _ctrlCmdUtil = ctrlCmdUtil;
 
             // ConfigManagerで設定を読み込み

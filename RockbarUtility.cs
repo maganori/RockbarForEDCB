@@ -15,6 +15,74 @@ using System.Windows.Forms;
 namespace RockbarForEDCB
 {
     /// <summary>
+    /// アセンブリに設定されたアプリのビルド日時を保持する属性。
+    /// RockbarForEDCB.csprojで設定。
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Assembly)]
+    internal sealed class AppVersionAttribute : Attribute
+    {
+        /// <summary>
+        /// アプリのビルド日時を取得する。
+        /// </summary>
+        public string Version { get; }
+
+        /// <summary>
+        /// AppVersionAttributeを初期化する。
+        /// </summary>
+        /// <param name="version">アプリのビルド日時。</param>
+        public AppVersionAttribute(string version)
+        {
+            Version = version;
+        }
+
+        /// <summary>
+        /// アプリのビルド日を取得する。
+        /// </summary>
+        /// <returns>yyyyMMdd形式のビルド日。取得できない場合は空文字列。</returns>
+        public static string GetVersion()
+        {
+            var attribute = GetAttribute();
+
+            if (attribute == null)
+            {
+                return string.Empty;
+            }
+
+            if (DateTime.TryParseExact(
+                attribute.Version,
+                "yyyy.MM.dd.HHmm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out DateTime buildDate))
+            {
+                return buildDate.ToString("yyyyMMdd");
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// アプリのビルド日時を取得する。
+        /// </summary>
+        /// <returns>yyyy.MM.dd.HHmm形式のビルド日時。取得できない場合は空文字列。</returns>
+        public static string GetBuildDate()
+        {
+            return GetAttribute()?.Version ?? string.Empty;
+        }
+
+        /// <summary>
+        /// アセンブリに設定されたAppVersionAttributeを取得する。
+        /// </summary>
+        /// <returns>AppVersionAttribute。設定されていない場合はnull。</returns>
+        private static AppVersionAttribute GetAttribute()
+        {
+            return (AppVersionAttribute)Attribute.GetCustomAttribute(
+                typeof(AppVersionAttribute).Assembly,
+                typeof(AppVersionAttribute));
+        }
+    }
+
+    /// <summary>
     /// ネットワーク種別列挙型
     /// </summary>
     public enum NetworkType
