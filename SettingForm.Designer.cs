@@ -314,6 +314,7 @@ namespace RockbarForEDCB
             this.tvtestOpenFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
+            this.versionLabel = new System.Windows.Forms.Label();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
@@ -3049,11 +3050,21 @@ namespace RockbarForEDCB
             this.fontDialog.MinSize = 6;
             this.fontDialog.ShowEffects = false;
             // 
+            // versionLabel
+            // 
+            this.versionLabel.AutoSize = true;
+            this.versionLabel.Location = new System.Drawing.Point(40, 424);
+            this.versionLabel.Name = "versionLabel";
+            this.versionLabel.Size = new System.Drawing.Size(116, 12);
+            this.versionLabel.TabIndex = 19;
+            this.versionLabel.Text = "Version : YYYYMMDD";
+            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.versionLabel);
             this.Controls.Add(this.settingTabControl);
             this.Controls.Add(this.cancelButton);
             this.Controls.Add(this.applyCloseButton);
@@ -3101,6 +3112,7 @@ namespace RockbarForEDCB
             this.taskTrayIconClickGroupBox.ResumeLayout(false);
             this.taskTrayIconClickGroupBox.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -3371,5 +3383,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox useIndividualMainFormFontsCheckBox;
         private System.Windows.Forms.GroupBox individualMainFormFontsGroupBox;
         private System.Windows.Forms.Label useMainFormFontForScalingNoteLabel;
+        private System.Windows.Forms.Label versionLabel;
     }
 }

@@ -72,6 +72,7 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.readMeGitHubToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkReleaseGitHubToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.versionDisplayToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.listContextMenuStrip.SuspendLayout();
             this.mainFormTabControl.SuspendLayout();
             this.taskTrayContextMenuStrip.SuspendLayout();
@@ -327,7 +328,7 @@
             this.helpToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.taskTrayContextMenuStrip.Name = "taskTrayContextMenuStrip";
-            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(181, 114);
+            this.taskTrayContextMenuStrip.Size = new System.Drawing.Size(152, 92);
             // 
             // openWebEpgTopToolStripMenuItem
             // 
@@ -374,24 +375,32 @@
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.readMeGitHubToolStripMenuItem,
-            this.checkReleaseGitHubToolStripMenuItem});
+            this.checkReleaseGitHubToolStripMenuItem,
+            this.versionDisplayToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.helpToolStripMenuItem.Text = "ヘルプ";
             // 
             // readMeGitHubToolStripMenuItem
             // 
             this.readMeGitHubToolStripMenuItem.Name = "readMeGitHubToolStripMenuItem";
-            this.readMeGitHubToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.readMeGitHubToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.readMeGitHubToolStripMenuItem.Text = "ReadMe(GitHub)";
             this.readMeGitHubToolStripMenuItem.Click += new System.EventHandler(this.readMeGitHubToolStripMenuItem_Click);
             // 
             // checkReleaseGitHubToolStripMenuItem
             // 
             this.checkReleaseGitHubToolStripMenuItem.Name = "checkReleaseGitHubToolStripMenuItem";
-            this.checkReleaseGitHubToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.checkReleaseGitHubToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
             this.checkReleaseGitHubToolStripMenuItem.Text = "更新の確認(GitHub)";
             this.checkReleaseGitHubToolStripMenuItem.Click += new System.EventHandler(this.checkReleaseGitHubToolStripMenuItem_Click);
+            // 
+            // versionDisplayToolStripMenuItem
+            // 
+            this.versionDisplayToolStripMenuItem.Enabled = false;
+            this.versionDisplayToolStripMenuItem.Name = "versionDisplayToolStripMenuItem";
+            this.versionDisplayToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.versionDisplayToolStripMenuItem.Text = "Version : YYYYMMDD";
             // 
             // MainForm
             // 
@@ -465,6 +474,7 @@
         private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem readMeGitHubToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem checkReleaseGitHubToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem versionDisplayToolStripMenuItem;
     }
 }
 

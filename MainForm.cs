@@ -66,6 +66,9 @@ namespace RockbarForEDCB
         {
             InitializeComponent();
 
+            // 右クリックメニューにバージョン情報を設定
+            versionDisplayToolStripMenuItem.Text = $"Version : {AppVersionAttribute.GetVersion()}";
+
             // フォーカスが外れたときの強調表示反転防止
             mainListView.HideSelection = true;
             subListView.HideSelection = true;
