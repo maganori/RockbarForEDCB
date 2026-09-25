@@ -397,7 +397,7 @@ namespace RockbarForEDCB
             if (_configManager.RockbarSetting.RecListMaxCount > recListMaxCountNumericUpDown.Maximum
                 || _configManager.RockbarSetting.RecListMaxCount < recListMaxCountNumericUpDown.Minimum)
             {
-                recListMaxCountNumericUpDown.Value = RockBarSetting.DEFAULT_REC_LIST_MAX_COUNT;
+                recListMaxCountNumericUpDown.Value = RockbarSetting.DEFAULT_REC_LIST_MAX_COUNT;
             }
             else
             {
@@ -451,7 +451,7 @@ namespace RockbarForEDCB
             SaveAllSettings();
 
             // 設定ファイルに書き込み
-            _configManager.SaveFromFile();
+            _configManager.SaveToFile();
 
             // MainForm側に適用通知を出す
             ApplyRequested?.Invoke(this, EventArgs.Empty);
@@ -475,7 +475,7 @@ namespace RockbarForEDCB
                 SaveAllSettings();
 
                 // 設定ファイルに書き込み
-                _configManager.SaveFromFile();
+                _configManager.SaveToFile();
 
                 // MainForm側に適用通知を出す
                 ApplyRequested?.Invoke(this, EventArgs.Empty);

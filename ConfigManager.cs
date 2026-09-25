@@ -17,14 +17,14 @@ namespace RockbarForEDCB
     public class ConfigManager
     {
         // 設定ファイル名はハードコーディングとする
-        public static string TOML_CONFIG_FILENAME = "RockbarForEDCB.toml";
-        public static string TSV_SELECTED_SERVICE_FILENAME = "SelectedServices.tsv";
-        public static string TSV_FAVORITE_SERVICE_FILENAME = "FavoriteServices.tsv";
+        private const string TomlConfigFileName = "RockbarForEDCB.toml";
+        private const string TsvSelectedServiceFileName = "SelectedServices.tsv";
+        private const string TsvFavoriteServiceFileName = "FavoriteServices.tsv";
 
         /// <summary>
         /// TOML設定
         /// </summary>
-        public RockBarSetting RockbarSetting { get; private set; }
+        public RockbarSetting RockbarSetting { get; private set; }
 
         /// <summary>
         /// 選択サービスリスト
@@ -41,7 +41,7 @@ namespace RockbarForEDCB
         /// </summary>
         public ConfigManager()
         {
-            RockbarSetting = new RockBarSetting();
+            RockbarSetting = new RockbarSetting();
             SelectedServiceList = new List<Service>();
             FavoriteServiceList = new List<Service>();
             LoadFromFile();
@@ -53,46 +53,37 @@ namespace RockbarForEDCB
         public void LoadFromFile()
         {
             // TOML設定ファイル（RockbarForEDCB.toml）の読み込み
-            LoadRockBarSettingFromFile();
+            LoadRockbarSettingFromFile();
 
             // 選択サービス一覧（SelectedServices.tsv）の読み込み
-            SelectedServiceList = LoadSelectedServicesFromFile() ?? new List<Service>();
+            LoadSelectedServicesFromFile();
 
             // お気に入りサービス一覧（FavoriteServices.tsv）の読み込み
-            FavoriteServiceList = LoadFavoriteServicesFromFile() ?? new List<Service>();
+            LoadFavoriteServicesFromFile();
         }
 
         /// <summary>
         /// 現在保持している設定およびサービス一覧をそれぞれのファイルに保存します。
         /// </summary>
-        public void SaveFromFile()
+        public void SaveToFile()
         {
             // TOML設定ファイルの保存
-            if (RockbarSetting != null)
-            {
-                Toml.WriteFile(RockbarSetting, GetTomlSettingFilePath());
-            }
+            SaveRockbarSettingToFile();
 
             // 選択サービス一覧の保存
-            if (SelectedServiceList != null)
-            {
-                SaveSelectedServicesToFile(SelectedServiceList);
-            }
+            SaveSelectedServicesToFile();
 
             // お気に入りサービス一覧の保存
-            if (FavoriteServiceList != null)
-            {
-                SaveFavoriteServicesToFile(FavoriteServiceList);
-            }
+            SaveFavoriteServicesToFile();
         }
 
         /// <summary>
         /// TOML設定ファイルから設定を読み込む。
         /// </summary>
-        private void LoadRockBarSettingFromFile()
+        private void LoadRockbarSettingFromFile()
         {
-            string tomlPath = GetTomlSettingFilePath();
-            RockbarSetting = new RockBarSetting();
+            string tomlPath = GetFullPath(TomlConfigFileName);
+            RockbarSetting = new RockbarSetting();
 
             // ファイルが存在しない場合はそのままデフォルト設定を使用
             if (File.Exists(tomlPath))
@@ -100,7 +91,7 @@ namespace RockbarForEDCB
                 try
                 {
                     // 全プロパティを型に直接一括マッピングして読み込む
-                    RockbarSetting = Toml.ReadFile<RockBarSetting>(tomlPath);
+                    RockbarSetting = Toml.ReadFile<RockbarSetting>(tomlPath);
 
                     // 名称が変更されたパラメータのバックワードコンパチ処理
                     TomlTable table = Toml.ReadFile(tomlPath);
@@ -126,7 +117,7 @@ namespace RockbarForEDCB
                 catch (Exception ex)
                 {
                     // パースエラー（uintに負の値、型の不一致、構文エラー等）が発生した場合
-                    string message = $"設定ファイル ({TOML_CONFIG_FILENAME}) の読み込み中にエラーが発生しました。\n\n" +
+                    string message = $"設定ファイル ({TomlConfigFileName}) の読み込み中にエラーが発生しました。\n\n" +
                                      $"【エラー詳細】\n{ex.Message}\n\n" +
                                      "デフォルトの設定で起動しますか？\n" +
                                      "(「いいえ」を選択するとアプリケーションを終了します)";
@@ -142,14 +133,14 @@ namespace RockbarForEDCB
                     }
 
                     // 「はい」が選ばれた場合はデフォルト設定を使用
-                    RockbarSetting = new RockBarSetting();
+                    RockbarSetting = new RockbarSetting();
                 }
             }
 
             // 読み込み後の値の検証と補正（補正が行われた場合はダイアログで通知）
             if (RockbarSetting.ValidateAndFix())
             {
-                string fixMessage = $"設定ファイル ({TOML_CONFIG_FILENAME}) 内に無効な数値（範囲外の値）が" +
+                string fixMessage = $"設定ファイル ({TomlConfigFileName}) 内に無効な数値（範囲外の値）が" +
                                     $"含まれていたため、安全なデフォルト値に補正しました。\n\n" +
                                    "このまま補正後の設定で起動しますか？\n" +
                                    "(「いいえ」を選択するとアプリケーションを終了します)";
@@ -167,36 +158,53 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// TSVファイルから選択サービスリストを読み込む
+        /// </summary>
+        /// <returns>選択サービスリスト</returns>
+        private void LoadSelectedServicesFromFile()
+        {
+            SelectedServiceList = LoadServicesFromFile(GetFullPath(TsvSelectedServiceFileName)) ?? new List<Service>();
+        }
+
+        /// <summary>
+        /// TSVファイルからお気に入りサービスリストを読み込む
+        /// </summary>
+        /// <returns>お気に入りサービスリスト</returns>
+        private void LoadFavoriteServicesFromFile()
+        {
+            FavoriteServiceList = LoadServicesFromFile(GetFullPath(TsvFavoriteServiceFileName)) ?? new List<Service>();
+        }
+
+        /// <summary>
         /// TSVファイルからサービスリストを読み込んで返す
         /// </summary>
-        /// <param name="filename">TSVファイル名</param>
+        /// <param name="fileName">TSVファイル名</param>
         /// <returns>サービスリスト</returns>
-        private List<Service> LoadServicesFromFile(string filename)
+        private List<Service> LoadServicesFromFile(string fileName)
         {
             List<Service> result = new List<Service>();
 
             try
             {
-                foreach (string line in File.ReadAllLines(filename))
+                foreach (string line in File.ReadAllLines(fileName))
                 {
                     string[] fields = line.Split('\t');
-                    if (fields.Length == 0)
+                    if (fields.Length < 2)
                     {
                         continue;
                     }
 
-                    // 前後の空白除去 + BOM 除去
-                    string first = fields[0]?.Trim().TrimStart('\uFEFF');
+                    // 1列目（Tsid）の前後の空白除去 + 先頭のBOMを除去
+                    string tsid = fields[0].Trim().TrimStart('\uFEFF');
+                    string sid = fields[1].Trim();
 
                     // 形式: Tsid, Sid, Name, Type?, TvtestOption?
-                    if (fields.Length >= 2 &&
-                        ushort.TryParse(fields[0], out _) &&
-                        ushort.TryParse(fields[1], out _))
+                    if (ushort.TryParse(tsid, out _) && ushort.TryParse(sid, out _))
                     {
                         Service service = new Service
                         {
-                            Tsid = fields[0].Trim(),
-                            Sid = fields[1].Trim(),
+                            Tsid = tsid,
+                            Sid = sid,
                             Name = fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null,
                             TypeName = fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]) ? fields[3].Trim() : null,
                             TvtestOption = fields.Length > 4 && !string.IsNullOrWhiteSpace(fields[4]) ? fields[4].Trim() : null
@@ -215,31 +223,37 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// TSVファイルから選択サービスリストを読み込んで返す
+        /// TOML設定ファイルに設定を書き込む
         /// </summary>
-        /// <returns>選択サービスリスト</returns>
-        private List<Service> LoadSelectedServicesFromFile()
+        private void SaveRockbarSettingToFile()
         {
-            return LoadServicesFromFile(GetTsvSelectedServicesFilePath());
+            Toml.WriteFile(RockbarSetting, GetFullPath(TomlConfigFileName));
         }
 
         /// <summary>
-        /// TSVファイルからお気に入りサービスリストを読み込んで返す
+        /// TSVファイルに選択サービスリストを書き込む
         /// </summary>
-        /// <returns>お気に入りサービスリスト</returns>
-        private List<Service> LoadFavoriteServicesFromFile()
+        private void SaveSelectedServicesToFile()
         {
-            return LoadServicesFromFile(GetTsvFavoriteServicesFilePath());
+            SaveServicesToFile(SelectedServiceList, GetFullPath(TsvSelectedServiceFileName));
+        }
+
+        /// <summary>
+        /// TSVファイルにお気に入りサービスリストを書き込む
+        /// </summary>
+        private void SaveFavoriteServicesToFile()
+        {
+            SaveServicesToFile(FavoriteServiceList, GetFullPath(TsvFavoriteServiceFileName));
         }
 
         /// <summary>
         /// TSVファイルにサービスリストを書き込む
         /// </summary>
         /// <param name="services">サービスリスト</param>
-        /// <param name="filename">ファイル名</param>
-        private void SaveServicesToFile(List<Service> services, string filename)
+        /// <param name="fileName">ファイル名</param>
+        private void SaveServicesToFile(List<Service> services, string fileName)
         {
-            using (var writer = new StreamWriter(filename))
+            using (var writer = new StreamWriter(fileName))
             {
                 writer.WriteLine("Tsid\tSid\tName\tType\tTVTestOption");
 
@@ -266,74 +280,28 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// TSVファイルに選択サービスリストを書き込む
-        /// </summary>
-        /// <param name="services">選択サービスリスト</param>
-        private void SaveSelectedServicesToFile(List<Service> services)
-        {
-            SaveServicesToFile(services, GetTsvSelectedServicesFilePath());
-        }
-
-        /// <summary>
-        /// TSVファイルにお気に入りサービスリストを書き込む
-        /// </summary>
-        /// <param name="services">お気に入りサービスリスト</param>
-        private void SaveFavoriteServicesToFile(List<Service> services)
-        {
-            SaveServicesToFile(services, GetTsvFavoriteServicesFilePath());
-        }
-
-        /// <summary>
-        /// TOML設定ファイルのフルパスを返す
-        /// </summary>
-        /// <returns>TOML設定ファイルのフルパス</returns>
-        private string GetTomlSettingFilePath()
-        {
-            // フルパスを返す
-            return GetFullPath(TOML_CONFIG_FILENAME);
-        }
-
-        /// <summary>
-        /// TSV選択サービス設定ファイルのフルパスを返す
-        /// </summary>
-        /// <returns>TSV選択サービス設定ファイルのフルパス</returns>
-        private string GetTsvSelectedServicesFilePath()
-        {
-            // フルパスを返す
-            return GetFullPath(TSV_SELECTED_SERVICE_FILENAME);
-        }
-
-        /// <summary>
-        /// TSVお気に入りサービス設定ファイルのフルパスを返す
-        /// </summary>
-        /// <returns>TSVお気に入りサービス設定ファイルのフルパス</returns>
-        private string GetTsvFavoriteServicesFilePath()
-        {
-            // フルパスを返す
-            return GetFullPath(TSV_FAVORITE_SERVICE_FILENAME);
-        }
-
-        /// <summary>
         /// アプリケーションディレクトリとファイル名を連結して返却する
         /// </summary>
-        /// <param name="filename">ファイル名</param>
+        /// <param name="fileName">ファイル名</param>
         /// <returns>フルパス</returns>
-        private string GetFullPath(string filename)
+        private string GetFullPath(string fileName)
         {
-            // 実行ファイルのフルパスを取得
-            string appFilePath = System.Reflection.Assembly.GetEntryAssembly().Location;
-
-            // ディレクトリと連結して、設定ファイルのフルパスを返す
-            return Path.Combine(Path.GetDirectoryName(appFilePath), filename);
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
         }
     }
 
     /// <summary>
     /// 設定ファイルクラス
     /// </summary>
-    public class RockBarSetting
+    public class RockbarSetting
     {
-        public RockBarSetting()
+        // 録画一覧の最大表示数のデフォルト値
+        public const int DEFAULT_REC_LIST_MAX_COUNT = 1500;
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        public RockbarSetting()
         {
             // デフォルト設定
             TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
@@ -361,10 +329,6 @@ namespace RockbarForEDCB
             this.NgReserveMenuBackColor = colorConverter.ConvertToString(Color.Red);
             this.DisabledReserveMenuBackColor = colorConverter.ConvertToString(Color.DarkGray);
         }
-
-        // 録画一覧の最大表示数のデフォルト値
-        public const int DEFAULT_REC_LIST_MAX_COUNT = 1500;
-
 
         // デフォルト設定
         // stringは""、オブジェクトは空オブジェクトで初期化。
@@ -570,37 +534,6 @@ namespace RockbarForEDCB
         public Dictionary<string, string> BonDriverNameToTunerName { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
-        /// RecFileSetInfo の TOML シリアライズ用 DTO クラス
-        /// </summary>
-        public class RecFileSetInfoDto
-        {
-            public string RecFolder { get; set; } = "";
-            public string WritePlugIn { get; set; } = "";
-            public string RecNamePlugIn { get; set; } = "";
-
-            public RecFileSetInfoDto() { }
-
-            public RecFileSetInfoDto(RecFileSetInfo src)
-            {
-                if (src == null) return;
-                this.RecFolder = src.RecFolder;
-                this.WritePlugIn = src.WritePlugIn;
-                this.RecNamePlugIn = src.RecNamePlugIn;
-            }
-
-            public RecFileSetInfo ToEntity()
-            {
-                return new RecFileSetInfo
-                {
-                    RecFolder = this.RecFolder,
-                    WritePlugIn = this.WritePlugIn,
-                    RecNamePlugIn = this.RecNamePlugIn,
-                    RecFileName = ""
-                };
-            }
-        }
-
-        /// <summary>
         /// 設定値の妥当性をチェックし、異常値があれば修復する。
         /// 修復が発生した場合は true を返す。
         /// </summary>
@@ -609,7 +542,7 @@ namespace RockbarForEDCB
             bool isFixed = false;
 
             // 起動時座標、幅、高さ、スプリッター位置
-            if (this.X <= - this.Width + 30 || this.Y < 0 || this.Width <= 0 || this.Height <= 0 || this.SplitterDistance <= 0 )
+            if (this.X <= -this.Width + 30 || this.Y < 0 || this.Width <= 0 || this.Height <= 0 || this.SplitterDistance <= 0)
             {
                 this.X = 50;
                 this.Y = 50;
@@ -676,6 +609,37 @@ namespace RockbarForEDCB
             }
 
             return isFixed;
+        }
+
+        /// <summary>
+        /// RecFileSetInfo の TOML シリアライズ用 DTO クラス
+        /// </summary>
+        public class RecFileSetInfoDto
+        {
+            public string RecFolder { get; set; } = "";
+            public string WritePlugIn { get; set; } = "";
+            public string RecNamePlugIn { get; set; } = "";
+
+            public RecFileSetInfoDto() { }
+
+            public RecFileSetInfoDto(RecFileSetInfo src)
+            {
+                if (src == null) return;
+                this.RecFolder = src.RecFolder;
+                this.WritePlugIn = src.WritePlugIn;
+                this.RecNamePlugIn = src.RecNamePlugIn;
+            }
+
+            public RecFileSetInfo ToEntity()
+            {
+                return new RecFileSetInfo
+                {
+                    RecFolder = this.RecFolder,
+                    WritePlugIn = this.WritePlugIn,
+                    RecNamePlugIn = this.RecNamePlugIn,
+                    RecFileName = ""
+                };
+            }
         }
     }
 }
