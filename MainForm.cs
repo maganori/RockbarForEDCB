@@ -211,9 +211,9 @@ namespace RockbarForEDCB
             {
                 notifyIcon.Visible = true;
             }
-            else
+            // タスクトレイアイコン常時表示がOFFで、メイン画面が出ていればタスクトレイアイコンを消す
+            else if (this.Visible)
             {
-                // 初回起動時・設定画面からの戻りで格納状態はないはず
                 notifyIcon.Visible = false;
             }
 
