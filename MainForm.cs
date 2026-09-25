@@ -854,7 +854,7 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.Height = this.Size.Height;
             _configManager.RockbarSetting.SplitterDistance = splitContainer.SplitterDistance;
 
-            _configManager.SaveFromFile();
+            _configManager.SaveToFile();
         }
 
         /// <summary>

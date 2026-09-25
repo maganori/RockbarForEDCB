@@ -62,12 +62,12 @@ namespace RockbarForEDCB
             /// <param name="initialItem">編集対象のListViewItem（新規追加時は null）</param>
             /// <param name="epgServiceInfos">全サービス情報一覧</param>
             /// <param name="existingKeys">既に登録されているキー（TSID-SID）の集合</param>
-            /// <param name="rockBarSetting">フォント設定</param>
+            /// <param name="rockbarSetting">フォント設定</param>
             public ServiceEditDialog(
                 ListViewItem initialItem,
                 List<EpgServiceInfo> epgServiceInfos,
                 HashSet<string> existingKeys,
-                RockBarSetting rockBarSetting = null)
+                RockbarSetting rockbarSetting = null)
             {
                 this.Text = (initialItem != null) ? "チャンネル編集" : "チャンネル追加";
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -136,7 +136,7 @@ namespace RockbarForEDCB
 
                 // フォントの適用
                 TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-                Font settingFormFont = (Font)fontConverter.ConvertFromString(rockBarSetting.SettingFormFont);
+                Font settingFormFont = (Font)fontConverter.ConvertFromString(rockbarSetting.SettingFormFont);
                 this.Font = settingFormFont;
 
                 // 編集モード：ListViewItem から値を直接展開

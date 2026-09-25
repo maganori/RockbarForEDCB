@@ -42,12 +42,12 @@ namespace RockbarForEDCB
             /// <param name="writePlugIns">出力PlugInリスト</param>
             /// <param name="fileNamePlugIns">ファイル名PlugInリスト</param>
             /// <param name="initialItem">編集対象のListViewItem（新規追加時は null）</param>
-            /// <param name="rockBarSetting">フォント設定</param>
+            /// <param name="rockbarSetting">フォント設定</param>
             public RecFolderEditDialog(
                 List<string> writePlugIns,
                 List<string> fileNamePlugIns,
                 ListViewItem initialItem = null,
-                RockBarSetting rockBarSetting = null)
+                RockbarSetting rockbarSetting = null)
             {
                 this.Text = (initialItem != null) ? "録画フォルダの変更" : "録画フォルダ、使用PlugIn設定";
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -135,7 +135,7 @@ namespace RockbarForEDCB
 
                 // フォントの適用
                 TypeConverter fontConverter = TypeDescriptor.GetConverter(typeof(Font));
-                Font settingFormFont = (Font)fontConverter.ConvertFromString(rockBarSetting.SettingFormFont);
+                Font settingFormFont = (Font)fontConverter.ConvertFromString(rockbarSetting.SettingFormFont);
                 this.Font = settingFormFont;
 
                 // 編集モード：ListViewItem から値を展開
