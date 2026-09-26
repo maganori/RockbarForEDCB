@@ -198,15 +198,15 @@ namespace RockbarForEDCB
                     string tsid = fields[0].Trim().TrimStart('\uFEFF');
                     string sid = fields[1].Trim();
 
-                    // 形式: Tsid, Sid, Name, Type?, TvtestOption?
+                    // 形式: Tsid, Sid, ServiceName, NetworkTypeName?, TvtestOption?
                     if (ushort.TryParse(tsid, out _) && ushort.TryParse(sid, out _))
                     {
                         Service service = new Service
                         {
                             Tsid = tsid,
                             Sid = sid,
-                            Name = fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null,
-                            TypeName = fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]) ? fields[3].Trim() : null,
+                            ServiceName = fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null,
+                            NetworkTypeName = fields.Length > 3 && !string.IsNullOrWhiteSpace(fields[3]) ? fields[3].Trim() : null,
                             TvtestOption = fields.Length > 4 && !string.IsNullOrWhiteSpace(fields[4]) ? fields[4].Trim() : null
                         };
 
@@ -255,7 +255,7 @@ namespace RockbarForEDCB
         {
             using (var writer = new StreamWriter(fileName))
             {
-                writer.WriteLine("Tsid\tSid\tName\tType\tTVTestOption");
+                writer.WriteLine("Tsid\tSid\tServiceName\tNetworkTypeName\tTVTestOption");
 
                 foreach (Service service in services)
                 {
@@ -263,8 +263,8 @@ namespace RockbarForEDCB
                     {
                         service.Tsid ?? "",
                         service.Sid ?? "",
-                        service.Name ?? "",
-                        service.TypeName ?? "",
+                        service.ServiceName ?? "",
+                        service.NetworkTypeName ?? "",
                         service.TvtestOption ?? ""
                     };
 
