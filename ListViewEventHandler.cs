@@ -207,8 +207,8 @@ namespace RockbarForEDCB
 
                 // ネットワークタイプの取得
                 NetworkType networkType = sv != null
-                    ? RockbarUtility.GetNetworkType(service.TypeName, sv.serviceInfo.ONID)
-                    : RockbarUtility.GetNetworkType(service.TypeName, null);
+                    ? RockbarUtility.GetNetworkType(service.NetworkTypeName, sv.serviceInfo.ONID)
+                    : RockbarUtility.GetNetworkType(service.NetworkTypeName, null);
 
                 // TVTestの起動処理呼び出し
                 _tvtestManager.StartTVTest(networkType, tsid, sid, service.TvtestOption);
@@ -1107,7 +1107,7 @@ namespace RockbarForEDCB
             if (isTuner)
             {
                 // --- チャンネル名の取得 ---
-                // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
                 string serviceName = _listViewBuilder.GetServiceName(reserve.TransportStreamID, reserve.ServiceID);
 
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)

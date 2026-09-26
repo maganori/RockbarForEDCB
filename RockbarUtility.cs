@@ -142,8 +142,8 @@ namespace RockbarForEDCB
     {
         public string Tsid { get; set; }
         public string Sid { get; set; }
-        public string Name { get; set; }
-        public string TypeName { get; set; }
+        public string ServiceName { get; set; }
+        public string NetworkTypeName { get; set; }
         public string TvtestOption { get; set; }
     }
 

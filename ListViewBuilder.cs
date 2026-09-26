@@ -141,11 +141,11 @@ namespace RockbarForEDCB
 
             // チャンネルキー -> サービス名 の辞書を1つだけ作成
             _serviceNameCache = services
-                    .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                    .Where(x => !string.IsNullOrWhiteSpace(x.ServiceName))
                     .GroupBy(x => RockbarUtility.GetKey(x.Tsid, x.Sid))
                     .ToDictionary(
                         g => g.Key,
-                        g => g.First().Name,
+                        g => g.First().ServiceName,
                         StringComparer.OrdinalIgnoreCase
                     );
         }
@@ -230,15 +230,15 @@ namespace RockbarForEDCB
                     // TSVのチャンネル一覧で設定されているネットワークタイプを最優先で使用する
                     // ネットワークタイプ設定が無い場合はEDCBからのデータをもとに自動判別
                     NetworkType networkType = matchedService != null
-                        ? RockbarUtility.GetNetworkType(service.TypeName, matchedService.serviceInfo.ONID)
-                        : RockbarUtility.GetNetworkType(service.TypeName, null);
+                        ? RockbarUtility.GetNetworkType(service.NetworkTypeName, matchedService.serviceInfo.ONID)
+                        : RockbarUtility.GetNetworkType(service.NetworkTypeName, null);
 
                     // 選択中タブ（地デジ / BS / CS）と不一致のサービスは除外する
                     if (selectedTab == MainFormTabType.DTTV && networkType != NetworkType.DTTV) continue;
                     if (selectedTab == MainFormTabType.BS && (networkType != NetworkType.BS && networkType != NetworkType.BS4K)) continue;
                     if (selectedTab == MainFormTabType.CS && (networkType != NetworkType.CS && networkType != NetworkType.CATV && networkType != NetworkType.SPHD)) continue;
 
-                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
                     string serviceName = GetServiceName(ushort.Parse(service.Tsid), ushort.Parse(service.Sid));
 
                     // 現在放送中の番組を取得
@@ -369,7 +369,7 @@ namespace RockbarForEDCB
                         continue; // 登録チャンネル一覧にない場合は処理を飛ばす
                     }
 
-                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
                     string serviceName = GetServiceName(ev.transport_stream_id, ev.service_id);
 
                     // 番組タイトルの取得
@@ -476,7 +476,7 @@ namespace RockbarForEDCB
                     }
 
                     // --- チャンネル名の取得 ---
-                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
                     string serviceName = GetServiceName(reserveData.TransportStreamID, reserveData.ServiceID);
 
                     // フィルタ条件チェック
@@ -692,7 +692,7 @@ namespace RockbarForEDCB
                         isRecording = startTime <= now && endTime >= now;
 
                         // --- チャンネル名の取得 ---
-                        // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのStationNameを使用
+                        // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
                         serviceName = GetServiceName(nearestReserve.TransportStreamID, nearestReserve.ServiceID);
 
                         dateTimeText = $"{startTime:MM/dd(ddd) HH:mm}-{endTime:HH:mm}";
@@ -1076,10 +1076,10 @@ namespace RockbarForEDCB
             {
                 foreach (var service in _configManager.SelectedServiceList)
                 {
-                    if (string.IsNullOrEmpty(service.Name))
+                    if (string.IsNullOrEmpty(service.ServiceName))
                         continue;
 
-                    int width = TextRenderer.MeasureText(service.Name, font).Width;
+                    int width = TextRenderer.MeasureText(service.ServiceName, font).Width;
                     if (width > maxWidth)
                     {
                         maxWidth = width;
