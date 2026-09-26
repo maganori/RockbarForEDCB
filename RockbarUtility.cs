@@ -314,6 +314,42 @@ namespace RockbarForEDCB
             }
         }
 
+        public static string GetServiceTypeName(byte serviceType, byte partialReceptionFlag)
+        {
+            if(partialReceptionFlag == 1)
+            {
+                return "ワンセグ";
+            }
+
+            switch (serviceType)
+            {
+                // 0x00: 未定義
+                case 0x01: return "テレビ";
+                case 0x02: return "音声";
+                // 0x03 - 0x7F: 未定義
+                case byte n when (n >= 0x80 && n <= 0xA0): return "独自";
+                case 0xA1: return "臨時映像";
+                case 0xA2: return "臨時音声";
+                case 0xA3: return "臨時データ";
+                case 0xA4: return "エンジニアリング";
+                case 0xA5: return "プロモーション映像";
+                case 0xA6: return "プロモーション音声";
+                case 0xA7: return "プロモーションデータ";
+                case 0xA8: return "事前蓄積用データ";
+                case 0xA9: return "蓄積専用データ";
+                case 0xAA: return "ブックマークリスト";
+                case 0xAB: return "サーバー型同時配信";
+                case 0xAC: return "独立ファイル";
+                case 0xAD: return "4KTV";
+                // 0xAE - 0xBF: 未定義
+                case 0xC0: return "データ";
+                case 0xC1: return "TLV型蓄積用データ";
+                case 0xC2: return "マルチメディア";
+                // 0xC3 – 0xFF: 未定義
+                default: return "不明";
+            }
+        }
+
         /// <summary>
         /// 予約ステータスから予約ステータス識別文字列を返す
         /// </summary>
