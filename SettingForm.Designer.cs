@@ -58,6 +58,7 @@ namespace RockbarForEDCB
             this.allServiceNameColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.allServiceTsidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.allServiceSidColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.allServiceServiceTypeColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.addSelectedServiceButton = new System.Windows.Forms.Button();
             this.addNewServiceButton = new System.Windows.Forms.Button();
             this.editServiceButton = new System.Windows.Forms.Button();
@@ -377,7 +378,8 @@ namespace RockbarForEDCB
             this.allServiceNetworkTypeColumnHeader,
             this.allServiceNameColumnHeader,
             this.allServiceTsidColumnHeader,
-            this.allServiceSidColumnHeader});
+            this.allServiceSidColumnHeader,
+            this.allServiceServiceTypeColumnHeader});
             this.allServiceListView.FullRowSelect = true;
             this.allServiceListView.HideSelection = false;
             this.allServiceListView.Location = new System.Drawing.Point(8, 26);
@@ -401,17 +403,21 @@ namespace RockbarForEDCB
             // allServiceNameColumnHeader
             // 
             this.allServiceNameColumnHeader.Text = "名前";
-            this.allServiceNameColumnHeader.Width = 130;
+            this.allServiceNameColumnHeader.Width = 120;
             // 
             // allServiceTsidColumnHeader
             // 
             this.allServiceTsidColumnHeader.Text = "TSID";
-            this.allServiceTsidColumnHeader.Width = 57;
+            this.allServiceTsidColumnHeader.Width = 44;
             // 
             // allServiceSidColumnHeader
             // 
             this.allServiceSidColumnHeader.Text = "SID";
-            this.allServiceSidColumnHeader.Width = 57;
+            this.allServiceSidColumnHeader.Width = 44;
+            // 
+            // allServiceServiceTypeColumnHeader
+            // 
+            this.allServiceServiceTypeColumnHeader.Text = "サービス";
             // 
             // addSelectedServiceButton
             // 
@@ -506,17 +512,17 @@ namespace RockbarForEDCB
             // selectedServiceNameColumnHeader
             // 
             this.selectedServiceNameColumnHeader.Text = "名前";
-            this.selectedServiceNameColumnHeader.Width = 130;
+            this.selectedServiceNameColumnHeader.Width = 120;
             // 
             // selectedServiceTsidColumnHeader
             // 
             this.selectedServiceTsidColumnHeader.Text = "TSID";
-            this.selectedServiceTsidColumnHeader.Width = 50;
+            this.selectedServiceTsidColumnHeader.Width = 44;
             // 
             // selectedServiceSidColumnHeader
             // 
             this.selectedServiceSidColumnHeader.Text = "SID";
-            this.selectedServiceSidColumnHeader.Width = 50;
+            this.selectedServiceSidColumnHeader.Width = 44;
             // 
             // selectedServiceTvtestOptionColumnHeader
             // 
@@ -1544,22 +1550,22 @@ namespace RockbarForEDCB
             // selectedService2NameColumnHeader
             // 
             this.selectedService2NameColumnHeader.Text = "名前";
-            this.selectedService2NameColumnHeader.Width = 130;
+            this.selectedService2NameColumnHeader.Width = 120;
             // 
             // selectedService2TsidColumnHeader
             // 
             this.selectedService2TsidColumnHeader.Text = "TSID";
-            this.selectedService2TsidColumnHeader.Width = 57;
+            this.selectedService2TsidColumnHeader.Width = 44;
             // 
             // selectedService2SidColumnHeader
             // 
             this.selectedService2SidColumnHeader.Text = "SID";
-            this.selectedService2SidColumnHeader.Width = 57;
+            this.selectedService2SidColumnHeader.Width = 44;
             // 
             // selectedService2TvtestOptionColumnHeader
             // 
             this.selectedService2TvtestOptionColumnHeader.Text = "TVTestオプション";
-            this.selectedService2TvtestOptionColumnHeader.Width = 0;
+            this.selectedService2TvtestOptionColumnHeader.Width = 180;
             // 
             // moveUpFavoriteServiceButton
             // 
@@ -1623,17 +1629,17 @@ namespace RockbarForEDCB
             // favoriteServiceNameColumnHeader
             // 
             this.favoriteServiceNameColumnHeader.Text = "名前";
-            this.favoriteServiceNameColumnHeader.Width = 130;
+            this.favoriteServiceNameColumnHeader.Width = 120;
             // 
             // favoriteServiceTsidColumnHeader
             // 
             this.favoriteServiceTsidColumnHeader.Text = "TSID";
-            this.favoriteServiceTsidColumnHeader.Width = 50;
+            this.favoriteServiceTsidColumnHeader.Width = 44;
             // 
             // favoriteServiceSidColumnHeader
             // 
             this.favoriteServiceSidColumnHeader.Text = "SID";
-            this.favoriteServiceSidColumnHeader.Width = 50;
+            this.favoriteServiceSidColumnHeader.Width = 44;
             // 
             // favoriteServiceTvtestOptionColumnHeader
             // 
@@ -3133,6 +3139,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.ColumnHeader allServiceTsidColumnHeader;
         private System.Windows.Forms.ColumnHeader allServiceSidColumnHeader;
         private System.Windows.Forms.ColumnHeader allServiceMarkColumnHeader;
+        private System.Windows.Forms.ColumnHeader allServiceServiceTypeColumnHeader;
         private System.Windows.Forms.ListView selectedServiceListView;
         private System.Windows.Forms.ColumnHeader selectedServiceMarkColumnHeader;
         private System.Windows.Forms.ColumnHeader selectedServiceNetworkTypeColumnHeader;

@@ -277,11 +277,22 @@ namespace RockbarForEDCB
         /// </summary>
         private void LoadAllServiceList()
         {
-            foreach (EpgServiceInfo epgServiceInfo in _serviceInfos)
+            // _serviceInfos をソート
+            var sortedServiceInfos = _serviceInfos
+                .OrderBy(info => (int)RockbarUtility.GetNetworkType(info.ONID)) // enum の並び順 (0~5) をソート順に利用
+                .ThenBy(info => RockbarUtility.GetNetworkType(info.ONID) == NetworkType.DTTV
+                    ? info.remote_control_key_id : info.SID) // 地デジはリモコンキーIDでソート、それ以外はSIDでソート
+                .ThenBy(info => info.SID); // 地デジのリモコンキーID重複考慮のためもう一度SIDでソート
+
+
+            // ソート済みの順序で ListViewItem を作成して追加
+            foreach (EpgServiceInfo epgServiceInfo in sortedServiceInfos)
             {
                 NetworkType networkType = RockbarUtility.GetNetworkType(epgServiceInfo.ONID);
 
                 string typeName = RockbarUtility.GetShortNetworkTypeName(networkType);
+                string serviceTypeName = RockbarUtility.GetServiceTypeName(
+                    epgServiceInfo.service_type, epgServiceInfo.partialReceptionFlag);
 
                 string[] data =
                 {
@@ -289,7 +300,8 @@ namespace RockbarForEDCB
                     typeName,
                     epgServiceInfo.service_name,
                     epgServiceInfo.TSID.ToString(),
-                    epgServiceInfo.SID.ToString()
+                    epgServiceInfo.SID.ToString(),
+                    serviceTypeName
                 };
 
                 ListViewItem item = new ListViewItem(data);
@@ -297,9 +309,6 @@ namespace RockbarForEDCB
 
                 _allServiceListView.Items.Add(item);
             }
-
-            // ネットワーク種別順で並べ替える
-            SortAllServiceList(ServiceListViewColumns.NetworkType);
         }
 
         /// <summary>
@@ -334,12 +343,7 @@ namespace RockbarForEDCB
                         targetItem.SubItems[ServiceListViewColumns.Name].Text = service.Name;
                     }
 
-                    // Tvtestオプションカラムを作成し設定
-                    while (targetItem.SubItems.Count <= 5)
-                    {
-                        targetItem.SubItems.Add("");
-                    }
-
+                    // AllServiceのServiceTypeカラムはTvtestオプションで上書き
                     targetItem.SubItems[ServiceListViewColumns.TvtestOption].Text = service.TvtestOption ?? "";
 
                     // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
@@ -413,7 +417,7 @@ namespace RockbarForEDCB
         /// </summary>
         public void AddService()
         {
-            ServiceListViewHelper.AddService(_allServiceListView, _selectedServiceListView);
+            ServiceListViewHelper.AddService(_allServiceListView, _selectedServiceListView, true);
         }
 
         /// <summary>
@@ -792,7 +796,8 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="leftListView">左ListView</param>
         /// <param name="rightListView">右ListView</param>
-        public static void AddService(ListView leftListView, ListView rightListView)
+        /// <param name="clearTvtestOption">TvtestOptionカラムのクリア要否</param>
+        public static void AddService(ListView leftListView, ListView rightListView, bool clearTvtestOption = false)
         {
             // >>ボタン
             foreach (ListViewItem item in leftListView.SelectedItems)
@@ -806,10 +811,10 @@ namespace RockbarForEDCB
                     ListViewItem newItem = (ListViewItem)targetItem.Clone();
                     newItem.Name = key;
 
-                    // TVTestOption 列まで SubItems を揃える
-                    while (newItem.SubItems.Count < rightListView.Columns.Count)
+                    // 全チャンネルからコピーするときは、TVTestOption列は無効化する
+                    if (clearTvtestOption)
                     {
-                        newItem.SubItems.Add("");
+                        newItem.SubItems[ServiceListViewColumns.TvtestOption].Text = "";
                     }
 
                     rightListView.Items.Add(newItem);
