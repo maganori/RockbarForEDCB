@@ -16,8 +16,8 @@ namespace RockbarForEDCB
     public static class ServiceListViewColumns
     {
         public const int Mark = 0;
-        public const int NetworkType = 1;
-        public const int Name = 2;
+        public const int NetworkTypeName = 1;
+        public const int ServiceName = 2;
         public const int Tsid = 3;
         public const int Sid = 4;
         public const int TvtestOption = 5;
@@ -44,8 +44,8 @@ namespace RockbarForEDCB
         {
             private readonly TextBox _tsidTextBox = new TextBox();
             private readonly TextBox _sidTextBox = new TextBox();
-            private readonly TextBox _nameTextBox = new TextBox();
-            private readonly ComboBox _typeComboBox = new ComboBox();
+            private readonly TextBox _serviceNameTextBox = new TextBox();
+            private readonly ComboBox _networkTypeNameComboBox = new ComboBox();
             private readonly TextBox _tvtestOptionTextBox = new TextBox();
 
             private readonly List<EpgServiceInfo> _serviceInfos;
@@ -92,18 +92,18 @@ namespace RockbarForEDCB
                 _sidTextBox.Top = 44;
                 _sidTextBox.Width = 200;
 
-                Label nameLabel = new Label { Left = 16, Top = 78, Width = 100, Text = "名前" };
-                _nameTextBox.Left = 120;
-                _nameTextBox.Top = 74;
-                _nameTextBox.Width = 200;
+                Label serviceNameLabel = new Label { Left = 16, Top = 78, Width = 100, Text = "名前" };
+                _serviceNameTextBox.Left = 120;
+                _serviceNameTextBox.Top = 74;
+                _serviceNameTextBox.Width = 200;
 
-                Label typeLabel = new Label { Left = 16, Top = 108, Width = 100, Text = "放送種別" };
-                _typeComboBox.Left = 120;
-                _typeComboBox.Top = 104;
-                _typeComboBox.Width = 200;
-                _typeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-                _typeComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
-                _typeComboBox.SelectedIndex = 0; // デフォルトは"自動判別"
+                Label networkTypeNameLabel = new Label { Left = 16, Top = 108, Width = 100, Text = "放送種別" };
+                _networkTypeNameComboBox.Left = 120;
+                _networkTypeNameComboBox.Top = 104;
+                _networkTypeNameComboBox.Width = 200;
+                _networkTypeNameComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+                _networkTypeNameComboBox.Items.AddRange(new object[] { "自動判別", "地", "BS", "CS", "CATV", "SPHD", "BS4K" });
+                _networkTypeNameComboBox.SelectedIndex = 0; // デフォルトは"自動判別"
 
                 Label tvtestOptionLabel = new Label { Left = 16, Top = 138, Width = 100, Text = "TVTestオプション" };
                 _tvtestOptionTextBox.Left = 120;
@@ -125,8 +125,8 @@ namespace RockbarForEDCB
                 this.Controls.AddRange(new Control[] {
                     tsidLabel, _tsidTextBox,
                     sidLabel, _sidTextBox,
-                    nameLabel, _nameTextBox,
-                    typeLabel, _typeComboBox,
+                    serviceNameLabel, _serviceNameTextBox,
+                    networkTypeNameLabel, _networkTypeNameComboBox,
                     tvtestOptionLabel, _tvtestOptionTextBox,
                     okButton, cancelButton
                 });
@@ -144,14 +144,14 @@ namespace RockbarForEDCB
                 {
                     _tsidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Tsid].Text;
                     _sidTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Sid].Text;
-                    _nameTextBox.Text = initialItem.SubItems[ServiceListViewColumns.Name].Text;
+                    _serviceNameTextBox.Text = initialItem.SubItems[ServiceListViewColumns.ServiceName].Text;
 
-                    string networkType = initialItem.SubItems[ServiceListViewColumns.NetworkType].Text;
-                    int typeIndex = _typeComboBox.FindStringExact(
-                        RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(networkType, null)));
-                    if (typeIndex >= 0)
+                    string networkTypeName = initialItem.SubItems[ServiceListViewColumns.NetworkTypeName].Text;
+                    int networkTypeNameIndex = _networkTypeNameComboBox.FindStringExact(
+                        RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(networkTypeName, null)));
+                    if (networkTypeNameIndex >= 0)
                     {
-                        _typeComboBox.SelectedIndex = typeIndex;
+                        _networkTypeNameComboBox.SelectedIndex = networkTypeNameIndex;
                     }
 
                     _tvtestOptionTextBox.Text = initialItem.SubItems.Count > ServiceListViewColumns.TvtestOption
@@ -200,15 +200,15 @@ namespace RockbarForEDCB
 
                 // 名前補完
                 // 未指定なら全チャンネル側の名前を使用、なければTSID-SID
-                if (string.IsNullOrWhiteSpace(_nameTextBox.Text))
+                if (string.IsNullOrWhiteSpace(_serviceNameTextBox.Text))
                 {
                     if (matchedService != null)
                     {
-                        _nameTextBox.Text = matchedService.service_name;
+                        _serviceNameTextBox.Text = matchedService.service_name;
                     }
                     else
                     {
-                        _nameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
+                        _serviceNameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
                     }
                 }
 
@@ -216,18 +216,18 @@ namespace RockbarForEDCB
                 // 種別指定が正しいか判定。誤りがあれば全チャンネル側の情報を使用
                 if (matchedService != null)
                 {
-                    var networkType = RockbarUtility.GetNetworkType(_typeComboBox.Text.Trim(), matchedService.ONID);
-                    _typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
+                    var networkType = RockbarUtility.GetNetworkType(_networkTypeNameComboBox.Text.Trim(), matchedService.ONID);
+                    _networkTypeNameComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
                 else
                 {
-                    var networkType = RockbarUtility.GetNetworkType(_typeComboBox.Text.Trim(), null);
-                    _typeComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
+                    var networkType = RockbarUtility.GetNetworkType(_networkTypeNameComboBox.Text.Trim(), null);
+                    _networkTypeNameComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
 
                 // ListViewItem を生成
-                string typeStr = _typeComboBox.Text.Trim();
-                string nameStr = _nameTextBox.Text.Trim();
+                string typeStr = _networkTypeNameComboBox.Text.Trim();
+                string nameStr = _serviceNameTextBox.Text.Trim();
                 string tsidStr = tsid.ToString();
                 string sidStr = sid.ToString();
                 string optionStr = string.IsNullOrWhiteSpace(_tvtestOptionTextBox.Text) ? "" : _tvtestOptionTextBox.Text.Trim();
@@ -277,6 +277,9 @@ namespace RockbarForEDCB
         /// </summary>
         private void LoadAllServiceList()
         {
+            // 初期化(2回ロードされることはないがガード処理)
+            _allServiceListView.Items.Clear();
+
             // _serviceInfos をソート
             var sortedServiceInfos = _serviceInfos
                 .OrderBy(info => (int)RockbarUtility.GetNetworkType(info.ONID)) // enum の並び順 (0~5) をソート順に利用
@@ -289,15 +292,14 @@ namespace RockbarForEDCB
             foreach (EpgServiceInfo epgServiceInfo in sortedServiceInfos)
             {
                 NetworkType networkType = RockbarUtility.GetNetworkType(epgServiceInfo.ONID);
-
-                string typeName = RockbarUtility.GetShortNetworkTypeName(networkType);
+                string networkTypeName = RockbarUtility.GetShortNetworkTypeName(networkType);
                 string serviceTypeName = RockbarUtility.GetServiceTypeName(
                     epgServiceInfo.service_type, epgServiceInfo.partialReceptionFlag);
 
                 string[] data =
                 {
                     "",
-                    typeName,
+                    networkTypeName,
                     epgServiceInfo.service_name,
                     epgServiceInfo.TSID.ToString(),
                     epgServiceInfo.SID.ToString(),
@@ -316,6 +318,9 @@ namespace RockbarForEDCB
         /// </summary>
         private void LoadSelectedServiceList()
         {
+            // 初期化(2回ロードされることはないがガード処理)
+            _selectedServiceListView.Items.Clear();
+
             List<ListViewItem> needCheckItems = new List<ListViewItem>();
 
             foreach (Service service in _configManager.SelectedServiceList)
@@ -329,29 +334,29 @@ namespace RockbarForEDCB
                     targetItem.Name = allServiceItem.Name;
 
                     // NetworkType指定があれば上書きする
-                    if (!string.IsNullOrWhiteSpace(service.TypeName))
+                    if (!string.IsNullOrWhiteSpace(service.NetworkTypeName))
                     {
-                        targetItem.SubItems[ServiceListViewColumns.NetworkType].Text =
+                        targetItem.SubItems[ServiceListViewColumns.NetworkTypeName].Text =
                             RockbarUtility.GetShortNetworkTypeName(
-                                RockbarUtility.GetNetworkType(service.TypeName, null)
+                                RockbarUtility.GetNetworkType(service.NetworkTypeName, null)
                             );
                     }
 
                     // チャンネル名指定があれば上書きする
-                    if (!string.IsNullOrWhiteSpace(service.Name))
+                    if (!string.IsNullOrWhiteSpace(service.ServiceName))
                     {
-                        targetItem.SubItems[ServiceListViewColumns.Name].Text = service.Name;
+                        targetItem.SubItems[ServiceListViewColumns.ServiceName].Text = service.ServiceName;
                     }
 
                     // AllServiceのServiceTypeカラムはTvtestオプションで上書き
                     targetItem.SubItems[ServiceListViewColumns.TvtestOption].Text = service.TvtestOption ?? "";
 
-                    // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
+                    // NetworkTypeName または ServiceName が左リストの元データと異なる場合、1列目に mod 印を付ける。
                     ServiceListViewHelper.ApplyModMarkIfChanged(allServiceItem, targetItem);
 
                     _selectedServiceListView.Items.Add(targetItem);
 
-                    // 選択チャンネルにあるチャンネルはチェック表示
+                    // 選択チャンネルにあるチャンネルはチェック表示対象に追加
                     needCheckItems.Add(allServiceItem);
                 }
                 else
@@ -366,7 +371,7 @@ namespace RockbarForEDCB
                 }
             }
 
-            // チェックする
+            // 選択チャンネルにあるチャンネルは全チャンネル一覧側をチェック表示
             needCheckItems.ForEach(x => ServiceListViewHelper.CheckServiceItem(x));
         }
 
@@ -377,12 +382,12 @@ namespace RockbarForEDCB
         /// <returns>生成された ListViewItem</returns>
         private static ListViewItem CreateServiceListItem(Service service)
         {
-            string typeName = RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(service.TypeName, null));
+            string networkTypeName = RockbarUtility.GetShortNetworkTypeName(RockbarUtility.GetNetworkType(service.NetworkTypeName, null));
 
             ListViewItem item = new ListViewItem(new string[] {
                 "",
-                typeName,
-                service.Name ?? "",
+                networkTypeName,
+                service.ServiceName ?? "",
                 service.Tsid ?? "",
                 service.Sid ?? "",
                 service.TvtestOption ?? ""
@@ -405,8 +410,8 @@ namespace RockbarForEDCB
                 {
                     Tsid = item.SubItems[ServiceListViewColumns.Tsid].Text,
                     Sid = item.SubItems[ServiceListViewColumns.Sid].Text,
-                    Name = item.SubItems[ServiceListViewColumns.Name].Text,
-                    TypeName = item.SubItems[ServiceListViewColumns.NetworkType].Text,
+                    ServiceName = item.SubItems[ServiceListViewColumns.ServiceName].Text,
+                    NetworkTypeName = item.SubItems[ServiceListViewColumns.NetworkTypeName].Text,
                     TvtestOption = item.SubItems[ServiceListViewColumns.TvtestOption].Text
                 });
             }
@@ -475,7 +480,7 @@ namespace RockbarForEDCB
 
                 if (_allServiceListView.Items.ContainsKey(newKey))
                 {
-                    // Type または Name が左リストの元データと異なる場合、1列目に mod 印を付ける。
+                    // NetworkTypeName または ServiceName が左リストの元データと異なる場合、1列目に mod 印を付ける。
                     ListViewItem originalItem = _allServiceListView.Items[newKey];
                     ServiceListViewHelper.ApplyModMarkIfChanged(originalItem, newItem);
                 }
@@ -537,7 +542,7 @@ namespace RockbarForEDCB
         {
             _allServiceListViewSorter.SetColumn(column,
                 column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
-                column == ServiceListViewColumns.NetworkType);
+                column == ServiceListViewColumns.NetworkTypeName);
             _allServiceListView.ListViewItemSorter = _allServiceListViewSorter;
             _allServiceListView.Sort();
         }
@@ -549,7 +554,7 @@ namespace RockbarForEDCB
         {
             _selectedServiceListViewSorter.SetColumn(column,
                 column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
-                column == ServiceListViewColumns.NetworkType);
+                column == ServiceListViewColumns.NetworkTypeName);
             _selectedServiceListView.ListViewItemSorter = _selectedServiceListViewSorter;
             _selectedServiceListView.Sort();
         }
@@ -593,6 +598,9 @@ namespace RockbarForEDCB
         /// </summary>
         public void Load()
         {
+            // 初期化(2回ロードされることはないがガード処理)
+            _favoriteServiceListView.Items.Clear();
+
             foreach (Service service in _configManager.FavoriteServiceList)
             {
                 // 1回キーとTSID, SIDだけで追加
@@ -629,8 +637,8 @@ namespace RockbarForEDCB
                 {
                     Tsid = item.SubItems[ServiceListViewColumns.Tsid].Text,
                     Sid = item.SubItems[ServiceListViewColumns.Sid].Text,
-                    Name = item.SubItems[ServiceListViewColumns.Name].Text,
-                    TypeName = item.SubItems[ServiceListViewColumns.NetworkType].Text,
+                    ServiceName = item.SubItems[ServiceListViewColumns.ServiceName].Text,
+                    NetworkTypeName = item.SubItems[ServiceListViewColumns.NetworkTypeName].Text,
                     TvtestOption = item.SubItems[ServiceListViewColumns.TvtestOption].Text
                 });
             }
@@ -692,12 +700,20 @@ namespace RockbarForEDCB
 
                 if (_selectedServiceListView2.Items.ContainsKey(key))
                 {
-                    // 登録済みはチェック表示
                     ListViewItem service2Item = _selectedServiceListView2.Items[key];
-                    favoriteItem.SubItems[ServiceListViewColumns.Mark].Text = service2Item.SubItems[ServiceListViewColumns.Mark].Text;
-                    favoriteItem.SubItems[ServiceListViewColumns.NetworkType].Text = service2Item.SubItems[ServiceListViewColumns.NetworkType].Text;
-                    favoriteItem.SubItems[ServiceListViewColumns.Name].Text = service2Item.SubItems[ServiceListViewColumns.Name].Text;
-                    favoriteItem.SubItems[ServiceListViewColumns.TvtestOption].Text = service2Item.SubItems[ServiceListViewColumns.TvtestOption].Text;
+                    favoriteItem.SubItems[ServiceListViewColumns.Mark].Text
+                        = service2Item.SubItems[ServiceListViewColumns.Mark].Text;
+
+                    favoriteItem.SubItems[ServiceListViewColumns.NetworkTypeName].Text
+                        = service2Item.SubItems[ServiceListViewColumns.NetworkTypeName].Text;
+
+                    favoriteItem.SubItems[ServiceListViewColumns.ServiceName].Text
+                        = service2Item.SubItems[ServiceListViewColumns.ServiceName].Text;
+
+                    favoriteItem.SubItems[ServiceListViewColumns.TvtestOption].Text
+                        = service2Item.SubItems[ServiceListViewColumns.TvtestOption].Text;
+
+                    // お気に入りチャンネルにあるチャンネルはチェック表示対象に追加
                     needCheckItems.Add(service2Item);
                 }
                 else
@@ -706,7 +722,7 @@ namespace RockbarForEDCB
                 }
             }
 
-            // チェックする
+            // お気に入りチャンネルにあるチャンネルは選択チャンネル側をチェック表示
             needCheckItems.ForEach(x => ServiceListViewHelper.CheckServiceItem(x));
         }
 
@@ -717,7 +733,7 @@ namespace RockbarForEDCB
         {
             _selectedServiceListView2Sorter.SetColumn(column,
                 column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
-                column == ServiceListViewColumns.NetworkType);
+                column == ServiceListViewColumns.NetworkTypeName);
             _selectedServiceListView2.ListViewItemSorter = _selectedServiceListView2Sorter;
             _selectedServiceListView2.Sort();
         }
@@ -729,7 +745,7 @@ namespace RockbarForEDCB
         {
             _favoriteServiceListViewSorter.SetColumn(column,
                 column == ServiceListViewColumns.Tsid || column == ServiceListViewColumns.Sid,
-                column == ServiceListViewColumns.NetworkType);
+                column == ServiceListViewColumns.NetworkTypeName);
             _favoriteServiceListView.ListViewItemSorter = _favoriteServiceListViewSorter;
             _favoriteServiceListView.Sort();
         }
@@ -777,12 +793,15 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// NetworkType または ServiceName が左リストの元データと異なる場合、1列目に mod 印を付ける。
+        /// NetworkTypeName または ServiceName が左リストの元データと異なる場合、1列目に mod 印を付ける。
         /// </summary>
         public static void ApplyModMarkIfChanged(ListViewItem originalItem, ListViewItem newItem)
         {
-            bool isTypeChanged = newItem.SubItems[ServiceListViewColumns.NetworkType].Text != originalItem.SubItems[ServiceListViewColumns.NetworkType].Text;
-            bool isNameChanged = newItem.SubItems[ServiceListViewColumns.Name].Text != originalItem.SubItems[ServiceListViewColumns.Name].Text;
+            bool isTypeChanged = newItem.SubItems[ServiceListViewColumns.NetworkTypeName].Text
+                != originalItem.SubItems[ServiceListViewColumns.NetworkTypeName].Text;
+
+            bool isNameChanged = newItem.SubItems[ServiceListViewColumns.ServiceName].Text
+                != originalItem.SubItems[ServiceListViewColumns.ServiceName].Text;
 
             if (isTypeChanged || isNameChanged)
             {

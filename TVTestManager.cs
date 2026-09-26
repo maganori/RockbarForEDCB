@@ -167,7 +167,7 @@ namespace RockbarForEDCB
                             continue;
                         }
 
-                        NetworkType networkType = RockbarUtility.GetNetworkType(service?.TypeName, reserve.OriginalNetworkID);
+                        NetworkType networkType = RockbarUtility.GetNetworkType(service?.NetworkTypeName, reserve.OriginalNetworkID);
                         if ((networkType == NetworkType.DTTV && _configManager.RockbarSetting.IsAutoOpenTvtestDttv) ||
                             ((networkType == NetworkType.BS) && _configManager.RockbarSetting.IsAutoOpenTvtestBs) ||
                             ((networkType == NetworkType.CS) && _configManager.RockbarSetting.IsAutoOpenTvtestCs) ||
