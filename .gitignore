@@ -1,5 +1,5 @@
 /.vs
-/bin
-/obj
+/.vscode
 /packages
-/.vscode/settings.json
+RockbarForEDCB/bin
+RockbarForEDCB/obj
