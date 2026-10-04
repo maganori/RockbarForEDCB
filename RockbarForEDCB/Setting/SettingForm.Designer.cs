@@ -271,20 +271,15 @@ namespace RockbarForEDCB
             this.menuFontTextBox = new System.Windows.Forms.TextBox();
             this.selectMenuFontButton = new System.Windows.Forms.Button();
             this.controlUiFontColorTabPage = new System.Windows.Forms.TabPage();
-            this.useMainFormFontForScalingNoteLabel = new System.Windows.Forms.Label();
             this.useIndividualMainFormFontsCheckBox = new System.Windows.Forms.CheckBox();
             this.individualMainFormFontsGroupBox = new System.Windows.Forms.GroupBox();
             this.tabFontTextBox = new System.Windows.Forms.TextBox();
             this.selectTextBoxFontButton = new System.Windows.Forms.Button();
             this.textBoxFontTextBox = new System.Windows.Forms.TextBox();
             this.textBoxFontLabel = new System.Windows.Forms.Label();
-            this.selectButtonFontButton = new System.Windows.Forms.Button();
-            this.buttonFontTextBox = new System.Windows.Forms.TextBox();
-            this.buttonFontLabel = new System.Windows.Forms.Label();
             this.selectTabFontButton = new System.Windows.Forms.Button();
             this.tabFontLabel = new System.Windows.Forms.Label();
             this.previewTabFontLabel = new System.Windows.Forms.Label();
-            this.previewButtonFontLabel = new System.Windows.Forms.Label();
             this.previewTextBoxFontLabel = new System.Windows.Forms.Label();
             this.useMainFormFontForScalingCheckBox = new System.Windows.Forms.CheckBox();
             this.previewSettingFormFontLabel = new System.Windows.Forms.Label();
@@ -2591,7 +2586,6 @@ namespace RockbarForEDCB
             // 
             // controlUiFontColorTabPage
             // 
-            this.controlUiFontColorTabPage.Controls.Add(this.useMainFormFontForScalingNoteLabel);
             this.controlUiFontColorTabPage.Controls.Add(this.useIndividualMainFormFontsCheckBox);
             this.controlUiFontColorTabPage.Controls.Add(this.individualMainFormFontsGroupBox);
             this.controlUiFontColorTabPage.Controls.Add(this.useMainFormFontForScalingCheckBox);
@@ -2611,15 +2605,6 @@ namespace RockbarForEDCB
             this.controlUiFontColorTabPage.Text = "フォント・色3";
             this.controlUiFontColorTabPage.UseVisualStyleBackColor = true;
             // 
-            // useMainFormFontForScalingNoteLabel
-            // 
-            this.useMainFormFontForScalingNoteLabel.AutoSize = true;
-            this.useMainFormFontForScalingNoteLabel.Location = new System.Drawing.Point(371, 43);
-            this.useMainFormFontForScalingNoteLabel.Name = "useMainFormFontForScalingNoteLabel";
-            this.useMainFormFontForScalingNoteLabel.Size = new System.Drawing.Size(228, 12);
-            this.useMainFormFontForScalingNoteLabel.TabIndex = 80;
-            this.useMainFormFontForScalingNoteLabel.Text = "※画面拡大時にレイアウトズレを補正できます。";
-            // 
             // useIndividualMainFormFontsCheckBox
             // 
             this.useIndividualMainFormFontsCheckBox.AutoSize = true;
@@ -2637,17 +2622,13 @@ namespace RockbarForEDCB
             this.individualMainFormFontsGroupBox.Controls.Add(this.selectTextBoxFontButton);
             this.individualMainFormFontsGroupBox.Controls.Add(this.textBoxFontTextBox);
             this.individualMainFormFontsGroupBox.Controls.Add(this.textBoxFontLabel);
-            this.individualMainFormFontsGroupBox.Controls.Add(this.selectButtonFontButton);
-            this.individualMainFormFontsGroupBox.Controls.Add(this.buttonFontTextBox);
-            this.individualMainFormFontsGroupBox.Controls.Add(this.buttonFontLabel);
             this.individualMainFormFontsGroupBox.Controls.Add(this.selectTabFontButton);
             this.individualMainFormFontsGroupBox.Controls.Add(this.tabFontLabel);
             this.individualMainFormFontsGroupBox.Controls.Add(this.previewTabFontLabel);
-            this.individualMainFormFontsGroupBox.Controls.Add(this.previewButtonFontLabel);
             this.individualMainFormFontsGroupBox.Controls.Add(this.previewTextBoxFontLabel);
             this.individualMainFormFontsGroupBox.Location = new System.Drawing.Point(84, 72);
             this.individualMainFormFontsGroupBox.Name = "individualMainFormFontsGroupBox";
-            this.individualMainFormFontsGroupBox.Size = new System.Drawing.Size(642, 121);
+            this.individualMainFormFontsGroupBox.Size = new System.Drawing.Size(642, 87);
             this.individualMainFormFontsGroupBox.TabIndex = 79;
             this.individualMainFormFontsGroupBox.TabStop = false;
             // 
@@ -2686,33 +2667,6 @@ namespace RockbarForEDCB
             this.textBoxFontLabel.TabIndex = 64;
             this.textBoxFontLabel.Text = "テキストボックスフォント";
             // 
-            // selectButtonFontButton
-            // 
-            this.selectButtonFontButton.Location = new System.Drawing.Point(372, 88);
-            this.selectButtonFontButton.Name = "selectButtonFontButton";
-            this.selectButtonFontButton.Size = new System.Drawing.Size(75, 23);
-            this.selectButtonFontButton.TabIndex = 62;
-            this.selectButtonFontButton.Text = "選択";
-            this.selectButtonFontButton.UseVisualStyleBackColor = true;
-            this.selectButtonFontButton.Click += new System.EventHandler(this.selectButtonFontButton_Click);
-            // 
-            // buttonFontTextBox
-            // 
-            this.buttonFontTextBox.Location = new System.Drawing.Point(137, 90);
-            this.buttonFontTextBox.Name = "buttonFontTextBox";
-            this.buttonFontTextBox.ReadOnly = true;
-            this.buttonFontTextBox.Size = new System.Drawing.Size(229, 19);
-            this.buttonFontTextBox.TabIndex = 63;
-            // 
-            // buttonFontLabel
-            // 
-            this.buttonFontLabel.AutoSize = true;
-            this.buttonFontLabel.Location = new System.Drawing.Point(58, 93);
-            this.buttonFontLabel.Name = "buttonFontLabel";
-            this.buttonFontLabel.Size = new System.Drawing.Size(65, 12);
-            this.buttonFontLabel.TabIndex = 64;
-            this.buttonFontLabel.Text = "ボタンフォント";
-            // 
             // selectTabFontButton
             // 
             this.selectTabFontButton.Location = new System.Drawing.Point(372, 16);
@@ -2741,15 +2695,6 @@ namespace RockbarForEDCB
             this.previewTabFontLabel.TabIndex = 65;
             this.previewTabFontLabel.Text = "放送種別タブのフォントプレビュー";
             // 
-            // previewButtonFontLabel
-            // 
-            this.previewButtonFontLabel.AutoSize = true;
-            this.previewButtonFontLabel.Location = new System.Drawing.Point(467, 93);
-            this.previewButtonFontLabel.Name = "previewButtonFontLabel";
-            this.previewButtonFontLabel.Size = new System.Drawing.Size(119, 12);
-            this.previewButtonFontLabel.TabIndex = 66;
-            this.previewButtonFontLabel.Text = "ボタンのフォントプレビュー";
-            // 
             // previewTextBoxFontLabel
             // 
             this.previewTextBoxFontLabel.AutoSize = true;
@@ -2764,15 +2709,15 @@ namespace RockbarForEDCB
             this.useMainFormFontForScalingCheckBox.AutoSize = true;
             this.useMainFormFontForScalingCheckBox.Location = new System.Drawing.Point(84, 42);
             this.useMainFormFontForScalingCheckBox.Name = "useMainFormFontForScalingCheckBox";
-            this.useMainFormFontForScalingCheckBox.Size = new System.Drawing.Size(281, 16);
+            this.useMainFormFontForScalingCheckBox.Size = new System.Drawing.Size(504, 16);
             this.useMainFormFontForScalingCheckBox.TabIndex = 78;
-            this.useMainFormFontForScalingCheckBox.Text = "メイン画面フォントをメイン画面のスケーリングに使用する";
+            this.useMainFormFontForScalingCheckBox.Text = "メイン画面フォントをメイン画面のスケーリングに使用する ※画面拡大時にレイアウト崩れを補正できます";
             this.useMainFormFontForScalingCheckBox.UseVisualStyleBackColor = true;
             // 
             // previewSettingFormFontLabel
             // 
             this.previewSettingFormFontLabel.AutoSize = true;
-            this.previewSettingFormFontLabel.Location = new System.Drawing.Point(551, 213);
+            this.previewSettingFormFontLabel.Location = new System.Drawing.Point(551, 182);
             this.previewSettingFormFontLabel.Name = "previewSettingFormFontLabel";
             this.previewSettingFormFontLabel.Size = new System.Drawing.Size(140, 12);
             this.previewSettingFormFontLabel.TabIndex = 76;
@@ -2781,7 +2726,7 @@ namespace RockbarForEDCB
             // settingFormFontLabel
             // 
             this.settingFormFontLabel.AutoSize = true;
-            this.settingFormFontLabel.Location = new System.Drawing.Point(54, 213);
+            this.settingFormFontLabel.Location = new System.Drawing.Point(54, 182);
             this.settingFormFontLabel.Name = "settingFormFontLabel";
             this.settingFormFontLabel.Size = new System.Drawing.Size(86, 12);
             this.settingFormFontLabel.TabIndex = 75;
@@ -2789,7 +2734,7 @@ namespace RockbarForEDCB
             // 
             // settingFormFontTextBox
             // 
-            this.settingFormFontTextBox.Location = new System.Drawing.Point(148, 210);
+            this.settingFormFontTextBox.Location = new System.Drawing.Point(148, 179);
             this.settingFormFontTextBox.Name = "settingFormFontTextBox";
             this.settingFormFontTextBox.ReadOnly = true;
             this.settingFormFontTextBox.Size = new System.Drawing.Size(302, 19);
@@ -2797,7 +2742,7 @@ namespace RockbarForEDCB
             // 
             // selectSettingFormFontButton
             // 
-            this.selectSettingFormFontButton.Location = new System.Drawing.Point(456, 208);
+            this.selectSettingFormFontButton.Location = new System.Drawing.Point(456, 177);
             this.selectSettingFormFontButton.Name = "selectSettingFormFontButton";
             this.selectSettingFormFontButton.Size = new System.Drawing.Size(75, 23);
             this.selectSettingFormFontButton.TabIndex = 73;
@@ -3294,9 +3239,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label tabFontLabel;
         private System.Windows.Forms.TextBox tabFontTextBox;
         private System.Windows.Forms.Button selectTabFontButton;
-        private System.Windows.Forms.Label buttonFontLabel;
-        private System.Windows.Forms.TextBox buttonFontTextBox;
-        private System.Windows.Forms.Button selectButtonFontButton;
         private System.Windows.Forms.Label textBoxFontLabel;
         private System.Windows.Forms.TextBox textBoxFontTextBox;
         private System.Windows.Forms.Button selectTextBoxFontButton;
@@ -3376,7 +3318,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label useRockbarReserveLabel;
         private System.Windows.Forms.Button deleteBonDriverButton;
         private System.Windows.Forms.Label previewTextBoxFontLabel;
-        private System.Windows.Forms.Label previewButtonFontLabel;
         private System.Windows.Forms.Label previewTabFontLabel;
         private System.Windows.Forms.Label previewMainFormFontLabel;
         private System.Windows.Forms.Label mainFormFontLabel;
@@ -3389,7 +3330,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox useMainFormFontForScalingCheckBox;
         private System.Windows.Forms.CheckBox useIndividualMainFormFontsCheckBox;
         private System.Windows.Forms.GroupBox individualMainFormFontsGroupBox;
-        private System.Windows.Forms.Label useMainFormFontForScalingNoteLabel;
         private System.Windows.Forms.Label versionLabel;
     }
 }
