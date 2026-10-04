@@ -13,15 +13,18 @@ namespace RockbarForEDCB
     public class TVTestManager
     {
         private readonly ConfigManager _configManager;
-        private readonly CtrlCmdUtil _ctrlCmdUtil;
+        //private readonly CtrlCmdUtil _ctrlCmdUtil;
+        private readonly EdcbConnection _edcbConnection;
 
         // Rockbarから自動起動したTVTestのプロセス一覧
         private readonly Dictionary<string, Process> _tvtestProcesses = new Dictionary<string, Process>();
 
-        public TVTestManager(ConfigManager configManager, CtrlCmdUtil ctrlCmdUtil)
+        //public TVTestManager(ConfigManager configManager, CtrlCmdUtil ctrlCmdUtil)
+        public TVTestManager(ConfigManager configManager, EdcbConnection edcbConnection)
         {
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
-            _ctrlCmdUtil = ctrlCmdUtil ?? throw new ArgumentNullException(nameof(ctrlCmdUtil));
+            //_ctrlCmdUtil = ctrlCmdUtil ?? throw new ArgumentNullException(nameof(ctrlCmdUtil));
+            _edcbConnection = edcbConnection ?? throw new ArgumentNullException(nameof(edcbConnection));
         }
 
         /// <summary>
@@ -104,7 +107,7 @@ namespace RockbarForEDCB
             if (_configManager.RockbarSetting.UseTcpIp && _configManager.RockbarSetting.IpAddress.IndexOf("127.0.0.1") < 0)
             {
                 string networkPath = "";
-                ErrCode errCode = _ctrlCmdUtil.SendGetRecFileNetworkPath(recFile.RecFilePath, ref networkPath);
+                ErrCode errCode = _edcbConnection.Send(c => c.SendGetRecFileNetworkPath(recFile.RecFilePath, ref networkPath));
                 if (errCode != ErrCode.CMD_SUCCESS || string.IsNullOrEmpty(networkPath))
                 {
                     MessageBox.Show("ネットワークパスの取得に失敗しました。EDCBの設定を見直してください。", "ネットワークパスエラー");

@@ -18,7 +18,8 @@ namespace RockbarForEDCB
         private readonly EpgDataManager _epgDataManager;
         private readonly ListViewBuilder _listViewBuilder;
         private readonly TVTestManager _tvtestManager;
-        private readonly CtrlCmdUtil _ctrlCmdUtil;
+        //private readonly CtrlCmdUtil _ctrlCmdUtil;
+        private readonly EdcbConnection _edcbConnection;
         private readonly ContextMenuStrip _contextMenu;
         private readonly Action<bool, bool, bool> _refreshList;
 
@@ -27,7 +28,7 @@ namespace RockbarForEDCB
             EpgDataManager epgDataManager,
             ListViewBuilder listViewBuilder,
             TVTestManager tvtestManager,
-            CtrlCmdUtil ctrlCmdUtil,
+            EdcbConnection edcbConnection,
             ContextMenuStrip contextMenu,
             Action<bool, bool, bool> refreshList)
         {
@@ -35,7 +36,7 @@ namespace RockbarForEDCB
             _epgDataManager = epgDataManager ?? throw new ArgumentNullException(nameof(epgDataManager));
             _listViewBuilder = listViewBuilder ?? throw new ArgumentNullException(nameof(listViewBuilder));
             _tvtestManager = tvtestManager ?? throw new ArgumentNullException(nameof(tvtestManager));
-            _ctrlCmdUtil = ctrlCmdUtil ?? throw new ArgumentNullException(nameof(ctrlCmdUtil));
+            _edcbConnection = edcbConnection ?? throw new ArgumentNullException(nameof(edcbConnection));
             _contextMenu = contextMenu ?? throw new ArgumentNullException(nameof(contextMenu));
             _refreshList = refreshList ?? throw new ArgumentNullException(nameof(refreshList));
         }
@@ -777,7 +778,7 @@ namespace RockbarForEDCB
                 reserve.RecSetting.RecMode = (byte)(_configManager.RockbarSetting.FixNoRecToServiceOnly ? 5 : 5 + (recMode + 4) % 5);
             }
 
-            var err = _ctrlCmdUtil.SendChgReserve(new List<ReserveData>() { reserve });
+            var err = _edcbConnection.Send(c => c.SendChgReserve(new List<ReserveData>() { reserve }));
             if (err != ErrCode.CMD_SUCCESS)
             {
                 MessageBox.Show("録画予約変更でエラーが発生しました。", "録画予約変更エラー");
@@ -929,7 +930,7 @@ namespace RockbarForEDCB
             reserve.RecSetting.SetBatFilePathAndRecTag(_configManager.RockbarSetting.RecBatFilePath);
 
             // サーバーへ予約追加コマンド送信
-            var err = _ctrlCmdUtil.SendAddReserve(new List<ReserveData> { reserve });
+            var err = _edcbConnection.Send(c => c.SendAddReserve(new List<ReserveData> { reserve }));
             if (err != ErrCode.CMD_SUCCESS)
             {
                 MessageBox.Show("録画予約登録でエラーが発生しました。", "録画予約登録エラー");
@@ -962,7 +963,7 @@ namespace RockbarForEDCB
                 }
             }
 
-            var err = _ctrlCmdUtil.SendDelReserve(new List<uint>() { reserve.ReserveID });
+            var err = _edcbConnection.Send(c => c.SendDelReserve(new List<uint>() { reserve.ReserveID }));
             if (err != ErrCode.CMD_SUCCESS)
             {
                 MessageBox.Show($"録画予約削除でエラーが発生しました。", "録画予約削除エラー");
@@ -998,7 +999,7 @@ namespace RockbarForEDCB
                 }
             }
 
-            var err = _ctrlCmdUtil.SendDelRecInfo(new List<uint>() { recFileInfo.ID });
+            var err = _edcbConnection.Send(c => c.SendDelRecInfo(new List<uint>() { recFileInfo.ID }));
             if (err != ErrCode.CMD_SUCCESS)
             {
                 MessageBox.Show("録画済み情報削除でエラーが発生しました。", "録画済み情報削除エラー");

@@ -1,5 +1,6 @@
 ﻿using EpgTimer;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -20,21 +21,23 @@ namespace RockbarForEDCB
         // EpgTimerSrv通信とEPGデータ管理
         private EpgDataManager _epgDataManager;
 
-        // EpgTimerSrv接続可否
-        private bool _canConnect = true;
-
         // ListViewアイテム作成
         private ListViewBuilder _listViewBuilder;
         private ListViewEventHandler _listViewEventHandler;
 
         // CtrlCmdUtil
-        private CtrlCmdUtil _ctrlCmdUtil = new CtrlCmdUtil();
+        //private CtrlCmdUtil _ctrlCmdUtil = new CtrlCmdUtil();
 
         // SettingForm
         private SettingForm _settingForm = null;
 
         // TVTestマネージャー
         private TVTestManager _tvtestManager;
+
+        private readonly EdcbConnection _edcbConnection;
+        // クラスのフィールド定義（関連変数の名前変更と追加）
+        //private CancellationTokenSource _edcbInitCts;
+
 
         // マウスのクリック位置を記憶
         private Point _mousePoint;
@@ -68,14 +71,16 @@ namespace RockbarForEDCB
             // ConfigManagerのインスタンス化
             _configManager = new ConfigManager();
 
+            _edcbConnection = new EdcbConnection();
+
             // EpgDataManagerのインスタンス化
-            _epgDataManager = new EpgDataManager(_ctrlCmdUtil);
+            _epgDataManager = new EpgDataManager(_edcbConnection);
 
             // ListViewBuilderのインスタンス化およびデリゲートの初期化
             _listViewBuilder = new ListViewBuilder(_configManager, _epgDataManager);
 
             // TVTestManagerのインスタンス化
-            _tvtestManager = new TVTestManager(_configManager, _ctrlCmdUtil);
+            _tvtestManager = new TVTestManager(_configManager, _edcbConnection);
 
             // ListViewEventHandler のインスタンス化
             _listViewEventHandler = new ListViewEventHandler(
@@ -83,7 +88,7 @@ namespace RockbarForEDCB
                 _epgDataManager,
                 _listViewBuilder,
                 _tvtestManager,
-                _ctrlCmdUtil,
+                _edcbConnection,
                 listContextMenuStrip,
                 RefreshList
             );
@@ -103,32 +108,35 @@ namespace RockbarForEDCB
                 splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
             }
 
-            if (_configManager.RockbarSetting.UseTcpIp) {
-                // TCP/IP通信にする
-                _ctrlCmdUtil.SetSendMode(true);
-                _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
-            }
-            else
-            {
-                // Pipe通信にする
-                _ctrlCmdUtil.SetSendMode(false);
-            }
+            //if (_configManager.RockbarSetting.UseTcpIp) {
+            //    // TCP/IP通信にする
+            //    _ctrlCmdUtil.SetSendMode(true);
+            //    _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
+            //}
+            //else
+            //{
+            //    // Pipe通信にする
+            //    _ctrlCmdUtil.SetSendMode(false);
+            //}
 
-            // 適当な通信を行って、通信可否を確認し問題があればメッセージを出す
-            if (!_epgDataManager.CheckConnection(out ErrCode errCode))
-            {
-                _canConnect = false;
-                MessageBox.Show(
-                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
-                    $"オプション設定を見直してアプリケーションを再起動してください。\n\nErrCode: {errCode}",
-                    "EpgTimerSrv接続チェック失敗",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
-            }
+            //// 適当な通信を行って、通信可否を確認し問題があればメッセージを出す
+            //if (!_epgDataManager.CheckConnection(out ErrCode errCode))
+            //{
+            //    _canConnect = false;
+            //    MessageBox.Show(
+            //        $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
+            //        $"オプション設定を見直してアプリケーションを再起動してください。\n\nErrCode: {errCode}",
+            //        "EpgTimerSrv接続チェック失敗",
+            //        MessageBoxButtons.OK,
+            //        MessageBoxIcon.Information
+            //    );
+            //}
 
-            // 初回表示
-            RefreshList(true, true, true);
+            //// 初回表示
+            RefreshList(false, true, true);
+
+            // 初回接続チェックの呼び出し箇所
+            InitializeEdcbConnectionAsync();
 
             // タイマーを有効化
             timer.Enabled = true;
@@ -407,7 +415,7 @@ namespace RockbarForEDCB
                 now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval); //前回更新時間から時間経過しているか
 
             // EpgTimerSrvと通信する
-            if (_canConnect)
+            if (_edcbConnection.CanConnect)
             {
                 // 定期更新など、通信が必要な場合
                 if (isTransmission)
@@ -634,6 +642,37 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// EpgTimerSrvへの接続確認と、成功時の初回表示を行う。
+        /// </summary>
+        private async void InitializeEdcbConnectionAsync()
+        {
+            // 設定ファイルから通信方式（TCP/IP or パイプ）を読み込む
+            var s = _configManager.RockbarSetting;
+
+            // 接続設定の反映と接続確認をまとめて行う。
+            // CanConnect の更新や、先発・後発の判断は EdcbConnection の中でしてくれる。
+            ErrCode? result = await _edcbConnection.ConnectAsync(s.UseTcpIp, s.IpAddress, s.PortNumber);
+
+            // null は「確認中に新しい呼び出しがあり、この結果は古い」という意味。何もせず終わる
+            if (result == null) return;
+
+            // 通信できなかった場合は、メッセージを出して終了
+            if (!_edcbConnection.CanConnect)
+            {
+                MessageBox.Show(
+                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
+                    $"オプション設定を見直してください。\n\nErrCode: {result}",
+                    "EpgTimerSrv接続チェック失敗",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            // 通信できた場合は、データを取得して画面を更新する
+            RefreshList(true, true, true);
+        }
+
+        /// <summary>
         /// フォームサイズ変更処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -817,7 +856,7 @@ namespace RockbarForEDCB
         {
             if (_settingForm == null || _settingForm.IsDisposed)
             {
-                _settingForm = new SettingForm(_configManager,  _ctrlCmdUtil, _canConnect);
+                _settingForm = new SettingForm(_configManager,  _edcbConnection);
 
                 // 「設定適用」、「設定保存」ボタンが押されたときのイベントをハンドリング
                 _settingForm.ApplyRequested += SettingForm_ApplyRequested;
@@ -849,19 +888,9 @@ namespace RockbarForEDCB
         /// </summary>
         public void ApplyConfigAndRefresh()
         {
-            // TCP/IPおよびPipe通信モードの再設定
-            if (_configManager.RockbarSetting.UseTcpIp)
-            {
-                _ctrlCmdUtil.SetSendMode(true);
-                _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
-            }
-            else
-            {
-                _ctrlCmdUtil.SetSendMode(false);
-            }
-
             ApplySetting();
-            RefreshList(true, true, true);
+            InitializeEdcbConnectionAsync();
+            //RefreshList(true, true, true);
         }
 
         /// <summary>
@@ -1110,6 +1139,161 @@ namespace RockbarForEDCB
             {
                 RockbarUtility.OpenBrowser(_configManager.RockbarSetting.WebEpgUrl);
             }
+        }
+    }
+
+    public class EdcbConnection
+    {
+        // 通信1回あたりのタイムアウト時間（ミリ秒）。接続確認と普段の通信で共通に使う
+        private const int TimeoutMs = 10000;
+
+        // 普段の通信用のCtrlCmdUtil
+        private readonly CtrlCmdUtil _ctrlCmdUtil = new CtrlCmdUtil();
+
+        // 「EpgTimerSrvと通信できる状態か」を表す
+        private volatile bool _canConnect;
+
+        // 「EpgTimerSrvと通信できる状態か」の公開用
+        public bool CanConnect => _canConnect;
+
+        // ConnectAsync が何回呼ばれたかを数える変数
+        // 呼び出しが重なったときに「どれが最新の呼び出しか」を見分けるために使う
+        private volatile int _connectCallCount;
+
+        /// <summary>
+        /// CtrlCmdUtilのラッパーメソッド
+        /// 使い方の例： ErrCode err = _edcbConnection.Send(c => c.SendEnumReserve(ref list));
+        /// CtrlCmdUtil：ErrCode err = _ctrlCmdUtil.SendEnumReserve(ref list);
+        /// </summary>
+        /// <param name="command">CtrlCmdUtilを使った通信処理（ErrCodeを返すもの）</param>
+        /// <returns>通信の結果。通信しなかった場合やタイムアウトの場合も、ErrCodeで返す</returns>
+        public ErrCode Send(Func<CtrlCmdUtil, ErrCode> command)
+        {
+            // 通信できない状態なら、待たずにすぐ失敗として返す
+            if (!_canConnect) return ErrCode.CMD_ERR_CONNECT;
+
+            // 通信を始めた時点の「接続カウント」を覚えておく。
+            int myGeneration = _connectCallCount;
+
+            // 通信は別のスレッドで実行（CtrlCmdUtilには通信を途中でやめる仕組みがないため）
+            Task<ErrCode> task = Task.Run(() =>
+            {
+                try
+                {
+                    return command(_ctrlCmdUtil);
+                }
+                catch (Exception ex)
+                {
+                    // パイプ通信の失敗や、受信データの不正で例外が出たとき用。
+                    System.Diagnostics.Trace.WriteLine(ex);
+                    return ErrCode.CMD_ERR_CONNECT;
+                }
+            });
+
+            // 応答があれば結果を、終わらなければタイムアウトとする
+            ErrCode errCode = task.Wait(TimeoutMs) ? task.Result : ErrCode.CMD_ERR_TIMEOUT;
+
+            // 「接続できない」系のエラーだったら、通信できない状態にする。
+            if (IsConnectionError(errCode) && myGeneration == _connectCallCount)
+            {
+                _canConnect = false;
+            }
+
+            return errCode;
+        }
+
+        /// <summary>
+        /// 「サーバーと繋がらない」ことを表すエラーかどうかを判定する。
+        /// 忙しいだけ（CMD_ERR_BUSY）や、引数の間違い（CMD_ERR_INVALID_ARG）などは含めない。
+        /// </summary>
+        private static bool IsConnectionError(ErrCode errCode)
+        {
+            return errCode == ErrCode.CMD_ERR_CONNECT      // サーバーにコネクトできなかった
+                || errCode == ErrCode.CMD_ERR_DISCONNECT   // サーバーから切断された
+                || errCode == ErrCode.CMD_ERR_TIMEOUT;     // タイムアウト発生
+        }
+
+        /// <summary>
+        /// 接続設定を反映し、EpgTimerSrvと通信できるかを確認する。
+        /// 何度も呼ばれた場合、有効なのは最後の呼び出しだけ。
+        /// </summary>
+        /// <returns>
+        /// 確認の結果（CMD_SUCCESSなら通信できた）。
+        /// 確認中に新しい呼び出しがあって、この結果が古くなった場合は null を返す。
+        /// </returns>
+        public async Task<ErrCode?> ConnectAsync(bool useTcpIp, string ipAddress, uint portNumber)
+        {
+            // 呼び出し回数を1増やし、「自分は何回目の呼び出しか」を覚えておく
+            int myCallNumber = ++_connectCallCount;
+
+            // 新しい接続設定を使い始めるので、「通信できる」状態をいったん取り消す。
+            _canConnect = false;
+
+            // 普段の通信用のCtrlCmdUtilに、接続設定を反映する
+            Configure(_ctrlCmdUtil, useTcpIp, ipAddress, portNumber);
+
+            // 接続確認をする（通信中は待つだけで、画面は固まらない）
+            ErrCode errCode = await CheckAsync(useTcpIp, ipAddress, portNumber);
+
+            // 待っている間に新しい呼び出しがあった場合、この結果は古いので捨てる。
+            // CanConnect は false のままだが、それで正しい（後発の呼び出しが結果を入れてくれる）。
+            if (myCallNumber != _connectCallCount) return null;
+
+            // 確認結果を保存する（CMD_SUCCESSなら通信できる）
+            _canConnect = (errCode == ErrCode.CMD_SUCCESS);
+            return errCode;
+        }
+
+        /// <summary>
+        /// 渡されたCtrlCmdUtilに、接続設定を反映する。
+        /// 「普段用」と「接続確認用」の両方で同じ設定コードを使うため、1つにまとめている。
+        /// </summary>
+        private static void Configure(CtrlCmdUtil cmd, bool useTcpIp, string ipAddress, uint portNumber)
+        {
+            // true ならTCP/IP通信、false ならパイプ通信にする
+            cmd.SetSendMode(useTcpIp);
+
+            // TCP/IP通信のときだけ、接続先のIPアドレスとポート番号を設定する
+            if (useTcpIp)
+            {
+                cmd.SetNWSetting(ipAddress, portNumber);
+            }
+        }
+
+        /// <summary>
+        /// EpgTimerSrvと通信できるかを確認する
+        /// </summary>
+        private static async Task<ErrCode> CheckAsync(bool useTcpIp, string ipAddress, uint portNumber)
+        {
+            // 接続確認用に、新しいCtrlCmdUtilを作る。
+            // 普段用と同じものを使うと、他の通信が終わるまで待たされる可能性があるため。
+            var testCmd = new CtrlCmdUtil();
+            Configure(testCmd, useTcpIp, ipAddress, portNumber);
+
+            // 通信は別スレッド（Task.Run）で開始する
+            Task<ErrCode> checkTask = Task.Run(() =>
+            {
+                try
+                {
+                    // チューナーごとの予約一覧を取得するだけの軽い通信。
+                    // 一覧の中身は使わず、通信が成功したかどうかだけを見る。
+                    var tuners = new List<TunerReserveInfo>();
+                    return testCmd.SendEnumTunerReserve(ref tuners);
+                }
+                catch (Exception ex)
+                {
+                    // パイプ通信は、接続できないときに例外が出ることがある。
+                    // アプリが落ちないように、ここで受け止めて「接続失敗」として返す。
+                    System.Diagnostics.Trace.WriteLine(ex);
+                    return ErrCode.CMD_ERR_CONNECT;
+                }
+            });
+
+            // 「通信が終わる」か「タイムアウト」かまで待つ
+            Task done = await Task.WhenAny(checkTask, Task.Delay(TimeoutMs));
+
+            // 通信のほうが先に終わっていればその結果を、そうでなければタイムアウトを返す
+            return done == checkTask ? await checkTask : ErrCode.CMD_ERR_TIMEOUT;
         }
     }
 }
