@@ -88,6 +88,9 @@ namespace RockbarForEDCB
                 RefreshList
             );
 
+            // MainFormのボタンの設定(デザイナーで出来ないもの)
+            SetupMainFormButton();
+
             // 設定反映
             ApplySetting();
 
@@ -193,6 +196,79 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// MainFormのボタンの設定処理(主にデザイナーで出来ないもの)
+        /// </summary>
+        private void SetupMainFormButton()
+        {
+            // ResetボタンをfilterTextBoxの中に入れる
+            filterTextBox.Controls.Add(resetButton);
+
+            resetButton.Text = "";
+            resetButton.Dock = DockStyle.Right;
+            resetButton.Width = filterTextBox.ClientSize.Height;
+            resetButton.Cursor = Cursors.Default;
+            resetButton.FlatStyle = FlatStyle.Flat;
+            resetButton.FlatAppearance.BorderSize = 0;
+
+            // ×を中央に線で描く
+            resetButton.Paint += (s, e) =>
+            {
+                int size = (int)(resetButton.Height * 0.4f);   // 高さの4割を×の大きさにする
+                int x = (resetButton.Width - size) / 2;
+                int y = (resetButton.Height - size) / 2;
+
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using (var pen = new Pen(resetButton.ForeColor, 1.5f))
+                {
+                    e.Graphics.DrawLine(pen, x, y, x + size, y + size);
+                    e.Graphics.DrawLine(pen, x + size, y, x, y + size);
+                }
+            };
+
+            // filterTextBoxに文字があるときだけResetボタンを表示
+            resetButton.Visible = filterTextBox.Text.Length > 0;
+            filterTextBox.TextChanged += (s, e) =>
+            {
+                resetButton.Visible = filterTextBox.Text.Length > 0;
+            };
+
+            // 設定ボタンを歯車マークにする
+            settingButton.Text = "\uE713";
+            settingButton.Font = new Font("Segoe MDL2 Assets", settingButton.Font.Size);
+            settingButton.TextAlign = ContentAlignment.MiddleCenter;
+
+
+            // 「×ボタン」の設定
+            closeButton.Text = "";
+            closeButton.Paint += (s, e) =>
+            {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+                using (var pen = new Pen(closeButton.ForeColor, 1.5f))
+                {
+                    // 「×ボタンでタスクトレイに格納する」が有効時は＿の絵にする
+                    if (_configManager.RockbarSetting.StoreTaskTrayByClosing)
+                    {
+                        // ＿: 下寄りに水平線
+                        int size = (int)(closeButton.Height * 0.4f);
+                        int x = (closeButton.Width - size) / 2;
+                        int y = (int)(closeButton.Height * 0.68f);
+                        e.Graphics.DrawLine(pen, x, y, x + size, y);
+                    }
+                    else
+                    {
+                        // ×: 対角線2本
+                        int size = (int)(closeButton.Height * 0.34f);
+                        int x = (closeButton.Width - size) / 2;
+                        int y = (closeButton.Height - size) / 2;
+                        e.Graphics.DrawLine(pen, x, y, x + size, y + size);
+                        e.Graphics.DrawLine(pen, x + size, y, x, y + size);
+                    }
+                }
+            };
+        }
+
+        /// <summary>
         /// 設定反映処理
         /// 主に見た目部分の設定をフォームに反映する。初回起動時・設定変更時に実行
         /// </summary>
@@ -261,6 +337,9 @@ namespace RockbarForEDCB
                 closeButton.Font = mainFormFont;
             }
 
+            // 歯車マークはフォント固定
+            settingButton.Font = new Font("Segoe MDL2 Assets", settingButton.Font.Size);
+
             // タブや検索ボックスの位置調整
             AdjustTopControls();
 
@@ -286,46 +365,26 @@ namespace RockbarForEDCB
             this.openWebEpgTopToolStripMenuItem.Visible = _configManager.RockbarSetting.UseWebLink;
 
             // 「✕ボタンでタスクトレイに格納する」が有効時は＿ボタンにする
-            if (_configManager.RockbarSetting.StoreTaskTrayByClosing)
-            {
-                this.closeButton.Text = "＿";
-            }
-            else
-            {
-                this.closeButton.Text = "×";
-            }
+            closeButton.Invalidate();
 
             // 録画済み一覧の最大保持数(表示数)
             _epgDataManager.RecListMaxCount = _configManager.RockbarSetting.RecListMaxCount;
         }
 
         /// <summary>
-        /// 上部のタブ・検索ボックス・Resetボタンの位置を調整する
+        /// 上部のタブ・検索ボックスの位置を調整する
         /// </summary>
         private void AdjustTopControls()
         {
-            int tabWidth = 0;
+            // ハンドルを確実に生成しておく(GetTabRectの結果を正しくするため)
+            var handle = mainFormTabControl.Handle;
 
-            foreach (TabPage tabPage in mainFormTabControl.TabPages)
-            {
-                // タブ文字列の幅を取得
-                int textWidth = TextRenderer.MeasureText(
-                    tabPage.Text,
-                    mainFormTabControl.Font
-                ).Width;
-
-                // タブの左右余白を加える
-                tabWidth += textWidth + 15;
-            }
-
-            // TabControl自身の左右の余白を追加
-            mainFormTabControl.Width = tabWidth + 4;
+            // 最後のタブの右端 = タブ見出しが実際に占める幅
+            Rectangle lastTabRect = mainFormTabControl.GetTabRect(mainFormTabControl.TabCount - 1);
+            mainFormTabControl.Width = lastTabRect.Right + 1;
 
             // 検索ボックスをTabControlの右側へ
-            filterTextBox.Left = mainFormTabControl.Right + 4;
-
-            // Resetボタンを検索ボックスの右側へ
-            resetButton.Left = filterTextBox.Right + 4;
+            filterTextBox.Left = mainFormTabControl.Right + 18;
         }
 
         /// <summary>
@@ -733,6 +792,7 @@ namespace RockbarForEDCB
         private void resetButton_Click(object sender, EventArgs e)
         {
             ResetFilter();
+            filterTextBox.Focus();
         }
 
         /// <summary>
