@@ -1,5 +1,5 @@
-﻿using Nett;
-using RockbarForEDCB.Properties;
+﻿using EpgTimer;
+using Nett;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,7 +7,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using EpgTimer;
 
 namespace RockbarForEDCB
 {

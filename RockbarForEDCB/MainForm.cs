@@ -1,19 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using EpgTimer;
+using System;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Xml.Linq;
-using System.Xml.XPath;
-using EpgTimer;
-using Nett;
 
 namespace RockbarForEDCB
 {
