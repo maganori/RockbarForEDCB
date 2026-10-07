@@ -302,7 +302,6 @@ namespace RockbarForEDCB
             Font menuFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.MenuFont);
             Font tabFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TabFont);
             Font textBoxFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.TextBoxFont);
-            Font buttonFont = (Font)fontConverter.ConvertFromString(_configManager.RockbarSetting.ButtonFont);
 
             // OSによるDPI変更(画面拡大)時の考慮
             if (_configManager.RockbarSetting.UseMainFormFontForScaling)
@@ -312,33 +311,28 @@ namespace RockbarForEDCB
             }
             else
             {
-                // システム指定のまま(ボタンの文字が途切れる場合あり)
+                // システム指定のまま(タブの文字が途切れる場合がある)
                 this.Font = SystemFonts.DefaultFont;
             }
 
-            mainListView.Font = listFont;
-            subListView.Font = listFont;
-            listContextMenuStrip.Font = menuFont;
-
+            //タブとフィルタテキストボックスのフォント
             if (_configManager.RockbarSetting.UseIndividualMainFormFonts)
             {
                 mainFormTabControl.Font = tabFont;
                 filterTextBox.Font = textBoxFont;
-                resetButton.Font = buttonFont;
-                settingButton.Font = buttonFont;
-                closeButton.Font = buttonFont;
             }
             else
             {
                 mainFormTabControl.Font = mainFormFont;
                 filterTextBox.Font = mainFormFont;
-                resetButton.Font = mainFormFont;
-                settingButton.Font = mainFormFont;
-                closeButton.Font = mainFormFont;
             }
 
-            // 歯車マークはフォント固定
-            settingButton.Font = new Font("Segoe MDL2 Assets", settingButton.Font.Size);
+            // 設定ボタンの歯車マークはフォント固定、フォントサイズは自動
+            settingButton.Font = new Font("Segoe MDL2 Assets", this.Font.Size);
+
+            mainListView.Font = listFont;
+            subListView.Font = listFont;
+            listContextMenuStrip.Font = menuFont;
 
             // タブや検索ボックスの位置調整
             AdjustTopControls();

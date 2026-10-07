@@ -362,14 +362,12 @@ namespace RockbarForEDCB
 
             tabFontTextBox.Text = _configManager.RockbarSetting.TabFont;
             textBoxFontTextBox.Text = _configManager.RockbarSetting.TextBoxFont;
-            buttonFontTextBox.Text = _configManager.RockbarSetting.ButtonFont;
             settingFormFontTextBox.Text = _configManager.RockbarSetting.SettingFormFont;
 
             // プレビューへ反映
             previewMainFormFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.MainFormFont);
             previewTabFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.TabFont);
             previewTextBoxFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.TextBoxFont);
-            previewButtonFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.ButtonFont);
             previewSettingFormFontLabel.Font = (Font)_fontConverter.ConvertFromString(_configManager.RockbarSetting.SettingFormFont);
 
             // フォント・色3 画面の初期表示時の有効/無効状態を反映
@@ -693,7 +691,6 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.UseIndividualMainFormFonts = useIndividualMainFormFontsCheckBox.Checked;
             _configManager.RockbarSetting.TabFont = tabFontTextBox.Text;
             _configManager.RockbarSetting.TextBoxFont = textBoxFontTextBox.Text;
-            _configManager.RockbarSetting.ButtonFont = buttonFontTextBox.Text;
             _configManager.RockbarSetting.SettingFormFont = settingFormFontTextBox.Text;
         }
 
@@ -1260,15 +1257,6 @@ namespace RockbarForEDCB
         {
             SelectFontFor(textBoxFontTextBox,
                 font => previewTextBoxFontLabel.Font = font);
-        }
-
-        /// <summary>
-        /// ボタンのフォント選択ボタン押下処理
-        /// </summary>
-        private void selectButtonFontButton_Click(object sender, EventArgs e)
-        {
-            SelectFontFor(buttonFontTextBox,
-                font => previewButtonFontLabel.Font = font);
         }
 
         /// <summary>

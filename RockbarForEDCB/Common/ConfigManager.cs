@@ -309,7 +309,6 @@ namespace RockbarForEDCB
             this.MainFormFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
             this.TabFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
             this.TextBoxFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
-            this.ButtonFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
             this.SettingFormFont = fontConverter.ConvertToString(SystemFonts.DefaultFont);
 
             TypeConverter colorConverter = TypeDescriptor.GetConverter(typeof(Color));
@@ -525,8 +524,6 @@ namespace RockbarForEDCB
         public string TabFont { get; set; } = "";
         // テキストボックスのフォント(シリアライズしたもの)
         public string TextBoxFont { get; set; } = "";
-        // ボタンのフォント(シリアライズしたもの)
-        public string ButtonFont { get; set; } = "";
         // 設定画面フォント(シリアライズしたもの)
         public string SettingFormFont { get; set; } = "";
         // BonDriver名→チューナー名マッピング
