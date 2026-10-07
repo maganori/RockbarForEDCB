@@ -40,7 +40,7 @@ namespace RockbarForEDCB
 
             try
             {
-                if (tvtestOption != null)
+                if (!string.IsNullOrWhiteSpace(tvtestOption))
                 {
                     result = Process.Start(_configManager.RockbarSetting.TvtestPath, $"{tvtestOption} /tsid {tsid} /sid {sid}");
                 }

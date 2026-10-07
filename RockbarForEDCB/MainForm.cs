@@ -817,7 +817,7 @@ namespace RockbarForEDCB
         {
             if (_settingForm == null || _settingForm.IsDisposed)
             {
-                _settingForm = new SettingForm(_ctrlCmdUtil, _canConnect);
+                _settingForm = new SettingForm(_configManager,  _ctrlCmdUtil, _canConnect);
 
                 // 「設定適用」、「設定保存」ボタンが押されたときのイベントをハンドリング
                 _settingForm.ApplyRequested += SettingForm_ApplyRequested;
@@ -849,8 +849,6 @@ namespace RockbarForEDCB
         /// </summary>
         public void ApplyConfigAndRefresh()
         {
-            _configManager.LoadFromFile();
-
             // TCP/IPおよびPipe通信モードの再設定
             if (_configManager.RockbarSetting.UseTcpIp)
             {

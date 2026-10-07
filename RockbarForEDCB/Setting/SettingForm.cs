@@ -48,7 +48,7 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="ctrlCmdUtil"></param>
         /// <param name="canConnect"></param>
-        public SettingForm(CtrlCmdUtil ctrlCmdUtil, bool canConnect)
+        public SettingForm(ConfigManager configManager, CtrlCmdUtil ctrlCmdUtil, bool canConnect)
         {
             InitializeComponent();
 
@@ -58,7 +58,7 @@ namespace RockbarForEDCB
             _ctrlCmdUtil = ctrlCmdUtil;
 
             // ConfigManagerで設定を読み込み
-            _configManager = new ConfigManager();
+            _configManager = configManager;
 
             // サービス一覧取得
             _serviceInfos.Clear();
