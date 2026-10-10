@@ -10,9 +10,9 @@ namespace RockbarForEDCB
     /// </summary>
     public class EpgDataManager
     {
-        private readonly CtrlCmdUtil _ctrlCmdUtil;
+        private readonly EdcbClient _edcbClient;
 
-        // CtrlCmdの結果格納用
+        // EdcbClient(CtrlCmd)の結果格納用
         private List<EpgServiceEventInfo> _serviceEvents = new List<EpgServiceEventInfo>();
         private List<TunerReserveInfo> _tunerReserveInfos = new List<TunerReserveInfo>();
         private List<ReserveData> _reserveDatas = new List<ReserveData>();
@@ -51,23 +51,10 @@ namespace RockbarForEDCB
         /// <summary>
         /// コンストラクタ
         /// </summary>
-        /// <param name="ctrlCmdUtil">EDCB通信用ユーティリティ</param>
-        public EpgDataManager(CtrlCmdUtil ctrlCmdUtil)
+        /// <param name="edcbClient">EDCB通信用クライアント</param>
+        public EpgDataManager(EdcbClient edcbClient)
         {
-            _ctrlCmdUtil = ctrlCmdUtil ?? throw new ArgumentNullException(nameof(ctrlCmdUtil));
-        }
-
-        /// <summary>
-        /// EpgTimerSrv (EDCB) との通信接続チェックを行います。
-        /// </summary>
-        /// <param name="errCode">失敗時のエラーコード</param>
-        /// <returns>接続成功の場合 true</returns>
-        public bool CheckConnection(out ErrCode errCode)
-        {
-            var tunerReserveInfos = new List<TunerReserveInfo>();
-            errCode = _ctrlCmdUtil.SendEnumTunerReserve(ref tunerReserveInfos);
-
-            return errCode == ErrCode.CMD_SUCCESS;
+            _edcbClient = edcbClient ?? throw new ArgumentNullException(nameof(edcbClient));
         }
 
         /// <summary>
@@ -79,7 +66,7 @@ namespace RockbarForEDCB
             // 番組一覧取得
             _serviceEvents.Clear();
             AllEventMap.Clear();
-            _ctrlCmdUtil.SendEnumPgAll(ref _serviceEvents);
+            _edcbClient.ExecuteCmd(c => c.SendEnumPgAll(ref _serviceEvents));
 
             // 番組一覧関連のハッシュを作成
             ServiceMap.Clear();
@@ -114,7 +101,7 @@ namespace RockbarForEDCB
         {
             // 予約一覧取得
             _reserveDatas.Clear();
-            _ctrlCmdUtil.SendEnumReserve(ref _reserveDatas);
+            _edcbClient.ExecuteCmd(c => c.SendEnumReserve(ref _reserveDatas));
 
             // 予約一覧関連のハッシュを作成
             ReserveMap.Clear();
@@ -144,7 +131,7 @@ namespace RockbarForEDCB
         {
             _recFileInfos.Clear();
             RecMap.Clear();
-            _ctrlCmdUtil.SendEnumRecInfoBasic(ref _recFileInfos);
+            _edcbClient.ExecuteCmd(c => c.SendEnumRecInfoBasic(ref _recFileInfos));
 
             // _recFileInfos を対象に条件判定および切り出しを行う
             if (RecListMaxCount > 0 && _recFileInfos.Count > RecListMaxCount)
@@ -177,7 +164,7 @@ namespace RockbarForEDCB
         {
             // チューナーごとの予約一覧取得
             _tunerReserveInfos.Clear();
-            _ctrlCmdUtil.SendEnumTunerReserve(ref _tunerReserveInfos);
+            _edcbClient.ExecuteCmd(c => c.SendEnumTunerReserve(ref _tunerReserveInfos));
 
             // チューナーごとの予約一覧の差分有無チェック
             // チェック対象：チューナー台数、各チューナーの識別ID、各チューナーに割り当てられている予約の件数

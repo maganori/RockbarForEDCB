@@ -16,7 +16,7 @@ namespace RockbarForEDCB
     {
         private readonly ConfigManager _configManager;
         private readonly ListView _recFolderListView;
-        private readonly CtrlCmdUtil _ctrlCmdUtil;
+        private readonly EdcbClient _edcbClient;
 
         /// <summary>
         /// 録画フォルダ追加・編集用ダイアログクラス
@@ -200,11 +200,11 @@ namespace RockbarForEDCB
         public RecFolderListViewManager(
             ConfigManager configManager,
             ListView recFolderListView,
-            CtrlCmdUtil ctrlCmdUtil)
+            EdcbClient edcbClient)
         {
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _recFolderListView = recFolderListView ?? throw new ArgumentNullException(nameof(recFolderListView));
-            _ctrlCmdUtil = ctrlCmdUtil;
+            _edcbClient = edcbClient;
         }
 
         /// <summary>
@@ -315,10 +315,10 @@ namespace RockbarForEDCB
             // PlugIn 一覧の取得
             var writePlugIns = new List<string>();
             var fileNamePlugIns = new List<string>();
-            if (_ctrlCmdUtil != null)
+            if (_edcbClient != null)
             {
-                _ctrlCmdUtil.SendEnumPlugIn(2, ref writePlugIns);
-                _ctrlCmdUtil.SendEnumPlugIn(1, ref fileNamePlugIns);
+                _edcbClient.ExecuteCmd(c => c.SendEnumPlugIn(2, ref writePlugIns));
+                _edcbClient.ExecuteCmd(c => c.SendEnumPlugIn(1, ref fileNamePlugIns));
             }
 
             // 編集時は対象アイテムからデータを取り出す（新規の場合は初期値）

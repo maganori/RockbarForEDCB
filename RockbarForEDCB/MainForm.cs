@@ -17,18 +17,15 @@ namespace RockbarForEDCB
         // 設定とサービスリスト
         private ConfigManager _configManager;
 
-        // EpgTimerSrv通信とEPGデータ管理
-        private EpgDataManager _epgDataManager;
+        // EdcbClient(EpgTimerSrv通信)
+        private readonly EdcbClient _edcbClient;
 
-        // EpgTimerSrv接続可否
-        private bool _canConnect = true;
+        // EPGデータ管理
+        private EpgDataManager _epgDataManager;
 
         // ListViewアイテム作成
         private ListViewBuilder _listViewBuilder;
         private ListViewEventHandler _listViewEventHandler;
-
-        // CtrlCmdUtil
-        private CtrlCmdUtil _ctrlCmdUtil = new CtrlCmdUtil();
 
         // SettingForm
         private SettingForm _settingForm = null;
@@ -68,14 +65,17 @@ namespace RockbarForEDCB
             // ConfigManagerのインスタンス化
             _configManager = new ConfigManager();
 
+            // EdcbClientのインスタンス化
+            _edcbClient = new EdcbClient();
+
             // EpgDataManagerのインスタンス化
-            _epgDataManager = new EpgDataManager(_ctrlCmdUtil);
+            _epgDataManager = new EpgDataManager(_edcbClient);
 
             // ListViewBuilderのインスタンス化およびデリゲートの初期化
             _listViewBuilder = new ListViewBuilder(_configManager, _epgDataManager);
 
             // TVTestManagerのインスタンス化
-            _tvtestManager = new TVTestManager(_configManager, _ctrlCmdUtil);
+            _tvtestManager = new TVTestManager(_configManager, _edcbClient);
 
             // ListViewEventHandler のインスタンス化
             _listViewEventHandler = new ListViewEventHandler(
@@ -83,7 +83,7 @@ namespace RockbarForEDCB
                 _epgDataManager,
                 _listViewBuilder,
                 _tvtestManager,
-                _ctrlCmdUtil,
+                _edcbClient,
                 listContextMenuStrip,
                 RefreshList
             );
@@ -103,32 +103,11 @@ namespace RockbarForEDCB
                 splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
             }
 
-            if (_configManager.RockbarSetting.UseTcpIp) {
-                // TCP/IP通信にする
-                _ctrlCmdUtil.SetSendMode(true);
-                _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
-            }
-            else
-            {
-                // Pipe通信にする
-                _ctrlCmdUtil.SetSendMode(false);
-            }
+            //// 初回仮表示
+            RefreshList(false, true, true);
 
-            // 適当な通信を行って、通信可否を確認し問題があればメッセージを出す
-            if (!_epgDataManager.CheckConnection(out ErrCode errCode))
-            {
-                _canConnect = false;
-                MessageBox.Show(
-                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
-                    $"オプション設定を見直してアプリケーションを再起動してください。\n\nErrCode: {errCode}",
-                    "EpgTimerSrv接続チェック失敗",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
-            }
-
-            // 初回表示
-            RefreshList(true, true, true);
+            // EdcbClien設定および接続確認
+            ReconfigureEdcbClientAsync();
 
             // タイマーを有効化
             timer.Enabled = true;
@@ -406,8 +385,8 @@ namespace RockbarForEDCB
                 ((isTransmission == true && forceMainListRefresh) || //通信要で強制リフレッシュ要　または
                 now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval); //前回更新時間から時間経過しているか
 
-            // EpgTimerSrvと通信する
-            if (_canConnect)
+            // EpgDataを更新する
+            if (_edcbClient.IsAvailable)
             {
                 // 定期更新など、通信が必要な場合
                 if (isTransmission)
@@ -634,6 +613,36 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// EdcbClientの設定および接続確認と、成功時のEpgData更新を行う
+        /// </summary>
+        private async void ReconfigureEdcbClientAsync()
+        {
+            // 設定ファイルから通信方式（TCP/IP or パイプ）を読み込む
+            var s = _configManager.RockbarSetting;
+
+            // 接続設定の反映と接続確認を行う
+            ErrCode? result = await _edcbClient.ApplySettingsAndCheckAsync(s.UseTcpIp, s.IpAddress, s.PortNumber);
+
+            // null は接続確認中に再設定され、古い設定の結果となった場合で何もしない
+            if (result == null) return;
+
+            // 通信できなかった場合は、メッセージを出して終了
+            if (!_edcbClient.IsAvailable)
+            {
+                MessageBox.Show(
+                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
+                    $"オプション設定を見直してください。\n\nErrCode: {result}",
+                    "EpgTimerSrv接続チェック失敗",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            // 通信できた場合は、データを取得して画面を更新する
+            RefreshList(true, true, true);
+        }
+
+        /// <summary>
         /// フォームサイズ変更処理
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -817,7 +826,7 @@ namespace RockbarForEDCB
         {
             if (_settingForm == null || _settingForm.IsDisposed)
             {
-                _settingForm = new SettingForm(_configManager,  _ctrlCmdUtil, _canConnect);
+                _settingForm = new SettingForm(_configManager,  _edcbClient);
 
                 // 「設定適用」、「設定保存」ボタンが押されたときのイベントをハンドリング
                 _settingForm.ApplyRequested += SettingForm_ApplyRequested;
@@ -849,19 +858,8 @@ namespace RockbarForEDCB
         /// </summary>
         public void ApplyConfigAndRefresh()
         {
-            // TCP/IPおよびPipe通信モードの再設定
-            if (_configManager.RockbarSetting.UseTcpIp)
-            {
-                _ctrlCmdUtil.SetSendMode(true);
-                _ctrlCmdUtil.SetNWSetting(_configManager.RockbarSetting.IpAddress, _configManager.RockbarSetting.PortNumber);
-            }
-            else
-            {
-                _ctrlCmdUtil.SetSendMode(false);
-            }
-
             ApplySetting();
-            RefreshList(true, true, true);
+            ReconfigureEdcbClientAsync();
         }
 
         /// <summary>
