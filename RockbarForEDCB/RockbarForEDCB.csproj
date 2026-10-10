@@ -227,6 +227,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\ConfigManager.cs" />
+    <Compile Include="Common\EdcbClient.cs" />
     <Compile Include="EpgDataManager.cs" />
     <Compile Include="ListViewBuilder.cs" />
     <Compile Include="ListViewEventHandler.cs" />

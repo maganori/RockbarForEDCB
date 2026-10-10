@@ -27,7 +27,8 @@ namespace RockbarForEDCB
         private TunerComboBoxManager _tunerComboBoxManager;
 
         // CtrlCmdUtil
-        private CtrlCmdUtil _ctrlCmdUtil;
+        //private CtrlCmdUtil _ctrlCmdUtil;
+        private readonly EdcbClient _edcbClient;
 
         // CtrlCmdの結果格納用
         private List<EpgServiceInfo> _serviceInfos = new List<EpgServiceInfo>();
@@ -47,15 +48,16 @@ namespace RockbarForEDCB
         /// 設定ファイルを読み込み画面表示する。
         /// </summary>
         /// <param name="ctrlCmdUtil"></param>
-        /// <param name="canConnect"></param>
-        public SettingForm(ConfigManager configManager, CtrlCmdUtil ctrlCmdUtil, bool canConnect)
+        /// <param name="isAvailable"></param>
+        public SettingForm(ConfigManager configManager, EdcbClient edcbClient)
         {
             InitializeComponent();
 
             // バージョン情報ラベルを設定
             versionLabel.Text =$"Version : {AppVersionAttribute.GetVersion()}";
 
-            _ctrlCmdUtil = ctrlCmdUtil;
+            //_ctrlCmdUtil = ctrlCmdUtil;
+            _edcbClient = edcbClient;
 
             // ConfigManagerで設定を読み込み
             _configManager = configManager;
@@ -64,10 +66,10 @@ namespace RockbarForEDCB
             _serviceInfos.Clear();
             _tunerReserveInfos.Clear();
 
-            if (canConnect)
+            if (_edcbClient.IsAvailable)
             {
-                _ctrlCmdUtil.SendEnumTunerReserve(ref _tunerReserveInfos);
-                _ctrlCmdUtil.SendEnumService(ref _serviceInfos);
+                _edcbClient.ExecuteCmd(c => c.SendEnumTunerReserve(ref _tunerReserveInfos));
+                _edcbClient.ExecuteCmd(c => c.SendEnumService(ref _serviceInfos));
             }
 
             // 選択チャンネルタブ用のオブジェクト作成
@@ -79,7 +81,7 @@ namespace RockbarForEDCB
                 (_configManager, selectedServiceListView, selectedServiceListView2, favoriteServiceListView);
 
             // 予約タブ RecFolderListViewManagerのオブジェクト作成
-            _recFolderListViewManager = new RecFolderListViewManager(_configManager, recFolderListView, _ctrlCmdUtil);
+            _recFolderListViewManager = new RecFolderListViewManager(_configManager, recFolderListView, _edcbClient);
 
             // 予約タブ TunerComboBoxManagerのオブジェクト作成
             _tunerComboBoxManager = new TunerComboBoxManager(_configManager, _tunerReserveInfos, recTunerIdComboBox);
