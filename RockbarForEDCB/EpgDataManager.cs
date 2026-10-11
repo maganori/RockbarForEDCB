@@ -10,6 +10,7 @@ namespace RockbarForEDCB
     /// </summary>
     public class EpgDataManager
     {
+        private readonly ConfigManager _configManager;
         private readonly EdcbClient _edcbClient;
 
         // EdcbClient(CtrlCmd)の結果格納用
@@ -23,6 +24,9 @@ namespace RockbarForEDCB
         private string _prevReserveHash = string.Empty;
         private string _prevRecHash = string.Empty;
         private string _prevTunerHash = string.Empty;
+
+        // 設定ファイルのサービス名辞書
+        public Dictionary<string, string> ServiceNameCache { get; private set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // サービス一覧(+番組)の保持用(TSID + SID → サービス情報(+番組))
         public Dictionary<string, EpgServiceEventInfo> ServiceMap { get; private set; } = new Dictionary<string, EpgServiceEventInfo>();
@@ -52,9 +56,12 @@ namespace RockbarForEDCB
         /// コンストラクタ
         /// </summary>
         /// <param name="edcbClient">EDCB通信用クライアント</param>
-        public EpgDataManager(EdcbClient edcbClient)
+        public EpgDataManager(ConfigManager configManager, EdcbClient edcbClient)
         {
+            _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _edcbClient = edcbClient ?? throw new ArgumentNullException(nameof(edcbClient));
+
+            RebuildServiceNameCache();
         }
 
         /// <summary>
@@ -175,6 +182,77 @@ namespace RockbarForEDCB
             _prevTunerHash = currentTunerHash;
 
             return isTunerChanged;
+        }
+
+        /// <summary>
+        /// チャンネルキー -> サービス名 のキャッシュを再構築する
+        /// </summary>
+        public void RebuildServiceNameCache()
+        {
+            var services = _configManager.SelectedServiceList;
+            if (services == null)
+            {
+                ServiceNameCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                return;
+            }
+
+            // チャンネルキー -> サービス名 の辞書を1つだけ作成
+            ServiceNameCache = services
+                    .Where(x => !string.IsNullOrWhiteSpace(x.ServiceName))
+                    .GroupBy(x => RockbarUtility.GetKey(x.Tsid, x.Sid))
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.First().ServiceName,
+                        StringComparer.OrdinalIgnoreCase
+                    );
+        }
+
+        /// <summary>
+        /// TSIDとSIDからサービス名を取得します。
+        /// </summary>
+        public string GetServiceName(ushort transportStreamId, ushort serviceId)
+        {
+            string key = RockbarUtility.GetKey(transportStreamId, serviceId);
+
+            // 設定ファイルのチャンネル名を最優先(辞書化したものから検索)
+            if (ServiceNameCache.TryGetValue(key, out string cachedName))
+            {
+                return cachedName;
+            }
+
+            // 設定ファイルのチャンネル名がない場合はEPGのサービス名を使用
+            if (ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService))
+            {
+                return matchedService.serviceInfo?.service_name ?? key;
+            }
+
+            // EPGにも存在しない場合
+            return key;
+        }
+
+        /// <summary>
+        /// チューナー名を取得します。
+        /// </summary>
+        public string GetTunerName(TunerReserveInfo tuner)
+        {
+            string tunerName;
+
+            // 設定ファイルのチューナー名を最優先
+            if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
+            {
+                tunerName = _configManager.RockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
+            }
+            else
+            {
+                tunerName = RockbarUtility.GetDefaultTunerName(tuner.tunerName);
+            }
+
+            if (tuner.tunerID != 0xffffffff)
+            {
+                tunerName += (tuner.tunerID & 0xffff).ToString();
+            }
+
+            return tunerName;
         }
     }
 }

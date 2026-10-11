@@ -16,7 +16,6 @@ namespace RockbarForEDCB
     {
         private readonly ConfigManager _configManager;
         private readonly EpgDataManager _epgDataManager;
-        private readonly ListViewBuilder _listViewBuilder;
         private readonly TVTestManager _tvtestManager;
         private readonly EdcbClient _edcbClient;
         private readonly ContextMenuStrip _contextMenu;
@@ -25,7 +24,6 @@ namespace RockbarForEDCB
         public ListViewEventHandler(
             ConfigManager configManager,
             EpgDataManager epgDataManager,
-            ListViewBuilder listViewBuilder,
             TVTestManager tvtestManager,
             EdcbClient edcbClient,
             ContextMenuStrip contextMenu,
@@ -33,7 +31,6 @@ namespace RockbarForEDCB
         {
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _epgDataManager = epgDataManager ?? throw new ArgumentNullException(nameof(epgDataManager));
-            _listViewBuilder = listViewBuilder ?? throw new ArgumentNullException(nameof(listViewBuilder));
             _tvtestManager = tvtestManager ?? throw new ArgumentNullException(nameof(tvtestManager));
             _edcbClient = edcbClient ?? throw new ArgumentNullException(nameof(edcbClient));
             _contextMenu = contextMenu ?? throw new ArgumentNullException(nameof(contextMenu));
@@ -552,7 +549,7 @@ namespace RockbarForEDCB
                     // チャンネル名
                     string serviceName = !string.IsNullOrEmpty(recFile.ServiceName)
                         ? recFile.ServiceName
-                        : _listViewBuilder.GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
+                        : _epgDataManager.GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
 
                     if (!string.IsNullOrEmpty(serviceName))
                     {
@@ -1107,7 +1104,7 @@ namespace RockbarForEDCB
             {
                 // --- チャンネル名の取得 ---
                 // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-                string serviceName = _listViewBuilder.GetServiceName(reserve.TransportStreamID, reserve.ServiceID);
+                string serviceName = _epgDataManager.GetServiceName(reserve.TransportStreamID, reserve.ServiceID);
 
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)
                 item.Text = $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}  {reserveString}    {serviceName}    {reserve.Title}";
@@ -1247,7 +1244,7 @@ namespace RockbarForEDCB
             // チャンネル名
             uint tsid = ev?.transport_stream_id ?? reserveData?.TransportStreamID ?? 0;
             uint sid = ev?.service_id ?? reserveData?.ServiceID ?? 0;
-            string serviceName = (tsid != 0 || sid != 0) ? _listViewBuilder.GetServiceName((ushort)tsid, (ushort)sid) : null;
+            string serviceName = (tsid != 0 || sid != 0) ? _epgDataManager.GetServiceName((ushort)tsid, (ushort)sid) : null;
 
             if (!string.IsNullOrEmpty(serviceName))
             {
