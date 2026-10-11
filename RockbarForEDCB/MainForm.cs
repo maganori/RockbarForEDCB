@@ -69,7 +69,7 @@ namespace RockbarForEDCB
             _edcbClient = new EdcbClient();
 
             // EpgDataManagerのインスタンス化
-            _epgDataManager = new EpgDataManager(_edcbClient);
+            _epgDataManager = new EpgDataManager(_configManager, _edcbClient);
 
             // ListViewBuilderのインスタンス化およびデリゲートの初期化
             _listViewBuilder = new ListViewBuilder(_configManager, _epgDataManager);
@@ -81,7 +81,6 @@ namespace RockbarForEDCB
             _listViewEventHandler = new ListViewEventHandler(
                 _configManager,
                 _epgDataManager,
-                _listViewBuilder,
                 _tvtestManager,
                 _edcbClient,
                 listContextMenuStrip,
@@ -342,6 +341,9 @@ namespace RockbarForEDCB
 
             // 録画済み一覧の最大保持数(表示数)
             _epgDataManager.RecListMaxCount = _configManager.RockbarSetting.RecListMaxCount;
+
+            // チャンネルキー -> サービス名 のキャッシュを再構築
+            _epgDataManager.RebuildServiceNameCache();
         }
 
         /// <summary>
