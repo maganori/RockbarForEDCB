@@ -430,13 +430,47 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// キー取得処理
+        /// サービス情報から「TSID-SID」形式のキーを作成します。
         /// </summary>
-        /// <param name="ids">ID配列</param>
-        /// <returns>連結キー</returns>
-        public static string GetKey(params ushort[] ids)
+        /// <returns>サービスを一意に表すキー文字列</returns>
+        public static string GetServiceKey(ushort tsid, ushort sid)
         {
-            return String.Join(DELIMITER, ids);
+            // サービス情報のTSID・SIDからキーを作る
+            return GetKey(tsid, sid);
+        }
+
+        /// <summary>
+        /// サービス情報から「TSID-SID」形式のキーを作成します。
+        /// </summary>
+        /// <param name="sv">サービス情報</param>
+        /// <returns>サービスを一意に表すキー文字列</returns>
+        public static string GetServiceKey(string tsid, string sid)
+        {
+            // サービス情報のTSID・SIDからキーを作る
+            return GetKey(ushort.Parse(tsid), ushort.Parse(sid));
+        }
+
+        /// <summary>
+        /// 番組情報から「TSID-SID-EventID」形式のキーを作成します。
+        /// </summary>
+        /// <param name="ev">番組情報</param>
+        /// <returns>番組を一意に表すキー文字列</returns>
+        public static string GetEventKey(EpgEventInfo ev)
+        {
+            // 番組情報のTSID・SID・EventIDからキーを作る
+            return GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+        }
+
+        /// <summary>
+        /// 予約情報から「TSID-SID-EventID」形式のキーを作成します。
+        /// </summary>
+        /// <param name="reserve">予約情報</param>
+        /// <returns>番組を一意に表すキー文字列</returns>
+        public static string GetEventKey(ReserveData reserve)
+        {
+            // 予約情報のTSID・SID・EventIDからキーを作る
+            // （番組情報から作ったキーと同じ形式なので、AllEventMap / ReserveMap のキーとして使える）
+            return GetKey(reserve.TransportStreamID, reserve.ServiceID, reserve.EventID);
         }
 
         /// <summary>
@@ -444,7 +478,7 @@ namespace RockbarForEDCB
         /// </summary>
         /// <param name="ids">ID配列</param>
         /// <returns>連結キー</returns>
-        public static string GetKey(params string[] ids)
+        private static string GetKey(params ushort[] ids)
         {
             return String.Join(DELIMITER, ids);
         }

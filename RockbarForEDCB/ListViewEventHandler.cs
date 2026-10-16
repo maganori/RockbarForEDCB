@@ -60,10 +60,10 @@ namespace RockbarForEDCB
 
                 ClearContextMenu();
 
-                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo sv);
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo serviceEv);
 
                 // EPG未取得チャンネルは処理を抜ける
-                if (sv == null)
+                if (serviceEv == null)
                 {
                     return;
                 }
@@ -71,7 +71,7 @@ namespace RockbarForEDCB
                 DateTime now = DateTime.Now;
 
                 // 終了していないイベントのみ抽出して開始日時順にソート
-                var afterEventList = sv.eventList
+                var afterEventList = serviceEv.eventList
                     .Where(x => x.start_time.AddSeconds(x.durationSec) >= now)
                     .OrderBy(a => a.start_time)
                     .Take(30);// 最大30件まで表示
@@ -82,7 +82,7 @@ namespace RockbarForEDCB
                     if (ev.ComponentInfo == null) continue;
 
                     // 該当イベントが予約済みであれば予約情報を取得
-                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    string eventKey = RockbarUtility.GetEventKey(ev);
                     _epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData);
 
                     // コンテキストメニューに番組項目を追加
@@ -119,18 +119,18 @@ namespace RockbarForEDCB
                     return;
                 }
 
-                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo sv);
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out EpgServiceEventInfo serviceEv);
 
                 // EPG未取得チャンネルは処理を抜ける
-                if (sv == null)
+                if (serviceEv == null)
                 {
                     return;
                 }
 
                 DateTime now = DateTime.Now;
-
+                
                 // 終了していないイベントのみ抽出して開始日時順にソート
-                var ev = sv.eventList
+                var ev = serviceEv.eventList
                     .Where(x => x.start_time.AddSeconds(x.durationSec) >= now)
                     .OrderBy(a => a.start_time)
                     .FirstOrDefault();
@@ -141,7 +141,7 @@ namespace RockbarForEDCB
                     return;
                 }
 
-                string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                string eventKey = RockbarUtility.GetEventKey(ev);
                 bool isReserved = _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
 
                 // 既に予約済みであれば、予約の有効・無効を切り替える
@@ -190,20 +190,20 @@ namespace RockbarForEDCB
                 var selected = targetListView.SelectedItems[0];
 
                 Service service = selected.Tag as Service;
-                EpgServiceEventInfo sv = null;
-                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out sv);
+                EpgServiceEventInfo serviceEv = null;
+                _epgDataManager.ServiceMap.TryGetValue(selected.Name, out serviceEv);
 
                 if (service == null)
                 {
                     return;
                 }
 
-                uint tsid = uint.Parse(service.Tsid);
-                uint sid = uint.Parse(service.Sid);
+                ushort tsid = ushort.Parse(service.Tsid);
+                ushort sid = ushort.Parse(service.Sid);
 
                 // ネットワークタイプの取得
-                NetworkType networkType = sv != null
-                    ? RockbarUtility.GetNetworkType(service.NetworkTypeName, sv.serviceInfo.ONID)
+                NetworkType networkType = serviceEv != null
+                    ? RockbarUtility.GetNetworkType(service.NetworkTypeName, serviceEv.serviceInfo.ONID)
                     : RockbarUtility.GetNetworkType(service.NetworkTypeName, null);
 
                 // TVTestの起動処理呼び出し
@@ -241,7 +241,7 @@ namespace RockbarForEDCB
                 {
                     ClearContextMenu();
 
-                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    string eventKey = RockbarUtility.GetEventKey(ev);
                     _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
 
                     CreateProgramDetailMenuItems(_contextMenu.Items, ev, reserveData);
@@ -274,7 +274,7 @@ namespace RockbarForEDCB
                 // Tagに格納されているものがEpgEventInfoならevへ代入
                 if (selected.Tag is EpgEventInfo ev)
                 {
-                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    string eventKey = RockbarUtility.GetEventKey(ev);
                     bool isReserved = _epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData);
 
                     // 既に予約済みであれば、予約の有効・無効を切り替える
@@ -536,7 +536,8 @@ namespace RockbarForEDCB
                     // 録画ファイルパス
                     if (!string.IsNullOrEmpty(recFile.RecFilePath))
                     {
-                        AddBrokenTextMenuItems(_contextMenu.Items, "録画ファイル : ", recFile.RecFilePath, "録画ファイル", "クリックで録画ファイルをコピー");
+                        AddBrokenTextMenuItems(_contextMenu.Items, "録画ファイル : ", recFile.RecFilePath,
+                                               "録画ファイル", "クリックで録画ファイルをコピー");
                     }
 
                     _contextMenu.Items.Add(new ToolStripSeparator());
@@ -548,9 +549,7 @@ namespace RockbarForEDCB
                     dateItem.ToolTipText = "クリックで日時をコピー";
 
                     // チャンネル名
-                    string serviceName = !string.IsNullOrEmpty(recFile.ServiceName)
-                        ? recFile.ServiceName
-                        : _epgDataManager.GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
+                    string serviceName = _epgDataManager.GetServiceName(recFile);
 
                     if (!string.IsNullOrEmpty(serviceName))
                     {
@@ -683,10 +682,10 @@ namespace RockbarForEDCB
 
                 foreach (var reserveData in reserves)
                 {
-                    string key = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
+                    string eventkey = RockbarUtility.GetEventKey(reserveData);
 
                     // 予約情報を取得
-                    _epgDataManager.AllEventMap.TryGetValue(key, out var ev);
+                    _epgDataManager.AllEventMap.TryGetValue(eventkey, out var ev);
 
                     // チューナー予約一覧のコンテキストメニュー項目生成
                     _contextMenu.Items.Add(CreateProgramSummaryMenuItem(ev, reserveData, true));
@@ -796,7 +795,7 @@ namespace RockbarForEDCB
             }
 
             // 重複予約になっていないかチェック
-            string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+            string eventKey = RockbarUtility.GetEventKey(ev);
             if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out var reserveData))
             {
                 //System.Diagnostics.Debug.WriteLine($"[Debug] Title: {reserveData.Title}");
@@ -804,9 +803,9 @@ namespace RockbarForEDCB
             }
 
             // EPGのサービス名を使用
-            string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-            _epgDataManager.ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
-            string serviceName = matchedService.serviceInfo?.service_name;
+            string serviceKey = RockbarUtility.GetServiceKey(ev.transport_stream_id, ev.service_id);
+            _epgDataManager.ServiceMap.TryGetValue(serviceKey, out EpgServiceEventInfo matchedServiceEv);
+            string serviceName = matchedServiceEv?.serviceInfo?.service_name;
 
             // RecSettingDataに入れるRecModeの値を生成するロジック
             byte recMode = 0;
@@ -943,12 +942,15 @@ namespace RockbarForEDCB
             // 削除確認ダイアログを表示
             if (_configManager.RockbarSetting.UseRockbarReserveDelConfirm)
             {
+                // チャンネル名を取得
+                string serviceName = _epgDataManager.GetServiceName(reserve);
+
                 // 視聴予約か録画予約の確認
                 string viewOrRecText = (reserve.RecSetting.RecMode == 4 || reserve.RecSetting.RecMode == 8) ? "視聴" : "録画";
 
                 var result = MessageBox.Show(
                 $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}\n" +
-                $"{reserve.StationName}\n{reserve.Title}\n\nの{viewOrRecText}予約を削除しますか？",
+                $"{serviceName}\n{reserve.Title}\n\nの{viewOrRecText}予約を削除しますか？",
                 $"{viewOrRecText}予約削除確認",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
@@ -976,6 +978,9 @@ namespace RockbarForEDCB
             // 削除確認ダイアログを表示
             if (_configManager.RockbarSetting.UseRockbarReserveDelConfirm)
             {
+                // チャンネル名を取得
+                string serviceName = _epgDataManager.GetServiceName(recFileInfo);
+
                 // ファイルパスが存在する場合のみ補足文を作成
                 string pathNotice = string.IsNullOrEmpty(recFileInfo.RecFilePath)
                     ? $"\n\n録画ファイル情報がないため録画に失敗した可能性があります。"
@@ -983,7 +988,7 @@ namespace RockbarForEDCB
 
                 var result = MessageBox.Show(
                     $"{recFileInfo.StartTime:MM/dd(ddd) HH:mm}～{recFileInfo.StartTime.AddSeconds(recFileInfo.DurationSecond):HH:mm}\n" +
-                    $"{recFileInfo.ServiceName}\n{recFileInfo.Title}\n\nの録画済み情報を削除しますか？" +
+                    $"{serviceName}\n{recFileInfo.Title}\n\nの録画済み情報を削除しますか？" +
                     pathNotice,
                     "録画済み情報削除確認",
                     MessageBoxButtons.YesNo,
@@ -1085,7 +1090,7 @@ namespace RockbarForEDCB
             {
                 // --- チャンネル名の取得 ---
                 // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-                string serviceName = _epgDataManager.GetServiceName(reserve.TransportStreamID, reserve.ServiceID);
+                string serviceName = _epgDataManager.GetServiceName(reserve);
 
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)
                 item.Text = $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}" +
@@ -1215,9 +1220,17 @@ namespace RockbarForEDCB
             }
 
             // チャンネル名
-            uint tsid = ev?.transport_stream_id ?? reserveData?.TransportStreamID ?? 0;
-            uint sid = ev?.service_id ?? reserveData?.ServiceID ?? 0;
-            string serviceName = (tsid != 0 || sid != 0) ? _epgDataManager.GetServiceName((ushort)tsid, (ushort)sid) : null;
+            string serviceName = null;
+            if (reserveData != null)
+            {
+                // 予約情報から取得
+                serviceName = _epgDataManager.GetServiceName(reserveData);
+            }
+            else if (ev != null)
+            {
+                // EPG上の番組情報から取得
+                serviceName = _epgDataManager.GetServiceName(ev.transport_stream_id, ev.service_id);
+            }
 
             if (!string.IsNullOrEmpty(serviceName))
             {
