@@ -208,8 +208,11 @@ namespace RockbarForEDCB
 
                     // 選択中タブ（地デジ / BS / CS）と不一致のサービスは除外する
                     if (selectedTab == MainFormTabType.DTTV && networkType != NetworkType.DTTV) continue;
-                    if (selectedTab == MainFormTabType.BS && (networkType != NetworkType.BS && networkType != NetworkType.BS4K)) continue;
-                    if (selectedTab == MainFormTabType.CS && (networkType != NetworkType.CS && networkType != NetworkType.CATV && networkType != NetworkType.SPHD)) continue;
+                    if (selectedTab == MainFormTabType.BS
+                                       && (networkType != NetworkType.BS && networkType != NetworkType.BS4K)) continue;
+                    if (selectedTab == MainFormTabType.CS
+                                       && (networkType != NetworkType.CS && networkType != NetworkType.CATV
+                                           && networkType != NetworkType.SPHD)) continue;
 
                     // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
                     string serviceName = _epgDataManager.GetServiceName(ushort.Parse(service.Tsid), ushort.Parse(service.Sid));
@@ -241,7 +244,7 @@ namespace RockbarForEDCB
                         // 予約状態文字列を取得
                         if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                         {
-                            reserveStatus = GetReserveStatus(reserveData);
+                            reserveStatus = RockbarUtility.GetReserveStatus(reserveData, true);
                         }
                         reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
                     }
@@ -364,7 +367,7 @@ namespace RockbarForEDCB
 
                     if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                     {
-                        reserveStatus = GetReserveStatus(reserveData);
+                        reserveStatus = RockbarUtility.GetReserveStatus(reserveData, true);
                     }
                     reserveString = RockbarUtility.GetReserveStatusString(reserveStatus);
 
@@ -459,13 +462,18 @@ namespace RockbarForEDCB
                     }
 
                     // --- 表示文字列の作成 ---
-                    ReserveStatus reserveStatus = GetReserveStatus(reserveData);
+                    string eventKey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
+                    // 自動予約された番組がEPGから消失していないかチェック
+                    bool eventExists = _epgDataManager.AllEventMap.ContainsKey(eventKey);
+
+                    ReserveStatus reserveStatus = RockbarUtility.GetReserveStatus(reserveData, eventExists);
                     string statusText = RockbarUtility.GetReserveStatusString(reserveStatus);
 
                     // ◎（正常予約）の場合はチューナー名を表示する
                     if (reserveStatus == ReserveStatus.OK)
                     {
-                        var matchedTuner = _epgDataManager.TunerReserveInfos.FirstOrDefault(t => t.reserveList.Contains(reserveData.ReserveID));
+                        var matchedTuner = _epgDataManager.TunerReserveInfos
+                                           .FirstOrDefault(t => t.reserveList.Contains(reserveData.ReserveID));
                         if (matchedTuner != null)
                         {
                             statusText = _epgDataManager.GetTunerName(matchedTuner);
@@ -479,7 +487,7 @@ namespace RockbarForEDCB
                     string[] rowData = { statusText, dateTimeText, serviceName, title };
                     ListViewItem item = new ListViewItem(rowData)
                     {
-                        Name = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID),
+                        Name = eventKey,
                         ToolTipText = $"{startTime:yyyy/MM/dd(ddd) HH:mm}～{endTime:HH:mm} {title}",
                         ForeColor = _listForeColor,
                         BackColor = GetReserveBackColor(reserveStatus, startTime, endTime, now)
@@ -555,7 +563,8 @@ namespace RockbarForEDCB
 
                     // --- 背景色の設定 ---
                     // 録画結果が正常の場合
-                    if (recEndStatus == RecEndStatus.NORMAL || recEndStatus == RecEndStatus.CHG_TIME || recEndStatus == RecEndStatus.NEXT_START_END)
+                    if (recEndStatus == RecEndStatus.NORMAL || recEndStatus == RecEndStatus.CHG_TIME
+                                        || recEndStatus == RecEndStatus.NEXT_START_END)
                     {
                         if (recFile.Scrambles > 0)
                         {
@@ -763,29 +772,6 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 予約データから予約ステータスを取得します。
-        /// </summary>
-        public ReserveStatus GetReserveStatus(ReserveData reserveData)
-        {
-            if (reserveData.RecSetting.IsNoRec())
-            {
-                return ReserveStatus.DISABLED;
-            }
-
-            if (reserveData.OverlapMode == 1)
-            {
-                return ReserveStatus.PARTIAL;
-            }
-
-            if (reserveData.OverlapMode == 2)
-            {
-                return ReserveStatus.NG;
-            }
-
-            return ReserveStatus.OK;
-        }
-
-        /// <summary>
         /// 予約ステータスと時刻から適切な背景色を取得します。
         /// </summary>
         private Color GetReserveBackColor(ReserveStatus reserveStatus, DateTime startTime, DateTime endTime, DateTime now)
@@ -806,7 +792,7 @@ namespace RockbarForEDCB
                 return _partialReserveListBackColor;
             }
             // TU不足の場合、赤背景色で警告
-            else if (reserveStatus == ReserveStatus.NG)
+            else if (reserveStatus == ReserveStatus.NG || reserveStatus == ReserveStatus.DISAPPEARED)
             {
                 return _ngReserveListBackColor;
             }
@@ -829,7 +815,8 @@ namespace RockbarForEDCB
         {
             List<List<RecInfoDetailText>> detailTexts = new List<List<RecInfoDetailText>>();
             {
-                var text = $"{recFile.StartTime.ToString("yyyy/MM/dd(ddd) HH:mm")}～{recFile.StartTime.AddSeconds(recFile.DurationSecond).ToString("HH:mm")}";
+                var text = $"{recFile.StartTime.ToString("yyyy/MM/dd(ddd) HH:mm")}～" +
+                           $"{recFile.StartTime.AddSeconds(recFile.DurationSecond).ToString("HH:mm")}";
                 var dateTimes = new List<RecInfoDetailText>()
                     {
                         new RecInfoDetailText { Value = text, CopyText = text },

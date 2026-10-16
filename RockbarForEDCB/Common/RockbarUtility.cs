@@ -344,6 +344,41 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
+        /// 予約情報から予約ステータスを判定します。
+        /// </summary>
+        /// <param name="reserve">予約情報（予約がない場合は null）</param>
+        /// <param name="eventExists">対応する番組がEPG上に存在するか（分からない・気にしない場合は true）</param>
+        public static ReserveStatus GetReserveStatus(ReserveData reserve, bool eventExists)
+        {
+            // 予約が存在しない場合
+            if (reserve == null)
+            {
+                return ReserveStatus.NONE;
+            }
+
+            // 録画モードが「無効」の場合は、重複状態に関係なく無効扱い
+            if (reserve.RecSetting.IsNoRec())
+            {
+                return ReserveStatus.DISABLED;
+            }
+
+            // OverlapMode: 0=正常, 1=一部のみ録画可能, 2=チューナー不足
+            switch (reserve.OverlapMode)
+            {
+                case 0:
+                    // プログラム予約（EventID=0xFFFF）はEPGに番組がないため消失扱いにしない
+                    bool isProgramReserve = (reserve.EventID == 0xFFFF);
+
+                    // 番組連動の予約なのにEPG上に番組がない場合のみ「番組消失」
+                    return (!isProgramReserve && !eventExists) ? ReserveStatus.DISAPPEARED : ReserveStatus.OK;
+                case 1:
+                    return ReserveStatus.PARTIAL;
+                default:
+                    return ReserveStatus.NG;
+            }
+        }
+
+        /// <summary>
         /// 予約ステータスから予約ステータス識別文字列を返す
         /// </summary>
         /// <param name="reserveStatus">予約ステータス</param>
