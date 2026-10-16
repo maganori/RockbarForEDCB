@@ -173,10 +173,10 @@ namespace RockbarForEDCB
                     return;
                 }
 
-                string key = RockbarUtility.GetKey(tsid.ToString(), sid.ToString());
+                string serviceKey = RockbarUtility.GetServiceKey(tsid, sid);
 
                 // 重複チェック（追加・編集共通）
-                if (_existingKeys.Contains(key))
+                if (_existingKeys.Contains(serviceKey))
                 {
                     MessageBox.Show(
                         "同じ TSID / SID のチャンネルが既に登録されています。",
@@ -206,7 +206,7 @@ namespace RockbarForEDCB
                     }
                     else
                     {
-                        _serviceNameTextBox.Text = RockbarUtility.GetKey(tsid, sid);
+                        _serviceNameTextBox.Text = RockbarUtility.GetServiceKey(tsid, sid);
                     }
                 }
 
@@ -215,7 +215,7 @@ namespace RockbarForEDCB
                 if (matchedService != null)
                 {
                     var networkType = RockbarUtility.GetNetworkType(_networkTypeNameComboBox.Text.Trim(), matchedService.ONID);
-                    _networkTypeNameComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
+                _networkTypeNameComboBox.Text = RockbarUtility.GetShortNetworkTypeName(networkType);
                 }
                 else
                 {
@@ -236,7 +236,7 @@ namespace RockbarForEDCB
                 item.SubItems.Add(tsidStr);                // 3: Tsid
                 item.SubItems.Add(sidStr);                 // 4: Sid
                 item.SubItems.Add(optionStr);              // 5: TvtestOption
-                item.Name = key;
+                item.Name = serviceKey;
 
                 ResultItem = item;
             }
@@ -305,7 +305,7 @@ namespace RockbarForEDCB
                 };
 
                 ListViewItem item = new ListViewItem(data);
-                item.Name = RockbarUtility.GetKey(epgServiceInfo.TSID, epgServiceInfo.SID);
+                item.Name = RockbarUtility.GetServiceKey(epgServiceInfo.TSID, epgServiceInfo.SID);
 
                 _allServiceListView.Items.Add(item);
             }
@@ -323,11 +323,11 @@ namespace RockbarForEDCB
 
             foreach (Service service in _configManager.SelectedServiceList)
             {
-                string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
+                string serviceKey = RockbarUtility.GetServiceKey(service.Tsid, service.Sid);
 
-                if (_allServiceListView.Items.ContainsKey(key))
+                if (_allServiceListView.Items.ContainsKey(serviceKey))
                 {
-                    ListViewItem allServiceItem = _allServiceListView.Items[key];
+                    ListViewItem allServiceItem = _allServiceListView.Items[serviceKey];
                     ListViewItem targetItem = (ListViewItem)allServiceItem.Clone();
                     targetItem.Name = allServiceItem.Name;
 
@@ -360,7 +360,7 @@ namespace RockbarForEDCB
                 else
                 {
                     ListViewItem manualAddItem = CreateServiceListItem(service);
-                    manualAddItem.Name = key;
+                    manualAddItem.Name = serviceKey;
 
                     // 左リストに存在しないためadd印を付ける
                     ServiceListViewHelper.ApplyManualAddMark(manualAddItem);
@@ -390,7 +390,7 @@ namespace RockbarForEDCB
                 service.Sid ?? "",
                 service.TvtestOption ?? ""
             });
-            item.Name = RockbarUtility.GetKey(service.Tsid, service.Sid);
+            item.Name = RockbarUtility.GetServiceKey(service.Tsid, service.Sid);
             return item;
         }
 
@@ -613,7 +613,7 @@ namespace RockbarForEDCB
                 };
 
                 ListViewItem item = new ListViewItem(data);
-                item.Name = RockbarUtility.GetKey(service.Tsid, service.Sid);
+                item.Name = RockbarUtility.GetServiceKey(service.Tsid, service.Sid);
                 _favoriteServiceListView.Items.Add(item);
             }
         }

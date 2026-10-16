@@ -34,7 +34,7 @@ namespace RockbarForEDCB
         /// <param name="sid">SID</param>
         /// <param name="tvtestOption">TVTest起動オプション（オプション）</param>
         /// <returns>TVTestプロセス</returns>
-        public Process StartTVTest(NetworkType networkType, uint tsid, uint sid, string tvtestOption = null)
+        public Process StartTVTest(NetworkType networkType, ushort tsid, ushort sid, string tvtestOption = null)
         {
             Process result = null;
 
@@ -141,7 +141,7 @@ namespace RockbarForEDCB
 
                 // お気に入りサービスのキー(大した件数ではない想定なので毎秒計算し直しで良いものとする)
                 var favoriteServiceMap = favoriteServiceList?
-                    .ToDictionary(x => RockbarUtility.GetKey(x.Tsid, x.Sid))
+                    .ToDictionary(x => RockbarUtility.GetServiceKey(x.Tsid, x.Sid))
                     ?? new Dictionary<string, Service>();
 
                 foreach (var reserve in reserveDatas)
@@ -150,16 +150,16 @@ namespace RockbarForEDCB
                         reserve.StartTime.Hour == checkTime.Hour &&
                         reserve.StartTime.Minute == checkTime.Minute)
                     {
-                        string key = RockbarUtility.GetKey(reserve.TransportStreamID, reserve.ServiceID);
+                        string serviceKey = RockbarUtility.GetServiceKey(reserve.TransportStreamID, reserve.ServiceID);
 
                         // すでに自動起動中のTVTestとTSID・SIDが同一の場合、(TVTest側でチャンネルが変わっていない前提で)起動スキップする
-                        if (_tvtestProcesses.ContainsKey(key))
+                        if (_tvtestProcesses.ContainsKey(serviceKey))
                         {
                             continue;
                         }
 
                         // お気に入りサービスに含まれているかチェックしつつ Service を取得
-                        bool isFavorite = favoriteServiceMap.TryGetValue(key, out Service service);
+                        bool isFavorite = favoriteServiceMap.TryGetValue(serviceKey, out Service service);
 
                         // お気に入りサービスオプションが設定されている場合、お気に入りサービスに含まれていなかったらスキップ
                         if (_configManager.RockbarSetting.IsAutoOpenTvtestFavoriteService && !isFavorite)
@@ -178,7 +178,7 @@ namespace RockbarForEDCB
                             var p = StartTVTest(networkType, reserve.TransportStreamID, reserve.ServiceID, service?.TvtestOption);
                             if (p != null)
                             {
-                                _tvtestProcesses.Add(key, p);
+                                _tvtestProcesses.Add(serviceKey, p);
                             }
                         }
                     }
@@ -213,15 +213,15 @@ namespace RockbarForEDCB
                 var currentReserves = new Dictionary<string, ReserveData>();
 
                 // 現在放送中番組を抽出
-                foreach (var data in reserveDatas)
+                foreach (var reserve in reserveDatas)
                 {
-                    if (data.StartTime < now && data.StartTime.AddSeconds(data.DurationSecond) > now)
+                    if (reserve.StartTime < now && reserve.StartTime.AddSeconds(reserve.DurationSecond) > now)
                     {
                         // 予約方法次第で同一番組が二重に登録されているケースあり
-                        var key = RockbarUtility.GetKey(data.TransportStreamID, data.ServiceID);
-                        if (!currentReserves.ContainsKey(key))
+                        var serviceKey = RockbarUtility.GetServiceKey(reserve.TransportStreamID, reserve.ServiceID);
+                        if (!currentReserves.ContainsKey(serviceKey))
                         {
-                            currentReserves.Add(key, data);
+                            currentReserves.Add(serviceKey, reserve);
                         }
                     }
                 }

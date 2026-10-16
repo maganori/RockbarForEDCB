@@ -37,7 +37,7 @@ namespace RockbarForEDCB
         // 予約情報の保持用(TSID + SID + EventID → 予約情報)
         public Dictionary<string, ReserveData> ReserveMap { get; private set; } = new Dictionary<string, ReserveData>();
 
-        // 録画済み情報の保持用(TSID + SID + EventID → 録画済み情報)
+        // 録画済み情報の保持用(RecFileInfo.ID → 録画済み情報)
         public Dictionary<uint, RecFileInfo> RecMap { get; private set; } = new Dictionary<uint, RecFileInfo>();
 
         // 外部から参照するための Reader プロパティ（フィールドを返す）
@@ -77,17 +77,17 @@ namespace RockbarForEDCB
 
             // 番組一覧関連のハッシュを作成
             ServiceMap.Clear();
-            foreach (EpgServiceEventInfo service in _serviceEvents)
+            foreach (EpgServiceEventInfo serviceEv in _serviceEvents)
             {
                 // TSID + SID → サービス一覧(serviceが番組情報を保持している)
-                string key = RockbarUtility.GetKey(service.serviceInfo.TSID, service.serviceInfo.SID);
-                ServiceMap[key] = service;
+                string serviceKey = RockbarUtility.GetServiceKey(serviceEv.serviceInfo.TSID, serviceEv.serviceInfo.SID);
+                ServiceMap[serviceKey] = serviceEv;
 
                 // TSID + SID + EventID → 番組情報
-                foreach (EpgEventInfo ev in service.eventList)
+                foreach (EpgEventInfo ev in serviceEv.eventList)
                 {
-                    string evKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
-                    AllEventMap[evKey] = ev;
+                    string eventKey = RockbarUtility.GetEventKey(ev);
+                    AllEventMap[eventKey] = ev;
                 }
             }
 
@@ -115,8 +115,8 @@ namespace RockbarForEDCB
             foreach (ReserveData reserveData in _reserveDatas)
             {
                 // TSID + SID + EventID → 予約情報
-                string evkey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
-                ReserveMap[evkey] = reserveData;
+                string eventkey = RockbarUtility.GetEventKey(reserveData);
+                ReserveMap[eventkey] = reserveData;
             }
 
             // 予約一覧の差分有無チェック
@@ -199,7 +199,7 @@ namespace RockbarForEDCB
             // チャンネルキー -> サービス名 の辞書を1つだけ作成
             ServiceNameCache = services
                     .Where(x => !string.IsNullOrWhiteSpace(x.ServiceName))
-                    .GroupBy(x => RockbarUtility.GetKey(x.Tsid, x.Sid))
+                    .GroupBy(x => RockbarUtility.GetServiceKey(x.Tsid, x.Sid))
                     .ToDictionary(
                         g => g.Key,
                         g => g.First().ServiceName,
@@ -210,24 +210,82 @@ namespace RockbarForEDCB
         /// <summary>
         /// TSIDとSIDからサービス名を取得します。
         /// </summary>
-        public string GetServiceName(ushort transportStreamId, ushort serviceId)
+        public string GetServiceName(ushort tsid, ushort sid)
         {
-            string key = RockbarUtility.GetKey(transportStreamId, serviceId);
+            string serviceKey = RockbarUtility.GetServiceKey(tsid, sid);
 
             // 設定ファイルのチャンネル名を最優先(辞書化したものから検索)
-            if (ServiceNameCache.TryGetValue(key, out string cachedName))
+            if (ServiceNameCache.TryGetValue(serviceKey, out string cachedName))
             {
                 return cachedName;
             }
 
             // 設定ファイルのチャンネル名がない場合はEPGのサービス名を使用
-            if (ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService))
+            if (ServiceMap.TryGetValue(serviceKey, out EpgServiceEventInfo matchedServiceEv))
             {
-                return matchedService.serviceInfo?.service_name ?? key;
+                string epgServiceName = matchedServiceEv.serviceInfo?.service_name;
+                if (!string.IsNullOrEmpty(epgServiceName))
+                {
+                    return epgServiceName;
+                }
             }
 
             // EPGにも存在しない場合
-            return key;
+            return serviceKey;
+        }
+
+        /// <summary>
+        /// 予約情報のサービス名を取得します。
+        /// </summary>
+        public string GetServiceName(ReserveData reserveData)
+        {
+            string serviceKey = RockbarUtility.GetServiceKey(reserveData.TransportStreamID, reserveData.ServiceID);
+
+            // 設定ファイルのチャンネル名を最優先(辞書化したものから検索)
+            if (ServiceNameCache.TryGetValue(serviceKey, out string cachedName))
+            {
+                return cachedName;
+            }
+
+            // 予約情報のサービス名があればそれを使用（空文字・null の場合は次へ）
+            if (!string.IsNullOrEmpty(reserveData.StationName))
+            {
+                return reserveData.StationName;
+            }
+
+            return serviceKey;
+        }
+
+        /// <summary>
+        /// 録画済み情報のサービス名を取得します。
+        /// </summary>
+        public string GetServiceName(RecFileInfo recFile)
+        {
+            string serviceKey = RockbarUtility.GetServiceKey(recFile.TransportStreamID, recFile.ServiceID);
+
+            // 設定ファイルのチャンネル名を最優先(辞書化したものから検索)
+            if (ServiceNameCache.TryGetValue(serviceKey, out string cachedName))
+            {
+                return cachedName;
+            }
+
+            // EPGのサービス名(最新)を使用
+            if (ServiceMap.TryGetValue(serviceKey, out EpgServiceEventInfo matchedServiceEv))
+            {
+                string epgServiceName = matchedServiceEv.serviceInfo?.service_name;
+                if (!string.IsNullOrEmpty(epgServiceName))
+                {
+                    return epgServiceName;
+                }
+            }
+
+            // 録画情報のサービス名があればそれを使用（空文字・null の場合は次へ）
+            if (!string.IsNullOrEmpty(recFile.ServiceName))
+            {
+                return recFile.ServiceName;
+            }
+
+            return serviceKey;
         }
 
         /// <summary>
@@ -235,18 +293,14 @@ namespace RockbarForEDCB
         /// </summary>
         public string GetTunerName(TunerReserveInfo tuner)
         {
-            string tunerName;
-
-            // 設定ファイルのチューナー名を最優先
-            if (_configManager.RockbarSetting.BonDriverNameToTunerName.ContainsKey(tuner.tunerName))
+            // 設定ファイルのチューナー名を最優先（見つかれば tunerName に入る）
+            if (!_configManager.RockbarSetting.BonDriverNameToTunerName.TryGetValue(tuner.tunerName, out string tunerName))
             {
-                tunerName = _configManager.RockbarSetting.BonDriverNameToTunerName[tuner.tunerName];
-            }
-            else
-            {
+                // 設定にない場合は、BonDriver名からデフォルト名を生成
                 tunerName = RockbarUtility.GetDefaultTunerName(tuner.tunerName);
             }
 
+            // チューナーIDが有効な場合は、下位16ビットを番号として末尾に付ける
             if (tuner.tunerID != 0xffffffff)
             {
                 tunerName += (tuner.tunerID & 0xffff).ToString();

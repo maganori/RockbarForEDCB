@@ -196,14 +196,14 @@ namespace RockbarForEDCB
                 // チャンネル表示
                 foreach (var service in services)
                 {
-                    string key = RockbarUtility.GetKey(service.Tsid, service.Sid);
+                    string serviceKey = RockbarUtility.GetServiceKey(service.Tsid, service.Sid);
 
-                    _epgDataManager.ServiceMap.TryGetValue(key, out EpgServiceEventInfo matchedService);
+                    _epgDataManager.ServiceMap.TryGetValue(serviceKey, out EpgServiceEventInfo matchedServiceEv);
 
                     // TSVのチャンネル一覧で設定されているネットワークタイプを最優先で使用する
                     // ネットワークタイプ設定が無い場合はEDCBからのデータをもとに自動判別
-                    NetworkType networkType = matchedService != null
-                        ? RockbarUtility.GetNetworkType(service.NetworkTypeName, matchedService.serviceInfo.ONID)
+                    NetworkType networkType = matchedServiceEv != null
+                        ? RockbarUtility.GetNetworkType(service.NetworkTypeName, matchedServiceEv.serviceInfo.ONID)
                         : RockbarUtility.GetNetworkType(service.NetworkTypeName, null);
 
                     // 選択中タブ（地デジ / BS / CS）と不一致のサービスは除外する
@@ -218,12 +218,12 @@ namespace RockbarForEDCB
                     string serviceName = _epgDataManager.GetServiceName(ushort.Parse(service.Tsid), ushort.Parse(service.Sid));
 
                     // 現在放送中の番組を取得
-                    EpgEventInfo ev = matchedService?.eventList.Find(x =>
+                    EpgEventInfo ev = matchedServiceEv?.eventList.Find(x =>
                         x.start_time <= now &&
                         x.start_time.AddSeconds(x.durationSec) >= now);
 
                     // EPG情報が無い場合と現在放送中の番組が無い場合のタイトル設定
-                    string eventTitle = ev?.ShortInfo?.event_name ?? (matchedService == null ? "EPG未取得" : "");
+                    string eventTitle = ev?.ShortInfo?.event_name ?? (matchedServiceEv == null ? "EPG未取得" : "");
 
                     // フィルタ条件チェック（チャンネル名・番組名の双方を対象とする）
                     if (!IsMatchFilter(serviceName, eventTitle))
@@ -239,7 +239,7 @@ namespace RockbarForEDCB
                     if (ev != null)
                     {
                         timeText = $"{ev.start_time:HH:mm}-{ev.start_time.AddSeconds(ev.durationSec):HH:mm}";
-                        string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                        string eventKey = RockbarUtility.GetEventKey(ev);
 
                         // 予約状態文字列を取得
                         if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData))
@@ -253,7 +253,7 @@ namespace RockbarForEDCB
                     string[] rowData = { serviceName, timeText, reserveString, eventTitle };
                     ListViewItem item = new ListViewItem(rowData)
                     {
-                        Name = key,
+                        Name = serviceKey,
                         Tag = service,
                         ToolTipText = eventTitle,
                         ForeColor = _listForeColor
@@ -268,9 +268,9 @@ namespace RockbarForEDCB
                     targetListView.Items.Add(item);
 
                     // 次に始まる最初の番組の「開始時刻」を探す
-                    if (matchedService?.eventList != null)
+                    if (matchedServiceEv?.eventList != null)
                     {
-                        var nextEv = matchedService.eventList
+                        var nextEv = matchedServiceEv.eventList
                             .Where(x => x.start_time > now)
                             .OrderBy(x => x.start_time)
                             .FirstOrDefault();
@@ -339,8 +339,8 @@ namespace RockbarForEDCB
                     var ev = itemData.Event;
 
                     // サービス（チャンネル）の決定
-                    string key = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id);
-                    if (!_epgDataManager.ServiceNameCache.ContainsKey(key))
+                    string serviceKey = RockbarUtility.GetServiceKey(ev.transport_stream_id, ev.service_id);
+                    if (!_epgDataManager.ServiceNameCache.ContainsKey(serviceKey))
                     {
                         continue; // 登録チャンネル一覧にない場合は処理を飛ばす
                     }
@@ -363,7 +363,7 @@ namespace RockbarForEDCB
                     // 予約状態の設定
                     string reserveString = "";
                     ReserveStatus reserveStatus = ReserveStatus.NONE;
-                    string eventKey = RockbarUtility.GetKey(ev.transport_stream_id, ev.service_id, ev.event_id);
+                    string eventKey = RockbarUtility.GetEventKey(ev);
 
                     if (_epgDataManager.ReserveMap.TryGetValue(eventKey, out ReserveData reserveData))
                     {
@@ -453,7 +453,7 @@ namespace RockbarForEDCB
 
                     // --- チャンネル名の取得 ---
                     // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-                    string serviceName = _epgDataManager.GetServiceName(reserveData.TransportStreamID, reserveData.ServiceID);
+                    string serviceName = _epgDataManager.GetServiceName(reserveData);
 
                     // フィルタ条件チェック
                     if (!IsMatchFilter(new[] { serviceName, reserveData.Title }))
@@ -462,7 +462,7 @@ namespace RockbarForEDCB
                     }
 
                     // --- 表示文字列の作成 ---
-                    string eventKey = RockbarUtility.GetKey(reserveData.TransportStreamID, reserveData.ServiceID, reserveData.EventID);
+                    string eventKey = RockbarUtility.GetEventKey(reserveData);
                     // 自動予約された番組がEPGから消失していないかチェック
                     bool eventExists = _epgDataManager.AllEventMap.ContainsKey(eventKey);
 
@@ -537,8 +537,8 @@ namespace RockbarForEDCB
                     DateTime endTime = startTime.AddSeconds(recFile.DurationSecond);
 
                     // --- チャンネル名の取得 ---
-                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-                    string serviceName = _epgDataManager.GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
+                    // 設定ファイルのチャンネル名を最優先で使用し、設定がなければ録画情報のServiceNameを使用
+                    string serviceName = _epgDataManager.GetServiceName(recFile);
 
                     // フィルタ条件チェック
                     if (!IsMatchFilter(new[] { serviceName, recFile.Title }))
@@ -675,7 +675,7 @@ namespace RockbarForEDCB
 
                         // --- チャンネル名の取得 ---
                         // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-                        serviceName = _epgDataManager.GetServiceName(nearestReserve.TransportStreamID, nearestReserve.ServiceID);
+                        serviceName = _epgDataManager.GetServiceName(nearestReserve);
 
                         dateTimeText = $"{startTime:MM/dd(ddd) HH:mm}-{endTime:HH:mm}";
                         toolTipDateTimeText = $"{startTime:MM/dd(ddd) HH:mm}～{endTime:HH:mm}";
@@ -825,8 +825,8 @@ namespace RockbarForEDCB
             }
 
             // --- チャンネル名の取得 ---
-            // 設定ファイルのチャンネル名を最優先で使用し、設定がなければEDCBのServiceNameを使用
-            string serviceName = _epgDataManager.GetServiceName(recFile.TransportStreamID, recFile.ServiceID);
+            // 設定ファイルのチャンネル名を最優先で使用し、設定がなければ録画情報のServiceNameを使用
+            string serviceName = _epgDataManager.GetServiceName(recFile);
 
             var services = new List<RecInfoDetailText>()
                 {
