@@ -400,7 +400,8 @@ namespace RockbarForEDCB
                 if (selected != null)
                 {
                     // 予約の有効・無効を切り替える
-                    if (_configManager.RockbarSetting.UseRockbarReserveMod && _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserveData))
+                    if (_configManager.RockbarSetting.UseRockbarReserveMod
+                        && _epgDataManager.ReserveMap.TryGetValue(selected.Name, out var reserveData))
                     {
                         ToggleRecMode(reserveData);
                     }
@@ -1050,28 +1051,7 @@ namespace RockbarForEDCB
         /// <returns></returns>
         private ToolStripMenuItem CreateProgramSummaryMenuItem(EpgEventInfo ev, ReserveData reserve, bool isTuner)
         {
-            ReserveStatus reserveStatus = ReserveStatus.NONE;
-
-            // 予約ステータスを判別
-            if (reserve != null)
-            {
-                if (reserve.RecSetting.IsNoRec())
-                {
-                    reserveStatus = ReserveStatus.DISABLED;
-                }
-                else if (reserve.OverlapMode == 0)
-                {
-                    reserveStatus = (ev == null) ? ReserveStatus.DISAPPEARED : ReserveStatus.OK;
-                }
-                else if (reserve.OverlapMode == 1)
-                {
-                    reserveStatus = ReserveStatus.PARTIAL;
-                }
-                else
-                {
-                    reserveStatus = ReserveStatus.NG;
-                }
-            }
+            ReserveStatus reserveStatus = RockbarUtility.GetReserveStatus(reserve, ev != null);
 
             ToolStripMenuItem item = new ToolStripMenuItem();
 
@@ -1090,6 +1070,7 @@ namespace RockbarForEDCB
                 case ReserveStatus.PARTIAL:
                     item.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.PartialReserveMenuBackColor);
                     break;
+                case ReserveStatus.DISAPPEARED:
                 case ReserveStatus.NG:
                     item.BackColor = (Color)colorConverter.ConvertFromString(_configManager.RockbarSetting.NgReserveMenuBackColor);
                     break;
@@ -1107,12 +1088,14 @@ namespace RockbarForEDCB
                 string serviceName = _epgDataManager.GetServiceName(reserve.TransportStreamID, reserve.ServiceID);
 
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)
-                item.Text = $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}  {reserveString}    {serviceName}    {reserve.Title}";
+                item.Text = $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}" +
+                            $"  {reserveString}    {serviceName}    {reserve.Title}";
             }
             else
             {
                 // サービスから開いた場合は番組情報を表示(必ず番組情報あり)
-                item.Text = $"{ev.start_time:MM/dd(ddd) HH:mm}～{ev.start_time.AddSeconds(ev.durationSec):HH:mm}  {reserveString}  {ev.ShortInfo?.event_name}";
+                item.Text = $"{ev.start_time:MM/dd(ddd) HH:mm}～{ev.start_time.AddSeconds(ev.durationSec):HH:mm}" +
+                            $"  {reserveString}  {ev.ShortInfo?.event_name}";
             }
 
             // 番組情報がある場合はサブメニューに番組情報を追加
@@ -1175,7 +1158,8 @@ namespace RockbarForEDCB
                 // Rockbarで予約変更を行う機能が有効の場合、予約の有効・無効切り替えメニューを追加
                 if (_configManager.RockbarSetting.UseRockbarReserveMod)
                 {
-                    var reserveItem = menuItems.Add(reserveData.RecSetting.IsNoRec() ? $">> {viewOrRecText}予約を有効にする" : $">> {viewOrRecText}予約を無効にする");
+                    var reserveItem = menuItems.Add(reserveData.RecSetting.IsNoRec()
+                                      ? $">> {viewOrRecText}予約を有効にする" : $">> {viewOrRecText}予約を無効にする");
                     reserveItem.Click += (s2, e2) => ToggleRecMode(reserveData);
                 }
 
@@ -1207,22 +1191,11 @@ namespace RockbarForEDCB
                     {
                         if (!string.IsNullOrEmpty(recInfo.RecFolder))
                         {
-                            AddBrokenTextMenuItems(menuItems, "録画フォルダ : ", recInfo.RecFolder, "録画フォルダ", "クリックで録画フォルダをコピー");
+                            AddBrokenTextMenuItems(menuItems, "録画フォルダ : ",
+                                recInfo.RecFolder, "録画フォルダ", "クリックで録画フォルダをコピー");
                         }
                     }
                 }
-
-                //// 指定ファイル名 
-                //if (reserveData.RecFileNameList.Count > 0)
-                //{
-                //    foreach (var fileName in reserveData.RecFileNameList)
-                //    {
-                //        if (!string.IsNullOrEmpty(fileName))
-                //        {
-                //            AddBrokenTextMenuItems(menuItems, "ファイル名 : ", fileName, "ファイル名", "クリックで録画ファイル名をコピー");
-                //        }
-                //    }
-                //}
 
                 menuItems.Add(new ToolStripSeparator());
             }
