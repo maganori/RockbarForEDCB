@@ -102,10 +102,11 @@ namespace RockbarForEDCB
                 splitContainer.SplitterDistance = _configManager.RockbarSetting.SplitterDistance;
             }
 
-            //// 初回仮表示
-            RefreshList(false, true, true);
+            // 初回仮表示
+            mainListView.Items.Clear();
+            subListView.Items.Clear();
 
-            // EdcbClien設定および接続確認
+            // EdcbClientの設定、接続確認および画面更新を行う
             ReconfigureEdcbClientAsync();
 
             // タイマーを有効化
@@ -113,7 +114,7 @@ namespace RockbarForEDCB
 
             // フォーム表示完了イベント
             // リストビューの列幅を再調整して水平スクロールバー表示を防ぐ。
-            this.Shown += MainForm_Shown;
+            //this.Shown += MainForm_Shown;
         }
 
         /// <summary>
@@ -615,7 +616,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// EdcbClientの設定および接続確認と、成功時のEpgData更新を行う
+        /// EdcbClientの設定、接続確認および画面更新を行う
         /// </summary>
         private async void ReconfigureEdcbClientAsync()
         {
@@ -628,7 +629,7 @@ namespace RockbarForEDCB
             // null は接続確認中に再設定され、古い設定の結果となった場合で何もしない
             if (result == null) return;
 
-            // 通信できなかった場合は、メッセージを出して終了
+            // 通信できなかった場合は、メッセージを出す
             if (!_edcbClient.IsAvailable)
             {
                 MessageBox.Show(
@@ -637,6 +638,9 @@ namespace RockbarForEDCB
                     "EpgTimerSrv接続チェック失敗",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
+
+                // 通信できなかった場合も他の設定反映のため画面を更新する
+                RefreshList(false, true, true);
                 return;
             }
 
@@ -735,22 +739,6 @@ namespace RockbarForEDCB
                 this.Left += e.X - _mousePoint.X;
                 this.Top += e.Y - _mousePoint.Y;
             }
-        }
-
-        /// <summary>
-        /// マウスクリック処理に応じてテキストでフィルタリングをする
-        /// </summary>
-        /// <param name="text">対象テキスト</param>
-        private void FilterWith(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                return;
-            }
-
-            filterTextBox.Text = text;
-            filterTextBox.Focus();
-            RefreshList(false, true, false);
         }
 
         /// <summary>
