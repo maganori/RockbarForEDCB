@@ -704,7 +704,7 @@ namespace RockbarForEDCB
         /// <param name="targetListView">対象のListView</param>
         public void HandleTunerMouseUp(object sender, MouseEventArgs e, ListView targetListView)
         {
-            ////中央クリック
+            // 中央クリック
             if (e.Button == MouseButtons.Middle)
             {
                 // クリックした箇所が自動選択されるので拾う
@@ -1094,7 +1094,7 @@ namespace RockbarForEDCB
 
                 // チューナーから開いた場合は予約情報を表示(必ず予約情報あり)
                 item.Text = $"{reserve.StartTime:MM/dd(ddd) HH:mm}～{reserve.StartTime.AddSeconds(reserve.DurationSecond):HH:mm}" +
-                            $"  {reserveString}    {serviceName}    {reserve.Title}";
+                            $"  {reserveString}  {serviceName}    {reserve.Title}";
             }
             else
             {
