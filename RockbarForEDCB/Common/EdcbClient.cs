@@ -1,6 +1,7 @@
 ﻿using EpgTimer;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace RockbarForEDCB
@@ -65,7 +66,12 @@ namespace RockbarForEDCB
             // TCP/IP通信のときだけ、接続先のIPアドレスとポート番号を設定する
             if (useTcpIp)
             {
-                ctrlCmdUtil.SetNWSetting(ipAddress, portNumber);
+                // 変換できればその値、失敗したら Loopback (127.0.0.1) を使用
+                IPAddress targetIp = IPAddress.TryParse(ipAddress, out var parsed)
+                    ? parsed
+                    : IPAddress.Loopback;
+
+                ctrlCmdUtil.SetNWSetting(targetIp, portNumber);
             }
         }
 

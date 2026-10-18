@@ -565,10 +565,10 @@ namespace RockbarForEDCB
                     //System.Diagnostics.Debug.WriteLine($"[Debug] Title: {recFile.Title}");
                     //System.Diagnostics.Debug.WriteLine($"[Debug] _ProgramInfo Length: {recFile._ProgramInfo?.Length ?? 0}");
                     //System.Diagnostics.Debug.WriteLine($"[Debug] _ProgramInfo Content:\n{recFile._ProgramInfo}");
-                    if (!string.IsNullOrEmpty(recFile._ProgramInfo))
+                    if (!string.IsNullOrEmpty(recFile.ProgramInfo))
                     {
                         _contextMenu.Items.Add(new ToolStripSeparator());
-                        AddBrokenTextMenuItems(_contextMenu.Items, "", recFile._ProgramInfo, "番組詳細", "クリックで番組詳細をコピー");
+                        AddBrokenTextMenuItems(_contextMenu.Items, "", recFile.ProgramInfo, "番組詳細", "クリックで番組詳細をコピー");
                     }
 
                     _contextMenu.Items.Add(new ToolStripSeparator());
@@ -585,7 +585,7 @@ namespace RockbarForEDCB
                             dateTime,
                             serviceName,
                             !string.IsNullOrEmpty(recFile.Title) ? $"{recFile.Title}\n" : null,
-                            !string.IsNullOrEmpty(recFile._ProgramInfo) ? $"{recFile._ProgramInfo}\n" : null
+                            !string.IsNullOrEmpty(recFile.ProgramInfo) ? $"{recFile.ProgramInfo}\n" : null
                          },
                          ">> すべての録画情報をコピー",
                          "すべての録画情報をまとめてコピー"
@@ -898,8 +898,7 @@ namespace RockbarForEDCB
                     // 6:データカルーセルを含める(0:OFF, 1:ON)
                     ServiceMode = _configManager.RockbarSetting.RecServiceMode,
                     PittariFlag = _configManager.RockbarSetting.RecPittari ? (byte)1 : (byte)0,
-                    //BatFilePath = _configManager.RockbarSetting.RecBatFilePath,
-                    //RecTag = _configManager.RockbarSetting.RecTag,
+                    BatFilePath = _configManager.RockbarSetting.RecBatFilePath,
                     RecFolderList = _configManager.RockbarSetting.RecFolderList,
                     // ・byte SuspendMode
                     // デフォルト有効 ：0 ※RebootFlagも0(無効)にされる
@@ -920,10 +919,7 @@ namespace RockbarForEDCB
                 //ReserveStatus = 0,
                 //RecFileNameList = new List<string>(), //未指定でよい
                 ////UnusedParam1 = 0,
-                //AutoAddInfo = new List<EpgAutoAddBasicInfo>(),
-
             };
-            reserve.RecSetting.SetBatFilePathAndRecTag(_configManager.RockbarSetting.RecBatFilePath);
 
             // サーバーへ予約追加コマンド送信
             var err = _edcbClient.ExecuteCmd(c => c.SendAddReserve(new List<ReserveData> { reserve }));
