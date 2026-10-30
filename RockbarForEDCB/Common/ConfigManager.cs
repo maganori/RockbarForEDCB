@@ -347,6 +347,8 @@ namespace RockbarForEDCB
         public string IpAddress { get; set; } = "127.0.0.1";
         // ポート番号
         public uint PortNumber { get; set; } = 4510;
+        // TCP/IPの死活監視の間隔（秒）0は死活監視なし
+        public int TcpWatchIntervalSec { get; set; } = 5;
         // Web Link使用
         public bool UseWebLink { get; set; } = true;
         // WebEPG URL
@@ -552,6 +554,13 @@ namespace RockbarForEDCB
             if (this.PortNumber < 1 || this.PortNumber > 65535)
             {
                 this.PortNumber = 4510;
+                isFixed = true;
+            }
+
+            // 死活監視の間隔（負の値は0＝死活監視なし）
+            if (this.TcpWatchIntervalSec < 0)
+            {
+                this.TcpWatchIntervalSec = 0;
                 isFixed = true;
             }
 

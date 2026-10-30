@@ -20,6 +20,14 @@ namespace RockbarForEDCB
         // EdcbClient(EpgTimerSrv通信)
         private readonly EdcbClient _edcbClient;
 
+        // EpgTimerSrvからのプッシュ通知を受け取るクラス
+        private readonly EdcbNotifyReceiver _edcbNotifyReceiver;
+
+        // 通知が続けて届いたときに、まとめて1回だけ更新するためのタイマー
+        // System.Threading.Timerと名前が重なるため、フルネームで記載
+        private readonly System.Windows.Forms.Timer _edcbNotifyDebounceTimer =
+            new System.Windows.Forms.Timer { Interval = 300 };
+
         // EPGデータ管理
         private EpgDataManager _epgDataManager;
 
@@ -68,6 +76,12 @@ namespace RockbarForEDCB
             // EdcbClientのインスタンス化
             _edcbClient = new EdcbClient();
 
+            // EdcbNotifyReceiverのインスタンス化と、イベントの登録
+            _edcbNotifyReceiver = new EdcbNotifyReceiver(_edcbClient);
+            _edcbNotifyReceiver.NotificationReceived += EdcbNotifyReceiver_NotificationReceived;
+            _edcbNotifyReceiver.Reconnected += EdcbNotifyReceiver_Reconnected;
+            _edcbNotifyDebounceTimer.Tick += EdcbNotifyDebounceTimer_Tick;
+
             // EpgDataManagerのインスタンス化
             _epgDataManager = new EpgDataManager(_configManager, _edcbClient);
 
@@ -106,15 +120,12 @@ namespace RockbarForEDCB
             mainListView.Items.Clear();
             subListView.Items.Clear();
 
-            // EdcbClientの設定、接続確認および画面更新を行う
-            ReconfigureEdcbClientAsync();
-
             // タイマーを有効化
             timer.Enabled = true;
 
             // フォーム表示完了イベント
             // リストビューの列幅を再調整して水平スクロールバー表示を防ぐ。
-            //this.Shown += MainForm_Shown;
+            this.Shown += MainForm_Shown;
         }
 
         /// <summary>
@@ -367,10 +378,10 @@ namespace RockbarForEDCB
         /// 描画更新処理
         /// 必要があればEpgTimerSrv通信を行い、MainListView・SubListViewの表示を更新する。
         /// </summary>
-        /// <param name="isTransmission">EpgTimerSrvと通信要否</param>
+        /// <param name="needsCommunication">EpgTimerSrvと通信要否</param>
         /// <param name="forceMainListRefresh">MainListView(Main Pane)の強制リフレッシュ要否</param>
         /// <param name="forceSubListRefresh">SubListtView(Sub Pane)の強制リフレッシュ要否</param>
-        private void RefreshList(bool isTransmission, bool forceMainListRefresh, bool forceSubListRefresh)
+        private void RefreshList(bool needsCommunication, bool forceMainListRefresh, bool forceSubListRefresh)
         {
             DateTime now = DateTime.Now;
 
@@ -385,14 +396,14 @@ namespace RockbarForEDCB
             // 録画情報更新必要有無判定
             bool isRecDataUpdateRequired = 
                 mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いて かつ
-                ((isTransmission == true && forceMainListRefresh) || //通信要で強制リフレッシュ要　または
+                ((needsCommunication && forceMainListRefresh) || //通信要で強制リフレッシュ要　または
                 now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval); //前回更新時間から時間経過しているか
 
             // EpgDataを更新する
             if (_edcbClient.IsAvailable)
             {
                 // 定期更新など、通信が必要な場合
-                if (isTransmission)
+                if (needsCommunication)
                 {
                     isServiceChanged = _epgDataManager.UpdateServiceData();
                     isReserveChanged = _epgDataManager.UpdateReserveData();
@@ -612,40 +623,120 @@ namespace RockbarForEDCB
         /// </summary>
         private void MainForm_Shown(object sender, EventArgs e)
         {
+            // リストビューの列幅を再調整して水平スクロールバー表示を防ぐ
             AdjustAllListViewColumns();
+
+            // EdcbClientの接続確認、一覧の取得、通知の受け取りを開始する（起動時はエラーを出さない）
+            ConnectEdcbAsync(false);
         }
 
         /// <summary>
-        /// EdcbClientの設定、接続確認および画面更新を行う
+        /// 接続設定を反映して接続を確認し、一覧を取り直して通知の受け取りを要望する
+        /// 接続できなくても通知の要望は残し、死活監視の結果で接続を試みる
         /// </summary>
-        private async void ReconfigureEdcbClientAsync()
+        /// <param name="showError">接続できなかったときにメッセージを出すか（利用者が操作したときだけtrue）</param>
+        private async void ConnectEdcbAsync(bool showError)
         {
-            // 設定ファイルから通信方式（TCP/IP or パイプ）を読み込む
-            var s = _configManager.RockbarSetting;
-
-            // 接続設定の反映と接続確認を行う
-            ErrCode? result = await _edcbClient.ApplySettingsAndCheckAsync(s.UseTcpIp, s.IpAddress, s.PortNumber);
-
-            // null は接続確認中に再設定され、古い設定の結果となった場合で何もしない
-            if (result == null) return;
-
-            // 通信できなかった場合は、メッセージを出す
-            if (!_edcbClient.IsAvailable)
+            // async voidのメソッドで例外が出るとアプリが落ちるため、全体を囲んで受け止める
+            try
             {
-                MessageBox.Show(
-                    $"EpgTimerSrvと接続できません。以降の通信を停止します。\n" +
-                    $"オプション設定を見直してください。\n\nErrCode: {result}",
-                    "EpgTimerSrv接続チェック失敗",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                var setting = _configManager.RockbarSetting;
 
-                // 通信できなかった場合も他の設定反映のため画面を更新する
-                RefreshList(false, true, true);
+                // 設定を反映する前に止める（古い設定で受け取った通知を使わないため）
+                _edcbNotifyReceiver.Stop();
+
+                ErrCode? errCode = await _edcbClient.ApplySettingsAndCheckAsync(
+                    setting.UseTcpIp, setting.IpAddress, setting.PortNumber, setting.TcpWatchIntervalSec);
+
+                // 確認の途中で別の設定が反映された場合は、この結果を使わないため何もしない
+                if (errCode == null) return;
+
+                bool connected = _edcbClient.IsAvailable;
+
+                if (!connected && showError)
+                {
+                    MessageBox.Show(
+                        $"EpgTimerSrvと接続できません。\nオプション設定を見直してください。\n\nErrCode: {errCode}",
+                        "EpgTimerSrv接続チェック失敗",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+
+                // 接続できたときだけ一覧を取り直す（できなければ前の一覧を残すため、表示だけ更新する）
+                RefreshList(connected, true, true);
+
+                // 接続できなくても要望は残す（サーバーが起動したら死活監視の結果で接続される）
+                _edcbNotifyReceiver.Start();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("[MainForm] EDCBの接続処理で例外: " + ex);
+            }
+        }
+
+        /// <summary>
+        /// 一覧に関係する通知（EPG・予約・録画）を受けたときの処理（受信スレッドから呼ばれる）
+        /// </summary>
+        private void EdcbNotifyReceiver_NotificationReceived(object sender, UpdateNotifyItem item)
+        {
+            // 一覧に関係する通知だけを対象にする
+            if (item != UpdateNotifyItem.EpgData &&
+                item != UpdateNotifyItem.ReserveInfo &&
+                item != UpdateNotifyItem.RecInfo)
+            {
                 return;
             }
 
-            // 通信できた場合は、データを取得して画面を更新する
-            RefreshList(true, true, true);
+            PostRefreshRequest();
+        }
+
+        /// <summary>
+        /// 通知の受け取りを接続したときの処理（接続処理のスレッドから呼ばれる）
+        /// 止まっている間の更新を取りこぼしている可能性があるため、一覧を取り直す
+        /// </summary>
+        private void EdcbNotifyReceiver_Reconnected(object sender, EventArgs e)
+        {
+            PostRefreshRequest();
+        }
+
+        /// <summary>
+        /// 受信スレッドから一覧の更新を要求する
+        /// UIスレッドに渡してデバウンスタイマーを仕切り直す（BeginInvokeは待たずに戻るため、受信スレッドを止めない）
+        /// </summary>
+        private void PostRefreshRequest()
+        {
+            // フォームが閉じている最中は何もしない
+            if (IsDisposed || !IsHandleCreated) return;
+
+            try
+            {
+                // UIスレッドでRestartDebounceTimerを呼ぶ（待たずに戻るため、受信スレッドを止めない）
+                BeginInvoke(new Action(RestartDebounceTimer));
+            }
+            catch (InvalidOperationException)
+            {
+                // 閉じる処理と重なってハンドルが消えた場合は無視する
+            }
+        }
+
+        /// <summary>
+        /// デバウンスタイマーを仕切り直す（UIスレッドで呼ぶこと）
+        /// 通知が続けて届いている間は、最後の通知から一定時間後に1回だけ更新される
+        /// </summary>
+        private void RestartDebounceTimer()
+        {
+            _edcbNotifyDebounceTimer.Stop();
+            _edcbNotifyDebounceTimer.Start();
+        }
+
+        /// <summary>
+        /// デバウンス後の更新処理
+        /// 通信して予約・EPG・録画を取り直し、一覧を再描画する
+        /// </summary>
+        private void EdcbNotifyDebounceTimer_Tick(object sender, EventArgs e)
+        {
+            _edcbNotifyDebounceTimer.Stop();
+            RefreshList(true, true, false);
         }
 
         /// <summary>
@@ -849,7 +940,7 @@ namespace RockbarForEDCB
         public void ApplyConfigAndRefresh()
         {
             ApplySetting();
-            ReconfigureEdcbClientAsync();
+            ConnectEdcbAsync(true);
         }
 
         /// <summary>
@@ -887,6 +978,11 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.SplitterDistance = splitContainer.SplitterDistance;
 
             _configManager.SaveToFile();
+
+            // 通知の受け取りを止める（EpgTimerSrvへの登録解除も行う）
+            _edcbNotifyDebounceTimer.Stop();
+            _edcbNotifyReceiver.Dispose();   // 先に通知の受け取りを止める
+            _edcbClient.Dispose();           // 死活監視のタイマーを止める
         }
 
         /// <summary>

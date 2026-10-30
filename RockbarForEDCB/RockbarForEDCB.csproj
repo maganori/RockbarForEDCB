@@ -228,13 +228,16 @@
   <ItemGroup>
     <Compile Include="Common\ConfigManager.cs" />
     <Compile Include="Common\EdcbClient.cs" />
-    <Compile Include="EpgDataManager.cs" />
-    <Compile Include="ListViewBuilder.cs" />
-    <Compile Include="ListViewEventHandler.cs" />
     <Compile Include="Common\RockbarUtility.cs" />
+    <Compile Include="EdcbNotifyReceiver.cs" />
+    <Compile Include="EpgDataManager.cs" />
     <Compile Include="EpgTimer\Common\CtrlCmd.cs" />
     <Compile Include="EpgTimer\Common\CtrlCmdDef.cs" />
     <Compile Include="EpgTimer\Common\DefineEnum.cs" />
+    <Compile Include="EpgTimer\Common\NWConnectClass.cs" />
+    <Compile Include="EpgTimer\Common\PipeServer.cs" />
+    <Compile Include="ListViewBuilder.cs" />
+    <Compile Include="ListViewEventHandler.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

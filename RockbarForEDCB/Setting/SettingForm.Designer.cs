@@ -78,7 +78,6 @@ namespace RockbarForEDCB
             this.webEpgUrlTextBox = new System.Windows.Forms.TextBox();
             this.portNumberNoteLabel = new System.Windows.Forms.Label();
             this.portNumberNumericUpDown = new System.Windows.Forms.NumericUpDown();
-            this.label3 = new System.Windows.Forms.Label();
             this.portNumberLabel = new System.Windows.Forms.Label();
             this.webLinkUrlExampleLabel = new System.Windows.Forms.Label();
             this.useTcpIpCheckBox = new System.Windows.Forms.CheckBox();
@@ -311,6 +310,8 @@ namespace RockbarForEDCB
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
             this.versionLabel = new System.Windows.Forms.Label();
+            this.tcpWatchIntervalSecLabel = new System.Windows.Forms.Label();
+            this.tcpWatchIntervalSecNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
@@ -334,6 +335,7 @@ namespace RockbarForEDCB
             this.otherTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).BeginInit();
             this.taskTrayIconClickGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tcpWatchIntervalSecNumericUpDown)).BeginInit();
             this.SuspendLayout();
             // 
             // cancelButton
@@ -545,11 +547,12 @@ namespace RockbarForEDCB
             // 
             // edcbLinkageTabPage
             // 
+            this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecNumericUpDown);
+            this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webEPGLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webEpgUrlTextBox);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNoteLabel);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNumericUpDown);
-            this.edcbLinkageTabPage.Controls.Add(this.label3);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlExampleLabel);
             this.edcbLinkageTabPage.Controls.Add(this.useTcpIpCheckBox);
@@ -587,7 +590,7 @@ namespace RockbarForEDCB
             // portNumberNoteLabel
             // 
             this.portNumberNoteLabel.AutoSize = true;
-            this.portNumberNoteLabel.Location = new System.Drawing.Point(303, 77);
+            this.portNumberNoteLabel.Location = new System.Drawing.Point(303, 47);
             this.portNumberNoteLabel.Name = "portNumberNoteLabel";
             this.portNumberNoteLabel.Size = new System.Drawing.Size(209, 12);
             this.portNumberNoteLabel.TabIndex = 16;
@@ -595,7 +598,7 @@ namespace RockbarForEDCB
             // 
             // portNumberNumericUpDown
             // 
-            this.portNumberNumericUpDown.Location = new System.Drawing.Point(178, 110);
+            this.portNumberNumericUpDown.Location = new System.Drawing.Point(178, 80);
             this.portNumberNumericUpDown.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -615,19 +618,10 @@ namespace RockbarForEDCB
             0,
             0});
             // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(37, 45);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(264, 12);
-            this.label3.TabIndex = 14;
-            this.label3.Text = "※非チェック時はローカルパイプ通信。次回起動時反映";
-            // 
             // portNumberLabel
             // 
             this.portNumberLabel.AutoSize = true;
-            this.portNumberLabel.Location = new System.Drawing.Point(59, 113);
+            this.portNumberLabel.Location = new System.Drawing.Point(59, 83);
             this.portNumberLabel.Name = "portNumberLabel";
             this.portNumberLabel.Size = new System.Drawing.Size(113, 12);
             this.portNumberLabel.TabIndex = 13;
@@ -647,9 +641,9 @@ namespace RockbarForEDCB
             this.useTcpIpCheckBox.AutoSize = true;
             this.useTcpIpCheckBox.Location = new System.Drawing.Point(22, 20);
             this.useTcpIpCheckBox.Name = "useTcpIpCheckBox";
-            this.useTcpIpCheckBox.Size = new System.Drawing.Size(196, 16);
+            this.useTcpIpCheckBox.Size = new System.Drawing.Size(367, 16);
             this.useTcpIpCheckBox.TabIndex = 0;
-            this.useTcpIpCheckBox.Text = "EDCBとの通信にTCP/IPを使用する";
+            this.useTcpIpCheckBox.Text = "EDCBとの通信にTCP/IPを使用する ※非チェック時はローカルパイプ通信";
             this.useTcpIpCheckBox.UseVisualStyleBackColor = true;
             this.useTcpIpCheckBox.CheckedChanged += new System.EventHandler(this.useTcpIpCheckBox_CheckedChanged);
             // 
@@ -667,7 +661,7 @@ namespace RockbarForEDCB
             // ipAddressLabel
             // 
             this.ipAddressLabel.AutoSize = true;
-            this.ipAddressLabel.Location = new System.Drawing.Point(59, 77);
+            this.ipAddressLabel.Location = new System.Drawing.Point(59, 47);
             this.ipAddressLabel.Name = "ipAddressLabel";
             this.ipAddressLabel.Size = new System.Drawing.Size(51, 12);
             this.ipAddressLabel.TabIndex = 8;
@@ -693,7 +687,7 @@ namespace RockbarForEDCB
             // 
             // ipAddressTextBox
             // 
-            this.ipAddressTextBox.Location = new System.Drawing.Point(122, 74);
+            this.ipAddressTextBox.Location = new System.Drawing.Point(122, 44);
             this.ipAddressTextBox.Name = "ipAddressTextBox";
             this.ipAddressTextBox.Size = new System.Drawing.Size(166, 19);
             this.ipAddressTextBox.TabIndex = 1;
@@ -3010,6 +3004,32 @@ namespace RockbarForEDCB
             this.versionLabel.TabIndex = 19;
             this.versionLabel.Text = "Version : YYYYMMDD";
             // 
+            // tcpWatchIntervalSecLabel
+            // 
+            this.tcpWatchIntervalSecLabel.AutoSize = true;
+            this.tcpWatchIntervalSecLabel.Location = new System.Drawing.Point(283, 86);
+            this.tcpWatchIntervalSecLabel.Name = "tcpWatchIntervalSecLabel";
+            this.tcpWatchIntervalSecLabel.Size = new System.Drawing.Size(147, 12);
+            this.tcpWatchIntervalSecLabel.TabIndex = 20;
+            this.tcpWatchIntervalSecLabel.Text = "死活監視間隔(秒)(0-99999)";
+            // 
+            // tcpWatchIntervalSecNumericUpDown
+            // 
+            this.tcpWatchIntervalSecNumericUpDown.Location = new System.Drawing.Point(437, 83);
+            this.tcpWatchIntervalSecNumericUpDown.Maximum = new decimal(new int[] {
+            99999,
+            0,
+            0,
+            0});
+            this.tcpWatchIntervalSecNumericUpDown.Name = "tcpWatchIntervalSecNumericUpDown";
+            this.tcpWatchIntervalSecNumericUpDown.Size = new System.Drawing.Size(70, 19);
+            this.tcpWatchIntervalSecNumericUpDown.TabIndex = 21;
+            this.tcpWatchIntervalSecNumericUpDown.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -3062,6 +3082,7 @@ namespace RockbarForEDCB
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).EndInit();
             this.taskTrayIconClickGroupBox.ResumeLayout(false);
             this.taskTrayIconClickGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.tcpWatchIntervalSecNumericUpDown)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -3139,7 +3160,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label tvtestPathLabel;
         private System.Windows.Forms.Button tvtestOpenButton;
         private System.Windows.Forms.TextBox tvtestPathTextBox;
-        private System.Windows.Forms.Label label3;
         private System.Windows.Forms.NumericUpDown portNumberNumericUpDown;
         private System.Windows.Forms.Label selectedServiceListLabel;
         private System.Windows.Forms.Label allServiceListLabel;
@@ -3331,5 +3351,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox useIndividualMainFormFontsCheckBox;
         private System.Windows.Forms.GroupBox individualMainFormFontsGroupBox;
         private System.Windows.Forms.Label versionLabel;
+        private System.Windows.Forms.Label tcpWatchIntervalSecLabel;
+        private System.Windows.Forms.NumericUpDown tcpWatchIntervalSecNumericUpDown;
     }
 }

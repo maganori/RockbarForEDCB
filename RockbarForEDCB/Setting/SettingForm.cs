@@ -149,6 +149,17 @@ namespace RockbarForEDCB
                 portNumberNumericUpDown.Value = _configManager.RockbarSetting.PortNumber;
             }
 
+            // 死活監視間隔が異常の場合、初期値にする
+            if (_configManager.RockbarSetting.TcpWatchIntervalSec > tcpWatchIntervalSecNumericUpDown.Maximum
+                || _configManager.RockbarSetting.TcpWatchIntervalSec < tcpWatchIntervalSecNumericUpDown.Minimum)
+            {
+                tcpWatchIntervalSecNumericUpDown.Value = 5;
+            }
+            else
+            {
+                tcpWatchIntervalSecNumericUpDown.Value = _configManager.RockbarSetting.TcpWatchIntervalSec;
+            }
+
             useWebLinkCheckBox.Checked = _configManager.RockbarSetting.UseWebLink;
             webEpgUrlTextBox.Text = _configManager.RockbarSetting.WebEpgUrl;
             webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
@@ -529,6 +540,7 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckBox.Checked;
             _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
             _configManager.RockbarSetting.PortNumber = (uint)portNumberNumericUpDown.Value;
+            _configManager.RockbarSetting.TcpWatchIntervalSec = (int)tcpWatchIntervalSecNumericUpDown.Value;
             _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
             _configManager.RockbarSetting.WebEpgUrl = webEpgUrlTextBox.Text;
             _configManager.RockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
@@ -719,11 +731,12 @@ namespace RockbarForEDCB
             ApplyUseTcpIpCheckBoxState();
         }
 
-        //// 「EDCBとの通信にTCP/IPを使用する」チェックボックスがOFFの場合は、予約内容全体が入力不可
+        //// 「EDCBとの通信にTCP/IPを使用する」チェックボックスがOFFの場合は、オプション全体が入力不可
         private void ApplyUseTcpIpCheckBoxState()
         {
             ipAddressTextBox.Enabled = useTcpIpCheckBox.Checked;
             portNumberNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
+            tcpWatchIntervalSecNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
         }
 
         // 「Web番組表機能(WebUI)を使用する」チェックボックスの変更検知
