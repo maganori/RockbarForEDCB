@@ -264,8 +264,8 @@ namespace RockbarForEDCB
         /// </summary>
         private NWConnect ConnectTcp()
         {
-            // 接続先はEdcbClientで変換済みのIPアドレスを使う
-            IPAddress ip = _edcbClient.IpAddress;
+            // 接続先のIPアドレスは、接続のたびにEdcbClientで変換する
+            IPAddress ip = _edcbClient.ResolveServerAddress();
             if (ip == null) return null;
 
             var nw = new NWConnect();

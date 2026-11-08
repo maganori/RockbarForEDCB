@@ -10,7 +10,7 @@ namespace RockbarForEDCB
 {
     /// <summary>
     /// EpgTimerSrvとの接続を一元管理するクラス
-    /// ・接続設定（パイプ/TCP、IP、ポート、死活監視の間隔）を保持する
+    /// ・接続設定（パイプ/TCP、ホスト名、ポート、死活監視の間隔）を保持する
     /// ・死活監視をして、結果を StatusChecked で知らせる
     /// ・コマンドの実行（ExecuteCmd）と、パイプ方式の通知登録・解除（ExecutePipeRegistCmd）を行う
     /// 　(TCP方式はロングポーリングのため、通知登録・解除はしない)
@@ -35,14 +35,14 @@ namespace RockbarForEDCB
         /// </summary>
         private sealed class ConnectionSettings
         {
-            public ConnectionSettings(int version, bool useTcpIp, IPAddress ipAddress, uint portNumber, int tcpWatchIntervalSec)
+            public ConnectionSettings(int version, bool useTcpIp, string hostName, uint portNumber, int tcpWatchIntervalSec)
             {
                 Version = version;
                 UseTcpIp = useTcpIp;
 
-                // 接続先のIPアドレス（ホスト名の変換は呼び出し元で済ませて、変換済みのものを受け取る）
-                // null は「ホスト名を変換できなかった」ことを表す
-                IpAddress = ipAddress;
+                // 接続先のホスト名（またはIPアドレスの文字列）
+                // 前後の空白は取り除いて保持するため
+                HostName = hostName?.Trim() ?? string.Empty;
 
                 PortNumber = portNumber;
 
@@ -62,14 +62,18 @@ namespace RockbarForEDCB
             /// <summary>設定の世代番号</summary>
             public int Version { get; }
             public bool UseTcpIp { get; }
-            public IPAddress IpAddress { get; }
+
+            /// <summary>接続先のホスト名、またはIPアドレスの文字列（空の場合もある）</summary>
+            public string HostName { get; }
+
             public uint PortNumber { get; }
+
             /// <summary>実際に使われる死活監視の間隔（秒）。0なら死活監視なし</summary>
             public int WatchIntervalSec { get; }
         }
 
         // 現在の接続設定（UIスレッドで書き、他のスレッドから読む）
-        private volatile ConnectionSettings _settings = new ConnectionSettings(0, false, null, 0, 0);
+        private volatile ConnectionSettings _settings = new ConnectionSettings(0, false, string.Empty, 0, 0);
 
         // 設定の世代番号の採番用（_stateLock の中でだけ増やす）
         private int _settingsVersionCounter;
@@ -110,14 +114,28 @@ namespace RockbarForEDCB
         /// <summary>TCP/IP接続かどうか（falseならパイプ接続）</summary>
         public bool UseTcpIp => _settings.UseTcpIp;
 
-        /// <summary>接続先のIPアドレス。パイプ接続のとき、または変換できなかったときは null</summary>
-        public IPAddress IpAddress => _settings.IpAddress;
-
         /// <summary>接続先のポート番号</summary>
         public uint PortNumber => _settings.PortNumber;
 
         /// <summary>実際に適用されている死活監視の間隔（秒）。0なら死活監視なし</summary>
         public int WatchIntervalSec => _settings.WatchIntervalSec;
+
+        /// <summary>
+        /// 接続先のIPアドレスを、呼び出しのたびに解決する
+        /// パイプ接続のとき、または変換できなかったときは null
+        /// 解決は別スレッドで行い、タイムアウトを超えたら null を返す（UIスレッドを長く止めないため）
+        /// </summary>
+        public IPAddress ResolveServerAddress()
+        {
+            // パイプ接続では、接続先のIPアドレスは使わないため null
+            ConnectionSettings settings = _settings;
+            if (!settings.UseTcpIp) return null;
+
+            Task<IPAddress> lookupTask = Task.Run(() => ResolveHostName(settings.HostName));
+
+            // 時間内に終わらなければ変換失敗（null）とする
+            return lookupTask.Wait(CmdTimeoutMs) ? lookupTask.Result : null;
+        }
 
         /// <summary>
         /// コンストラクタ
@@ -144,22 +162,18 @@ namespace RockbarForEDCB
                 bool isAvailable;
                 NotifySrvInfo status = null;
 
-                if (settings.UseTcpIp && settings.IpAddress == null)
+                if (settings.UseTcpIp)
                 {
-                    // ホスト名を変換できていないため、通信せずに「通信不可」とする
-                    isAvailable = false;
-                }
-                else if (settings.UseTcpIp)
-                {
-                    CtrlCmdUtil ctrlCmdUtil = CreateCtrlCmdUtil(settings);
-
                     // 問い合わせの結果を受ける入れ物
                     // タイムアウトで諦めた通信が、あとから書き込む可能性があるため、
                     // 成功を確認できたときだけ status に渡す（status とは別の変数にしている）
                     var receivedInfo = new NotifySrvInfo();
 
-                    // TCPは接続のタイムアウトが効かないことがあるため、RunWithTimeoutで時間を制限する
-                    ErrCode err = RunWithTimeout(() => ctrlCmdUtil.SendGetNotifySrvStatus(ref receivedInfo), TcpWatchConnectTimeoutMs);
+                    // 名前解決と通信をまとめて、タイムアウト付きの別スレッドで行う
+                    // （名前解決が遅くても、死活監視のスレッドを止めないため）
+                    ErrCode err = RunOnServer(settings,
+                        c => c.SendGetNotifySrvStatus(ref receivedInfo), TcpWatchConnectTimeoutMs);
+
                     isAvailable = (err == ErrCode.CMD_SUCCESS);
                     if (isAvailable) status = receivedInfo;
                 }
@@ -197,10 +211,6 @@ namespace RockbarForEDCB
         public async Task<ErrCode?> ApplySettingsAndCheckAsync(
             bool useTcpIp, string hostName, uint portNumber, int watchIntervalSec)
         {
-            // ホスト名をIPアドレスに変換する（TCPのときだけ行う）
-            // DNSの問い合わせは時間がかかることがあるため、ロックの外で行う
-            IPAddress resolvedIp = useTcpIp ? await ResolveHostAsync(hostName) : null;
-
             // 世代番号の採番、接続設定の保存、通信可能フラグを下げる処理は、まとめてロックの中で行う
             // （採番と保存の間に別の呼び出しが割り込むと、古い設定が最新として残ってしまうため）
             ConnectionSettings settings;
@@ -211,7 +221,7 @@ namespace RockbarForEDCB
                 _settingsVersionCounter++;
 
                 // 接続設定のスナップショットを作成し、最新の接続設定として保存
-                settings = new ConnectionSettings(_settingsVersionCounter, useTcpIp, resolvedIp, portNumber, watchIntervalSec);
+                settings = new ConnectionSettings(_settingsVersionCounter, useTcpIp, hostName, portNumber, watchIntervalSec);
                 _settings = settings;
 
                 // 接続確認を開始するため、いったん通信可能フラグを下げる
@@ -273,38 +283,19 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// EpgTimerSrvと通信可能かテストを行う
+        /// 通信は別スレッドで行い、タイムアウトまで待つ（UIスレッドを止めないため）
         /// </summary>
-        private static async Task<ErrCode> CheckConnectionAsync(ConnectionSettings settings)
+        private static Task<ErrCode> CheckConnectionAsync(ConnectionSettings settings)
         {
-            // TCPでホスト名を変換できていない場合は、通信せずに接続失敗とする
-            if (settings.UseTcpIp && settings.IpAddress == null) return ErrCode.CMD_ERR_CONNECT;
-
-            // 接続確認用に、新しいCtrlCmdUtilを作る
-            CtrlCmdUtil ctrlCmdUtil = CreateCtrlCmdUtil(settings);
-
-            // 通信は別スレッド（Task.Run）で行い、タイムアウトまで待つ
-            Task<ErrCode> checkTask = Task.Run(() =>
+            return Task.Run(() =>
             {
-                try
+                // 巡回カウンタ0で問い合わせると、サーバーは待たずに現在の状態を返す
+                return RunOnServer(settings, c =>
                 {
-                    // 巡回カウンタ0で問い合わせると、サーバーは待たずに現在の状態を返す
                     var status = new NotifySrvInfo();
-                    return ctrlCmdUtil.SendGetNotifySrvStatus(ref status);
-                }
-                catch (Exception ex)
-                {
-                    // パイプ通信は、接続できないときに例外が出ることがある
-                    // アプリが落ちないように、ここで受け止めて「接続失敗」として返す
-                    System.Diagnostics.Debug.WriteLine(ex);
-                    return ErrCode.CMD_ERR_CONNECT;
-                }
+                    return c.SendGetNotifySrvStatus(ref status);
+                }, CmdTimeoutMs);
             });
-
-            // 「通信が終わる」か「タイムアウト」かまで待つ
-            Task done = await Task.WhenAny(checkTask, Task.Delay(CmdTimeoutMs));
-
-            // 通信の方が先に終わっていればその結果を、そうでなければタイムアウトを返す
-            return done == checkTask ? await checkTask : ErrCode.CMD_ERR_TIMEOUT;
         }
 
         /// <summary>
@@ -320,19 +311,18 @@ namespace RockbarForEDCB
             if (!_isAvailable) return ErrCode.CMD_ERR_CONNECT;
 
             ConnectionSettings settings = _settings;
-            CtrlCmdUtil ctrlCmdUtil = CreateCtrlCmdUtil(settings);
-
-            ErrCode errCode = RunWithTimeout(() => command(ctrlCmdUtil), CmdTimeoutMs);
+            ErrCode errCode = RunOnServer(settings, command, CmdTimeoutMs);
 
             // 接続系のエラー（接続失敗・切断・タイムアウト）かどうか
             bool isConnectionError =
                 errCode == ErrCode.CMD_ERR_CONNECT ||      // サーバーにコネクトできなかった
                 errCode == ErrCode.CMD_ERR_DISCONNECT ||   // サーバーから切断された
-                errCode == ErrCode.CMD_ERR_TIMEOUT;     // タイムアウト発生
+                errCode == ErrCode.CMD_ERR_TIMEOUT;        // タイムアウト発生
 
             // 通信不能にすべきか
             // ・TCP：接続系のエラーなら通信不能
             // ・パイプ：接続待ちイベントが消えている（＝サーバーが停止した）ときだけ通信不能
+            //   （パイプのときは CreateCtrlCmdUtil が必ず非nullを返すため、ここで参照しても安全）
             bool serverDown = isConnectionError &&
                 (settings.UseTcpIp || !CreateCtrlCmdUtil(settings).PipeExists());
 
@@ -346,39 +336,23 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// ホスト名またはIPアドレスの文字列を IPAddress に変換する
+        /// ホスト名またはIPアドレスの文字列を IPAddress に変換する（タイムアウトなし・同期）
         /// ・IPアドレスの文字列なら、DNSを使わずにそのまま変換する
         /// ・それ以外はホスト名として DNS で調べる（IPv4アドレスを優先する）
         /// ・変換できなければ null を返す
+        /// 呼び出し側（別スレッド）でタイムアウトを設けること
         /// </summary>
-        /// <param name="hostName">ホスト名、またはIPアドレスの文字列</param>
-        public static async Task<IPAddress> ResolveHostAsync(string hostName)
+        private static IPAddress ResolveHostName(string hostName)
         {
-            // 空文字・空白だけの場合は変換できないとする
-            if (string.IsNullOrWhiteSpace(hostName)) return null;
-
-            // 前後の空白は取り除く
-            hostName = hostName.Trim();
-
-            // IPv6は「[::1]」のように角かっこで囲まれることがあるため、角かっこを外す
-            if (hostName.StartsWith("[") && hostName.EndsWith("]"))
-            {
-                hostName = hostName.Substring(1, hostName.Length - 2);
-            }
+            string text = NormalizeHostName(hostName);
+            if (text == null) return null;
 
             // IPアドレスとして読めるなら、DNSを使わずにそのまま返す（IPv4もIPv6もここで変換される）
-            if (IPAddress.TryParse(hostName, out IPAddress ip)) return ip;
+            if (IPAddress.TryParse(text, out IPAddress ip)) return ip;
 
             try
             {
-                // DNSの問い合わせは応答が遅いことがあるため、タイムアウトを設けて待つ
-                Task<IPAddress[]> lookupTask = Dns.GetHostAddressesAsync(hostName);
-                Task done = await Task.WhenAny(lookupTask, Task.Delay(CmdTimeoutMs));
-
-                // 時間内に終わらなければ変換失敗とする
-                if (done != lookupTask) return null;
-
-                IPAddress[] addresses = await lookupTask;
+                IPAddress[] addresses = Dns.GetHostAddresses(text);
 
                 // IPv4アドレスを優先し、無ければ最初のアドレスを使う
                 return addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork)
@@ -390,6 +364,47 @@ namespace RockbarForEDCB
                 System.Diagnostics.Debug.WriteLine(ex);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// 入力された文字列を、名前解決に使える形に整える
+        /// 前後の空白と、IPv6の角かっこを取り除く
+        /// 空文字、空白だけ、途中に空白を含む場合は null（変換しない）
+        /// </summary>
+        private static string NormalizeHostName(string hostName)
+        {
+            if (string.IsNullOrWhiteSpace(hostName)) return null;
+
+            // 前後の空白は取り除く
+            string text = hostName.Trim();
+
+            // IPv6は「[::1]」のように角かっこで囲まれることがあるため、角かっこを外す
+            if (text.Length >= 2 && text.StartsWith("[") && text.EndsWith("]"))
+            {
+                text = text.Substring(1, text.Length - 2);
+            }
+
+            // 空白を含むものは、ホスト名としても IPアドレスとしても無効
+            // （空文字の場合に Dns.GetHostAddresses("") が自分のPCのアドレスを返すのを防ぐため）
+            if (text.Length == 0 || text.Any(char.IsWhiteSpace)) return null;
+
+            return text;
+        }
+
+        /// <summary>
+        /// ホスト名またはIPアドレスの文字列を IPAddress に変換する（WakeOnLan などの非同期の呼び出し元向け）
+        /// 時間内に変換できなければ null を返す
+        /// </summary>
+        /// <param name="hostName">ホスト名、またはIPアドレスの文字列</param>
+        public static async Task<IPAddress> ResolveHostAsync(string hostName)
+        {
+            Task<IPAddress> lookupTask = Task.Run(() => ResolveHostName(hostName));
+
+            // DNSの問い合わせは応答が遅いことがあるため、タイムアウトを設けて待つ
+            Task done = await Task.WhenAny(lookupTask, Task.Delay(CmdTimeoutMs));
+
+            // 時間内に終わらなければ変換失敗とする
+            return done == lookupTask ? await lookupTask : null;
         }
 
         /// <summary>
@@ -408,19 +423,42 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// 接続設定に従って、新しいCtrlCmdUtilを作る
-        /// 呼び出し毎に作ることで、設定の変更と通信が同じインスタンスを共有しないようにする
+        /// TCPのときは、この時点でホスト名をIPアドレスに変換する（通信のたびに変換するため）
+        /// 変換できなかったときは null を返す（呼び出し側で接続失敗として扱う）
+        /// パイプのときは、必ず非nullを返す
         /// </summary>
         private static CtrlCmdUtil CreateCtrlCmdUtil(ConnectionSettings settings)
         {
             var ctrlCmdUtil = new CtrlCmdUtil();
             ctrlCmdUtil.SetSendMode(settings.UseTcpIp);
 
-            // TCP/IP通信のときだけ、接続先を設定する
-            if (settings.UseTcpIp)
-            {
-                ctrlCmdUtil.SetNWSetting(settings.IpAddress, settings.PortNumber);
-            }
+            // パイプ接続のときは、接続先の設定が不要なのでそのまま返す
+            if (!settings.UseTcpIp) return ctrlCmdUtil;
+
+            // TCP/IP接続のときは、ホスト名をIPアドレスに変換して接続先を設定する
+            IPAddress ip = ResolveHostName(settings.HostName);
+            if (ip == null) return null;
+
+            ctrlCmdUtil.SetNWSetting(ip, settings.PortNumber);
             return ctrlCmdUtil;
+        }
+
+        /// <summary>
+        /// 接続設定に従って通信を行う（名前解決と通信を、同じタイムアウトの中で行う）
+        /// 名前解決に失敗したときは、通信せずに接続失敗（CMD_ERR_CONNECT）を返す
+        /// </summary>
+        private static ErrCode RunOnServer(ConnectionSettings settings, Func<CtrlCmdUtil, ErrCode> command, int timeoutMs)
+        {
+            return RunWithTimeout(() =>
+            {
+                // 通信用のCtrlCmdUtilを作る（TCPのときはここでホスト名を変換する）
+                CtrlCmdUtil ctrlCmdUtil = CreateCtrlCmdUtil(settings);
+
+                // 変換できなかった場合は、通信せずに接続失敗とする
+                if (ctrlCmdUtil == null) return ErrCode.CMD_ERR_CONNECT;
+
+                return command(ctrlCmdUtil);
+            }, timeoutMs);
         }
 
         /// <summary>

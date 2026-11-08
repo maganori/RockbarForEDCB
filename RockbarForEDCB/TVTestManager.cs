@@ -125,8 +125,8 @@ namespace RockbarForEDCB
         /// <returns>リモートならtrue。変換できていない（null）場合は、リモートとは判断しない</returns>
         private bool IsRemoteConnection()
         {
-            // 接続先のIPアドレス（ホスト名から変換済み）
-            IPAddress ip = _edcbClient.IpAddress;
+            // 接続先のIPアドレス（ホスト名を、呼び出しのたびに変換する）
+            IPAddress ip = _edcbClient.ResolveServerAddress();
 
             // 変換できていない場合は、リモートとは判断しない
             if (ip == null) return false;
