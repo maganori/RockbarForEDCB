@@ -76,16 +76,16 @@ namespace RockbarForEDCB
             this.edcbLinkageTabPage = new System.Windows.Forms.TabPage();
             this.webEPGLabel = new System.Windows.Forms.Label();
             this.webEpgUrlTextBox = new System.Windows.Forms.TextBox();
-            this.portNumberNoteLabel = new System.Windows.Forms.Label();
+            this.hostNameNoteLabel = new System.Windows.Forms.Label();
             this.portNumberNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.portNumberLabel = new System.Windows.Forms.Label();
             this.webLinkUrlExampleLabel = new System.Windows.Forms.Label();
             this.useTcpIpCheckBox = new System.Windows.Forms.CheckBox();
             this.useWebLinkCheckBox = new System.Windows.Forms.CheckBox();
-            this.ipAddressLabel = new System.Windows.Forms.Label();
+            this.hostNameLabel = new System.Windows.Forms.Label();
             this.webLinkUrlLabel = new System.Windows.Forms.Label();
             this.recInfoWebLinkUrlLabel = new System.Windows.Forms.Label();
-            this.ipAddressTextBox = new System.Windows.Forms.TextBox();
+            this.hostNameTextBox = new System.Windows.Forms.TextBox();
             this.webLinkUrlTextBox = new System.Windows.Forms.TextBox();
             this.recInfoWebLinkUrlTextBox = new System.Windows.Forms.TextBox();
             this.reserveTabPage = new System.Windows.Forms.TabPage();
@@ -551,16 +551,16 @@ namespace RockbarForEDCB
             this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webEPGLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webEpgUrlTextBox);
-            this.edcbLinkageTabPage.Controls.Add(this.portNumberNoteLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.hostNameNoteLabel);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberNumericUpDown);
             this.edcbLinkageTabPage.Controls.Add(this.portNumberLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlExampleLabel);
             this.edcbLinkageTabPage.Controls.Add(this.useTcpIpCheckBox);
             this.edcbLinkageTabPage.Controls.Add(this.useWebLinkCheckBox);
-            this.edcbLinkageTabPage.Controls.Add(this.ipAddressLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.hostNameLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlLabel);
             this.edcbLinkageTabPage.Controls.Add(this.recInfoWebLinkUrlLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.ipAddressTextBox);
+            this.edcbLinkageTabPage.Controls.Add(this.hostNameTextBox);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlTextBox);
             this.edcbLinkageTabPage.Controls.Add(this.recInfoWebLinkUrlTextBox);
             this.edcbLinkageTabPage.Location = new System.Drawing.Point(4, 22);
@@ -587,14 +587,14 @@ namespace RockbarForEDCB
             this.webEpgUrlTextBox.Size = new System.Drawing.Size(478, 19);
             this.webEpgUrlTextBox.TabIndex = 17;
             // 
-            // portNumberNoteLabel
+            // hostNameNoteLabel
             // 
-            this.portNumberNoteLabel.AutoSize = true;
-            this.portNumberNoteLabel.Location = new System.Drawing.Point(303, 47);
-            this.portNumberNoteLabel.Name = "portNumberNoteLabel";
-            this.portNumberNoteLabel.Size = new System.Drawing.Size(209, 12);
-            this.portNumberNoteLabel.TabIndex = 16;
-            this.portNumberNoteLabel.Text = "※localhost, ホスト名はNG。127.0.0.1はOK";
+            this.hostNameNoteLabel.AutoSize = true;
+            this.hostNameNoteLabel.Location = new System.Drawing.Point(356, 47);
+            this.hostNameNoteLabel.Name = "hostNameNoteLabel";
+            this.hostNameNoteLabel.Size = new System.Drawing.Size(152, 12);
+            this.hostNameNoteLabel.TabIndex = 16;
+            this.hostNameNoteLabel.Text = "※コンピューター名や192.168.0.10など";
             // 
             // portNumberNumericUpDown
             // 
@@ -658,14 +658,14 @@ namespace RockbarForEDCB
             this.useWebLinkCheckBox.UseVisualStyleBackColor = true;
             this.useWebLinkCheckBox.CheckedChanged += new System.EventHandler(this.useWebLinkCheckBox_CheckedChanged);
             // 
-            // ipAddressLabel
+            // hostNameLabel
             // 
-            this.ipAddressLabel.AutoSize = true;
-            this.ipAddressLabel.Location = new System.Drawing.Point(59, 47);
-            this.ipAddressLabel.Name = "ipAddressLabel";
-            this.ipAddressLabel.Size = new System.Drawing.Size(51, 12);
-            this.ipAddressLabel.TabIndex = 8;
-            this.ipAddressLabel.Text = "IPアドレス";
+            this.hostNameLabel.AutoSize = true;
+            this.hostNameLabel.Location = new System.Drawing.Point(59, 47);
+            this.hostNameLabel.Name = "hostNameLabel";
+            this.hostNameLabel.Size = new System.Drawing.Size(96, 12);
+            this.hostNameLabel.TabIndex = 8;
+            this.hostNameLabel.Text = "ホスト名/IPアドレス";
             // 
             // webLinkUrlLabel
             // 
@@ -685,12 +685,12 @@ namespace RockbarForEDCB
             this.recInfoWebLinkUrlLabel.TabIndex = 9;
             this.recInfoWebLinkUrlLabel.Text = "録画詳細URL";
             // 
-            // ipAddressTextBox
+            // hostNameTextBox
             // 
-            this.ipAddressTextBox.Location = new System.Drawing.Point(122, 44);
-            this.ipAddressTextBox.Name = "ipAddressTextBox";
-            this.ipAddressTextBox.Size = new System.Drawing.Size(166, 19);
-            this.ipAddressTextBox.TabIndex = 1;
+            this.hostNameTextBox.Location = new System.Drawing.Point(179, 44);
+            this.hostNameTextBox.Name = "hostNameTextBox";
+            this.hostNameTextBox.Size = new System.Drawing.Size(166, 19);
+            this.hostNameTextBox.TabIndex = 1;
             // 
             // webLinkUrlTextBox
             // 
@@ -3147,8 +3147,8 @@ namespace RockbarForEDCB
         private System.Windows.Forms.TabPage tvtestLinkageTabPage;
         private System.Windows.Forms.Label portNumberLabel;
         private System.Windows.Forms.CheckBox useTcpIpCheckBox;
-        private System.Windows.Forms.Label ipAddressLabel;
-        private System.Windows.Forms.TextBox ipAddressTextBox;
+        private System.Windows.Forms.Label hostNameLabel;
+        private System.Windows.Forms.TextBox hostNameTextBox;
         private System.Windows.Forms.Label tvTestNoteLabel;
         private System.Windows.Forms.CheckBox useDoubleClickTvtestCheckBox;
         private System.Windows.Forms.Label tvtestDttvOptionLabel;
@@ -3174,7 +3174,7 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox isAutoOpenDttvCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenCsCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenBsCheckBox;
-        private System.Windows.Forms.Label portNumberNoteLabel;
+        private System.Windows.Forms.Label hostNameNoteLabel;
         private System.Windows.Forms.TabPage otherTabPage;
         private System.Windows.Forms.CheckBox showTaskTrayIconCheckBox;
         private System.Windows.Forms.CheckBox fixNoRecToServiceOnlyCheckBox;

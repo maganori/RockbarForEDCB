@@ -646,7 +646,7 @@ namespace RockbarForEDCB
                 _edcbNotifyReceiver.Stop();
 
                 ErrCode? errCode = await _edcbClient.ApplySettingsAndCheckAsync(
-                    setting.UseTcpIp, setting.IpAddress, setting.PortNumber, setting.TcpWatchIntervalSec);
+                    setting.UseTcpIp, setting.HostName, setting.PortNumber, setting.TcpWatchIntervalSec);
 
                 // 確認の途中で別の設定が反映された場合は、この結果を使わないため何もしない
                 if (errCode == null) return;

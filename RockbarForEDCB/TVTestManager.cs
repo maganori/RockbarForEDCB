@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Windows.Forms;
 
 namespace RockbarForEDCB
@@ -101,7 +102,7 @@ namespace RockbarForEDCB
         /// <returns>TVTestプロセス</returns>
         public Process PlayRecFile(RecFileInfo recFile)
         {
-            if (_configManager.RockbarSetting.UseTcpIp && _configManager.RockbarSetting.IpAddress.IndexOf("127.0.0.1") < 0)
+            if (_configManager.RockbarSetting.UseTcpIp && IsRemoteConnection())
             {
                 string networkPath = "";
                 ErrCode errCode = _edcbClient.ExecuteCmd(c => c.SendGetRecFileNetworkPath(recFile.RecFilePath, ref networkPath));
@@ -116,6 +117,22 @@ namespace RockbarForEDCB
             {
                 return StartTvtPlay(recFile.RecFilePath);
             }
+        }
+
+        /// <summary>
+        /// 接続先のEpgTimerSrvがこのPC以外（リモート）かどうかを判定する
+        /// </summary>
+        /// <returns>リモートならtrue。変換できていない（null）場合は、リモートとは判断しない</returns>
+        private bool IsRemoteConnection()
+        {
+            // 接続先のIPアドレス（ホスト名から変換済み）
+            IPAddress ip = _edcbClient.IpAddress;
+
+            // 変換できていない場合は、リモートとは判断しない
+            if (ip == null) return false;
+
+            // ループバック（127.0.0.1 や ::1）ならこのPC、それ以外はリモート
+            return !IPAddress.IsLoopback(ip);
         }
 
         /// <summary>

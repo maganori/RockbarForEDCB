@@ -1,6 +1,8 @@
 ﻿using EpgTimer;
 using System;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,15 +35,14 @@ namespace RockbarForEDCB
         /// </summary>
         private sealed class ConnectionSettings
         {
-            public ConnectionSettings(int version, bool useTcpIp, string ipAddress, uint portNumber, int tcpWatchIntervalSec)
+            public ConnectionSettings(int version, bool useTcpIp, IPAddress ipAddress, uint portNumber, int tcpWatchIntervalSec)
             {
                 Version = version;
                 UseTcpIp = useTcpIp;
 
-                // 変換できなければ Loopback (127.0.0.1) を使う（nullも変換失敗扱い）
-                IpAddress = (ipAddress != null && IPAddress.TryParse(ipAddress, out var parsed))
-                    ? parsed
-                    : IPAddress.Loopback;
+                // 接続先のIPアドレス（ホスト名の変換は呼び出し元で済ませて、変換済みのものを受け取る）
+                // null は「ホスト名を変換できなかった」ことを表す
+                IpAddress = ipAddress;
 
                 PortNumber = portNumber;
 
@@ -97,8 +98,8 @@ namespace RockbarForEDCB
         /// <summary>TCP/IP接続かどうか（falseならパイプ接続）</summary>
         public bool UseTcpIp => _settings.UseTcpIp;
 
-        /// <summary>接続先のIPアドレス（文字列）</summary>
-        public string IpAddress => _settings.IpAddress.ToString();
+        /// <summary>接続先のIPアドレス。パイプ接続のとき、または変換できなかったときは null</summary>
+        public IPAddress IpAddress => _settings.IpAddress;
 
         /// <summary>接続先のポート番号</summary>
         public uint PortNumber => _settings.PortNumber;
@@ -131,7 +132,12 @@ namespace RockbarForEDCB
                 bool isAvailable;
                 NotifySrvInfo status = null;
 
-                if (settings.UseTcpIp)
+                if (settings.UseTcpIp && settings.IpAddress == null)
+                {
+                    // ホスト名を変換できていないため、通信せずに「通信不可」とする
+                    isAvailable = false;
+                }
+                else if (settings.UseTcpIp)
                 {
                     CtrlCmdUtil ctrlCmdUtil = CreateCtrlCmdUtil(settings);
 
@@ -177,8 +183,12 @@ namespace RockbarForEDCB
         /// 待機中に新しい設定が適用され、この結果が古くなった場合は null を返す
         /// </returns>
         public async Task<ErrCode?> ApplySettingsAndCheckAsync(
-            bool useTcpIp, string ipAddress, uint portNumber, int watchIntervalSec)
+            bool useTcpIp, string hostName, uint portNumber, int watchIntervalSec)
         {
+            // ホスト名をIPアドレスに変換する（TCPのときだけ行う）
+            // DNSの問い合わせは時間がかかることがあるため、ロックの外で行う
+            IPAddress resolvedIp = useTcpIp ? await ResolveHostAsync(hostName) : null;
+
             // 世代番号の採番、接続設定の保存、通信可能フラグを下げる処理は、まとめてロックの中で行う
             // （採番と保存の間に別の呼び出しが割り込むと、古い設定が最新として残ってしまうため）
             ConnectionSettings settings;
@@ -188,7 +198,7 @@ namespace RockbarForEDCB
                 _settingsVersionCounter++;
 
                 // 接続設定のスナップショットを作成し、最新の接続設定として保存
-                settings = new ConnectionSettings(_settingsVersionCounter, useTcpIp, ipAddress, portNumber, watchIntervalSec);
+                settings = new ConnectionSettings(_settingsVersionCounter, useTcpIp, resolvedIp, portNumber, watchIntervalSec);
                 _settings = settings;
 
                 // 接続確認を開始するため、いったん通信可能フラグを下げる
@@ -243,6 +253,9 @@ namespace RockbarForEDCB
         /// </summary>
         private static async Task<ErrCode> CheckConnectionAsync(ConnectionSettings settings)
         {
+            // TCPでホスト名を変換できていない場合は、通信せずに接続失敗とする
+            if (settings.UseTcpIp && settings.IpAddress == null) return ErrCode.CMD_ERR_CONNECT;
+
             // 接続確認用に、新しいCtrlCmdUtilを作る
             CtrlCmdUtil ctrlCmdUtil = CreateCtrlCmdUtil(settings);
 
@@ -307,6 +320,53 @@ namespace RockbarForEDCB
             }
 
             return errCode;
+        }
+
+        /// <summary>
+        /// ホスト名またはIPアドレスの文字列を IPAddress に変換する
+        /// ・IPアドレスの文字列なら、DNSを使わずにそのまま変換する
+        /// ・それ以外はホスト名として DNS で調べる（IPv4アドレスを優先する）
+        /// ・変換できなければ null を返す
+        /// </summary>
+        /// <param name="hostName">ホスト名、またはIPアドレスの文字列</param>
+        public static async Task<IPAddress> ResolveHostAsync(string hostName)
+        {
+            // 空文字・空白だけの場合は変換できないとする
+            if (string.IsNullOrWhiteSpace(hostName)) return null;
+
+            // 前後の空白は取り除く
+            hostName = hostName.Trim();
+
+            // IPv6は「[::1]」のように角かっこで囲まれることがあるため、角かっこを外す
+            if (hostName.StartsWith("[") && hostName.EndsWith("]"))
+            {
+                hostName = hostName.Substring(1, hostName.Length - 2);
+            }
+
+            // IPアドレスとして読めるなら、DNSを使わずにそのまま返す（IPv4もIPv6もここで変換される）
+            if (IPAddress.TryParse(hostName, out IPAddress ip)) return ip;
+
+            try
+            {
+                // DNSの問い合わせは応答が遅いことがあるため、タイムアウトを設けて待つ
+                Task<IPAddress[]> lookupTask = Dns.GetHostAddressesAsync(hostName);
+                Task done = await Task.WhenAny(lookupTask, Task.Delay(CmdTimeoutMs));
+
+                // 時間内に終わらなければ変換失敗とする
+                if (done != lookupTask) return null;
+
+                IPAddress[] addresses = await lookupTask;
+
+                // IPv4アドレスを優先し、無ければ最初のアドレスを使う
+                return addresses.FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork)
+                    ?? addresses.FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                // 存在しないホスト名などは例外になるため、ここで受け止めて「変換失敗」とする
+                System.Diagnostics.Debug.WriteLine(ex);
+                return null;
+            }
         }
 
         /// <summary>

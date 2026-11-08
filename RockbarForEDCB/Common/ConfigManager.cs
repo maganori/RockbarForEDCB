@@ -112,6 +112,12 @@ namespace RockbarForEDCB
                     {
                         RockbarSetting.ListForeColor = table.Get<string>("ForeColor");
                     }
+
+                    // 20261017の次版:HostName, 初版:IpAddress
+                    if (!table.ContainsKey("HostName") && table.ContainsKey("IpAddress"))
+                    {
+                        RockbarSetting.HostName = table.Get<string>("IpAddress");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -343,8 +349,8 @@ namespace RockbarForEDCB
         public int SplitterDistance { get; set; } = 200;
         // TCP/IP使用
         public bool UseTcpIp { get; set; }
-        // IPアドレス
-        public string IpAddress { get; set; } = "127.0.0.1";
+        // ホスト名 or IPアドレス
+        public string HostName { get; set; } = "127.0.0.1";
         // ポート番号
         public uint PortNumber { get; set; } = 4510;
         // TCP/IPの死活監視の間隔（秒）0は死活監視なし

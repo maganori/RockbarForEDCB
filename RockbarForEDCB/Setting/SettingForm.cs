@@ -136,7 +136,7 @@ namespace RockbarForEDCB
         private void LoadEdcbLinkageSettings()
         {
             useTcpIpCheckBox.Checked = _configManager.RockbarSetting.UseTcpIp;
-            ipAddressTextBox.Text = _configManager.RockbarSetting.IpAddress;
+            hostNameTextBox.Text = _configManager.RockbarSetting.HostName;
 
             // port番号が異常の場合、下限にする
             if (_configManager.RockbarSetting.PortNumber > portNumberNumericUpDown.Maximum
@@ -538,7 +538,7 @@ namespace RockbarForEDCB
         private void SaveEdcbLinkageSettings()
         {
             _configManager.RockbarSetting.UseTcpIp = useTcpIpCheckBox.Checked;
-            _configManager.RockbarSetting.IpAddress = ipAddressTextBox.Text;
+            _configManager.RockbarSetting.HostName = hostNameTextBox.Text;
             _configManager.RockbarSetting.PortNumber = (uint)portNumberNumericUpDown.Value;
             _configManager.RockbarSetting.TcpWatchIntervalSec = (int)tcpWatchIntervalSecNumericUpDown.Value;
             _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
@@ -734,7 +734,7 @@ namespace RockbarForEDCB
         //// 「EDCBとの通信にTCP/IPを使用する」チェックボックスがOFFの場合は、オプション全体が入力不可
         private void ApplyUseTcpIpCheckBoxState()
         {
-            ipAddressTextBox.Enabled = useTcpIpCheckBox.Checked;
+            hostNameTextBox.Enabled = useTcpIpCheckBox.Checked;
             portNumberNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
             tcpWatchIntervalSecNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
         }

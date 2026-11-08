@@ -264,8 +264,9 @@ namespace RockbarForEDCB
         /// </summary>
         private NWConnect ConnectTcp()
         {
-            // 接続先はEdcbClientの設定と同じにするため、変換できなければLoopbackを使う
-            IPAddress ip = IPAddress.TryParse(_edcbClient.IpAddress, out var parsed) ? parsed : IPAddress.Loopback;
+            // 接続先はEdcbClientで変換済みのIPアドレスを使う
+            IPAddress ip = _edcbClient.IpAddress;
+            if (ip == null) return null;
 
             var nw = new NWConnect();
             if (!nw.ConnectServer(ip, _edcbClient.PortNumber, 0, HandleTcpCommand))
