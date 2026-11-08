@@ -119,13 +119,10 @@
   </resheader>
   <data name="webLinkUrlExampleLabel.Text" xml:space="preserve">
     <value>それぞれ、{ONID} {TSID} {SID} {EID}を番組情報で置換します。 {RecID}は録画情報IDに置換します。
-
 (例: EMWUI用)
 http://localhost:5510/EMWUI/epginfo.html?onid={ONID}&amp;&amp;tsid={TSID}&amp;&amp;sid={SID}&amp;&amp;eid={EID}
-
 (例: legacy用)
-http://localhost:5510/legacy/epginfo.html?{ONID}-{TSID}-{SID}-{EID}
-</value>
+http://localhost:5510/legacy/epginfo.html?{ONID}-{TSID}-{SID}-{EID}</value>
   </data>
   <data name="tvtestOptionExampleLabel.Text" xml:space="preserve">
     <value>(例) /s /d BonDriver_PT3_T.dll

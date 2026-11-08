@@ -48,6 +48,9 @@ namespace RockbarForEDCB
         private CancellationTokenSource _leftCts;
         private CancellationTokenSource _rightCts;
 
+        // statusButtonのツールチップ（接続状態の説明）
+        private readonly ToolTip _statusToolTip = new ToolTip();
+
         // 次回の画面更新が必要になる最早時刻
         private DateTime _nextMainListViewRefreshTime = DateTime.MinValue;
         private DateTime _nextSubListViewRefreshTime = DateTime.MinValue;
@@ -75,6 +78,9 @@ namespace RockbarForEDCB
 
             // EdcbClientのインスタンス化
             _edcbClient = new EdcbClient();
+
+            // 接続状態が変わったらstatusButtonの表示を更新する
+            _edcbClient.AvailabilityChanged += EdcbClient_AvailabilityChanged;
 
             // EdcbNotifyReceiverのインスタンス化と、イベントの登録
             _edcbNotifyReceiver = new EdcbNotifyReceiver(_edcbClient);
@@ -222,6 +228,20 @@ namespace RockbarForEDCB
                 resetButton.Visible = filterTextBox.Text.Length > 0;
             };
 
+
+            // statusButton（EDCB接続状態表示・再接続ボタン）の初期設定
+            statusButton.Text = "";
+            statusButton.Cursor = Cursors.Hand;
+            statusButton.FlatStyle = FlatStyle.Flat;
+            statusButton.FlatAppearance.BorderSize = 0;
+
+            // 接続状態に応じて図形を描く
+            statusButton.Paint += statusButton_Paint;
+
+            // 初期表示（起動直後は未接続の表示）
+            UpdateStatusButton();
+
+
             // 設定ボタンを歯車マークにする
             settingButton.Text = "\uE713";
             settingButton.Font = new Font("Segoe MDL2 Assets", settingButton.Font.Size);
@@ -256,6 +276,97 @@ namespace RockbarForEDCB
                     }
                 }
             };
+        }
+
+        /// <summary>
+        /// statusButtonの描画
+        /// 接続中は緑の塗りつぶし円、未接続は赤枠の円に斜め線を描く
+        /// </summary>
+        private void statusButton_Paint(object sender, PaintEventArgs e)
+        {
+            // ボタンの高さの半分を直径にして、中央に描く
+            float size = statusButton.Height * 0.5f;
+            float x = (statusButton.Width - size) / 2f;
+            float y = (statusButton.Height - size) / 2f;
+
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            if (_edcbClient.IsAvailable)
+            {
+                // オンライン: 緑の塗りつぶし円
+                using (var brush = new SolidBrush(Color.FromArgb(0, 160, 0)))
+                {
+                    e.Graphics.FillEllipse(brush, x, y, size, size);
+                }
+            }
+            else
+            {
+                using (var pen = new Pen(Color.Crimson, 1.5f))
+                {
+                    // オフライン: 赤枠の円
+                    e.Graphics.DrawEllipse(pen, x, y, size, size);
+
+                    // ＋斜め線（左上から右下へ。円の内側に少し余白を取る）
+                    float inset = size * 0.15f;
+                    e.Graphics.DrawLine(pen, x + inset, y + inset, x + size - inset, y + size - inset);
+                }
+            }
+        }
+
+        /// <summary>
+        /// statusButtonの表示（ツールチップ含む）を現在の接続状態に合わせて更新する（UIスレッドで呼ぶこと）
+        /// </summary>
+        private void UpdateStatusButton()
+        {
+            _statusToolTip.SetToolTip(statusButton,
+                _edcbClient.IsAvailable
+                    ? "接続中(クリックで再接続)"
+                    : "未接続(クリックで再接続)");
+
+            // 描き直しを要求する（Paintイベントで図形が変わる）
+            statusButton.Invalidate();
+        }
+
+        /// <summary>
+        /// EdcbClientの接続状態が変わったときの処理
+        /// 別スレッドから呼ばれるため、UIスレッドに渡して更新する
+        /// </summary>
+        private void EdcbClient_AvailabilityChanged(object sender, EventArgs e)
+        {
+            // フォームが閉じている最中は何もしない
+            if (IsDisposed || !IsHandleCreated) return;
+
+            try
+            {
+                BeginInvoke(new Action(UpdateStatusButton));
+            }
+            catch (InvalidOperationException)
+            {
+                // 閉じる処理と重なってハンドルが消えた場合は無視する
+            }
+        }
+
+        /// <summary>
+        /// statusButtonクリック処理
+        /// WOLを送ってからEDCBへ再接続する（WOLを送るかどうかは WakeOnLan 側で判断）
+        /// </summary>
+        private async void statusButton_Click(object sender, EventArgs e)
+        {
+            // WOLを送る（送らない設定なら Skipped が返る）
+            WolResult wol = await WakeOnLan.SendForSettingAsync(_configManager.RockbarSetting);
+
+            // 送信に失敗したときだけ知らせる
+            if (wol == WolResult.Failed)
+            {
+                MessageBox.Show(
+                    "WOLの送信に失敗しました。\nWolMacAddress・WolTargetHost（またはHostName）・WolPortNumberを確認してください。",
+                    "WOL送信失敗",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
+
+            // 再接続する（結果はアイコンで示すため、ここではエラーを出さない）
+            ConnectEdcbAsync(false);
         }
 
         /// <summary>

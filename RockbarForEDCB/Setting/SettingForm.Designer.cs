@@ -74,7 +74,23 @@ namespace RockbarForEDCB
             this.selectedServiceTvtestOptionColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.settingTabControl = new System.Windows.Forms.TabControl();
             this.edcbLinkageTabPage = new System.Windows.Forms.TabPage();
-            this.webEPGLabel = new System.Windows.Forms.Label();
+            this.useWolCheckBox = new System.Windows.Forms.CheckBox();
+            this.wolGroupBox = new System.Windows.Forms.GroupBox();
+            this.wolMacAddressNoteLabel = new System.Windows.Forms.Label();
+            this.wolTestButton = new System.Windows.Forms.Button();
+            this.wolTargetHostTextBox = new System.Windows.Forms.TextBox();
+            this.wolPortNumberNoteLabel = new System.Windows.Forms.Label();
+            this.wolTargetHostLabel = new System.Windows.Forms.Label();
+            this.wolSubnetMaskComboBox = new System.Windows.Forms.ComboBox();
+            this.wolMacAddressLabel = new System.Windows.Forms.Label();
+            this.wolMacAddressTextBox = new System.Windows.Forms.TextBox();
+            this.wolSubnetMaskLabel = new System.Windows.Forms.Label();
+            this.wolTargetHostNoteLabel = new System.Windows.Forms.Label();
+            this.wolPortNumberLabel = new System.Windows.Forms.Label();
+            this.wolPortNumberNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.tcpWatchIntervalSecNumericUpDown = new System.Windows.Forms.NumericUpDown();
+            this.tcpWatchIntervalSecLabel = new System.Windows.Forms.Label();
+            this.webEpgUrlLabel = new System.Windows.Forms.Label();
             this.webEpgUrlTextBox = new System.Windows.Forms.TextBox();
             this.hostNameNoteLabel = new System.Windows.Forms.Label();
             this.portNumberNumericUpDown = new System.Windows.Forms.NumericUpDown();
@@ -310,10 +326,11 @@ namespace RockbarForEDCB
             this.fontDialog = new System.Windows.Forms.FontDialog();
             this.colorDialog = new System.Windows.Forms.ColorDialog();
             this.versionLabel = new System.Windows.Forms.Label();
-            this.tcpWatchIntervalSecLabel = new System.Windows.Forms.Label();
-            this.tcpWatchIntervalSecNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.settingTabControl.SuspendLayout();
             this.edcbLinkageTabPage.SuspendLayout();
+            this.wolGroupBox.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.wolPortNumberNumericUpDown)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tcpWatchIntervalSecNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).BeginInit();
             this.reserveTabPage.SuspendLayout();
             this.edcbReserveSettingGroupBox.SuspendLayout();
@@ -335,7 +352,6 @@ namespace RockbarForEDCB
             this.otherTabPage.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).BeginInit();
             this.taskTrayIconClickGroupBox.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.tcpWatchIntervalSecNumericUpDown)).BeginInit();
             this.SuspendLayout();
             // 
             // cancelButton
@@ -547,22 +563,24 @@ namespace RockbarForEDCB
             // 
             // edcbLinkageTabPage
             // 
-            this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecNumericUpDown);
-            this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.webEPGLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.webEpgUrlTextBox);
-            this.edcbLinkageTabPage.Controls.Add(this.hostNameNoteLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.portNumberNumericUpDown);
-            this.edcbLinkageTabPage.Controls.Add(this.portNumberLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlExampleLabel);
             this.edcbLinkageTabPage.Controls.Add(this.useTcpIpCheckBox);
-            this.edcbLinkageTabPage.Controls.Add(this.useWebLinkCheckBox);
             this.edcbLinkageTabPage.Controls.Add(this.hostNameLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlLabel);
-            this.edcbLinkageTabPage.Controls.Add(this.recInfoWebLinkUrlLabel);
             this.edcbLinkageTabPage.Controls.Add(this.hostNameTextBox);
+            this.edcbLinkageTabPage.Controls.Add(this.hostNameNoteLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.portNumberLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.portNumberNumericUpDown);
+            this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.tcpWatchIntervalSecNumericUpDown);
+            this.edcbLinkageTabPage.Controls.Add(this.useWolCheckBox);
+            this.edcbLinkageTabPage.Controls.Add(this.wolGroupBox);
+            this.edcbLinkageTabPage.Controls.Add(this.useWebLinkCheckBox);
+            this.edcbLinkageTabPage.Controls.Add(this.webEpgUrlLabel);
+            this.edcbLinkageTabPage.Controls.Add(this.webEpgUrlTextBox);
+            this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlLabel);
             this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlTextBox);
+            this.edcbLinkageTabPage.Controls.Add(this.recInfoWebLinkUrlLabel);
             this.edcbLinkageTabPage.Controls.Add(this.recInfoWebLinkUrlTextBox);
+            this.edcbLinkageTabPage.Controls.Add(this.webLinkUrlExampleLabel);
             this.edcbLinkageTabPage.Location = new System.Drawing.Point(4, 22);
             this.edcbLinkageTabPage.Name = "edcbLinkageTabPage";
             this.edcbLinkageTabPage.Padding = new System.Windows.Forms.Padding(3);
@@ -571,34 +589,54 @@ namespace RockbarForEDCB
             this.edcbLinkageTabPage.Text = "EDCB連携";
             this.edcbLinkageTabPage.UseVisualStyleBackColor = true;
             // 
-            // webEPGLabel
+            // useTcpIpCheckBox
             // 
-            this.webEPGLabel.AutoSize = true;
-            this.webEPGLabel.Location = new System.Drawing.Point(35, 178);
-            this.webEPGLabel.Name = "webEPGLabel";
-            this.webEPGLabel.Size = new System.Drawing.Size(63, 12);
-            this.webEPGLabel.TabIndex = 18;
-            this.webEPGLabel.Text = "番組表URL";
+            this.useTcpIpCheckBox.AutoSize = true;
+            this.useTcpIpCheckBox.Location = new System.Drawing.Point(22, 17);
+            this.useTcpIpCheckBox.Name = "useTcpIpCheckBox";
+            this.useTcpIpCheckBox.Size = new System.Drawing.Size(367, 16);
+            this.useTcpIpCheckBox.TabIndex = 0;
+            this.useTcpIpCheckBox.Text = "EDCBとの通信にTCP/IPを使用する ※非チェック時はローカルパイプ通信";
+            this.useTcpIpCheckBox.UseVisualStyleBackColor = true;
+            this.useTcpIpCheckBox.CheckedChanged += new System.EventHandler(this.useTcpIpCheckBox_CheckedChanged);
             // 
-            // webEpgUrlTextBox
+            // hostNameLabel
             // 
-            this.webEpgUrlTextBox.Location = new System.Drawing.Point(122, 175);
-            this.webEpgUrlTextBox.Name = "webEpgUrlTextBox";
-            this.webEpgUrlTextBox.Size = new System.Drawing.Size(478, 19);
-            this.webEpgUrlTextBox.TabIndex = 17;
+            this.hostNameLabel.AutoSize = true;
+            this.hostNameLabel.Location = new System.Drawing.Point(59, 44);
+            this.hostNameLabel.Name = "hostNameLabel";
+            this.hostNameLabel.Size = new System.Drawing.Size(96, 12);
+            this.hostNameLabel.TabIndex = 8;
+            this.hostNameLabel.Text = "ホスト名/IPアドレス";
+            // 
+            // hostNameTextBox
+            // 
+            this.hostNameTextBox.Location = new System.Drawing.Point(178, 41);
+            this.hostNameTextBox.Name = "hostNameTextBox";
+            this.hostNameTextBox.Size = new System.Drawing.Size(166, 19);
+            this.hostNameTextBox.TabIndex = 1;
             // 
             // hostNameNoteLabel
             // 
             this.hostNameNoteLabel.AutoSize = true;
-            this.hostNameNoteLabel.Location = new System.Drawing.Point(356, 47);
+            this.hostNameNoteLabel.Location = new System.Drawing.Point(356, 44);
             this.hostNameNoteLabel.Name = "hostNameNoteLabel";
-            this.hostNameNoteLabel.Size = new System.Drawing.Size(152, 12);
+            this.hostNameNoteLabel.Size = new System.Drawing.Size(180, 12);
             this.hostNameNoteLabel.TabIndex = 16;
             this.hostNameNoteLabel.Text = "※コンピューター名や192.168.0.10など";
             // 
+            // portNumberLabel
+            // 
+            this.portNumberLabel.AutoSize = true;
+            this.portNumberLabel.Location = new System.Drawing.Point(59, 71);
+            this.portNumberLabel.Name = "portNumberLabel";
+            this.portNumberLabel.Size = new System.Drawing.Size(113, 12);
+            this.portNumberLabel.TabIndex = 13;
+            this.portNumberLabel.Text = "ポート番号(1～65535)";
+            // 
             // portNumberNumericUpDown
             // 
-            this.portNumberNumericUpDown.Location = new System.Drawing.Point(178, 80);
+            this.portNumberNumericUpDown.Location = new System.Drawing.Point(178, 68);
             this.portNumberNumericUpDown.Maximum = new decimal(new int[] {
             65535,
             0,
@@ -618,39 +656,192 @@ namespace RockbarForEDCB
             0,
             0});
             // 
-            // portNumberLabel
+            // tcpWatchIntervalSecLabel
             // 
-            this.portNumberLabel.AutoSize = true;
-            this.portNumberLabel.Location = new System.Drawing.Point(59, 83);
-            this.portNumberLabel.Name = "portNumberLabel";
-            this.portNumberLabel.Size = new System.Drawing.Size(113, 12);
-            this.portNumberLabel.TabIndex = 13;
-            this.portNumberLabel.Text = "ポート番号(1～65535)";
+            this.tcpWatchIntervalSecLabel.AutoSize = true;
+            this.tcpWatchIntervalSecLabel.Location = new System.Drawing.Point(283, 74);
+            this.tcpWatchIntervalSecLabel.Name = "tcpWatchIntervalSecLabel";
+            this.tcpWatchIntervalSecLabel.Size = new System.Drawing.Size(147, 12);
+            this.tcpWatchIntervalSecLabel.TabIndex = 20;
+            this.tcpWatchIntervalSecLabel.Text = "死活監視間隔(秒)(0-99999)";
             // 
-            // webLinkUrlExampleLabel
+            // tcpWatchIntervalSecNumericUpDown
             // 
-            this.webLinkUrlExampleLabel.AutoSize = true;
-            this.webLinkUrlExampleLabel.Location = new System.Drawing.Point(120, 282);
-            this.webLinkUrlExampleLabel.Name = "webLinkUrlExampleLabel";
-            this.webLinkUrlExampleLabel.Size = new System.Drawing.Size(484, 84);
-            this.webLinkUrlExampleLabel.TabIndex = 11;
-            this.webLinkUrlExampleLabel.Text = resources.GetString("webLinkUrlExampleLabel.Text");
+            this.tcpWatchIntervalSecNumericUpDown.Location = new System.Drawing.Point(437, 71);
+            this.tcpWatchIntervalSecNumericUpDown.Maximum = new decimal(new int[] {
+            99999,
+            0,
+            0,
+            0});
+            this.tcpWatchIntervalSecNumericUpDown.Name = "tcpWatchIntervalSecNumericUpDown";
+            this.tcpWatchIntervalSecNumericUpDown.Size = new System.Drawing.Size(70, 19);
+            this.tcpWatchIntervalSecNumericUpDown.TabIndex = 21;
+            this.tcpWatchIntervalSecNumericUpDown.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
             // 
-            // useTcpIpCheckBox
+            // useWolCheckBox
             // 
-            this.useTcpIpCheckBox.AutoSize = true;
-            this.useTcpIpCheckBox.Location = new System.Drawing.Point(22, 20);
-            this.useTcpIpCheckBox.Name = "useTcpIpCheckBox";
-            this.useTcpIpCheckBox.Size = new System.Drawing.Size(367, 16);
-            this.useTcpIpCheckBox.TabIndex = 0;
-            this.useTcpIpCheckBox.Text = "EDCBとの通信にTCP/IPを使用する ※非チェック時はローカルパイプ通信";
-            this.useTcpIpCheckBox.UseVisualStyleBackColor = true;
-            this.useTcpIpCheckBox.CheckedChanged += new System.EventHandler(this.useTcpIpCheckBox_CheckedChanged);
+            this.useWolCheckBox.AutoSize = true;
+            this.useWolCheckBox.Location = new System.Drawing.Point(63, 93);
+            this.useWolCheckBox.Name = "useWolCheckBox";
+            this.useWolCheckBox.Size = new System.Drawing.Size(166, 16);
+            this.useWolCheckBox.TabIndex = 22;
+            this.useWolCheckBox.Text = "WakeOnLan(WOL)を使用する";
+            this.useWolCheckBox.UseVisualStyleBackColor = true;
+            this.useWolCheckBox.CheckedChanged += new System.EventHandler(this.useWolCheckBox_CheckedChanged);
+            // 
+            // wolGroupBox
+            // 
+            this.wolGroupBox.Controls.Add(this.wolTargetHostLabel);
+            this.wolGroupBox.Controls.Add(this.wolTargetHostTextBox);
+            this.wolGroupBox.Controls.Add(this.wolTargetHostNoteLabel);
+            this.wolGroupBox.Controls.Add(this.wolSubnetMaskLabel);
+            this.wolGroupBox.Controls.Add(this.wolSubnetMaskComboBox);
+            this.wolGroupBox.Controls.Add(this.wolPortNumberLabel);
+            this.wolGroupBox.Controls.Add(this.wolPortNumberNumericUpDown);
+            this.wolGroupBox.Controls.Add(this.wolPortNumberNoteLabel);
+            this.wolGroupBox.Controls.Add(this.wolMacAddressLabel);
+            this.wolGroupBox.Controls.Add(this.wolMacAddressTextBox);
+            this.wolGroupBox.Controls.Add(this.wolMacAddressNoteLabel);
+            this.wolGroupBox.Controls.Add(this.wolTestButton);
+            this.wolGroupBox.Location = new System.Drawing.Point(54, 95);
+            this.wolGroupBox.Name = "wolGroupBox";
+            this.wolGroupBox.Size = new System.Drawing.Size(550, 99);
+            this.wolGroupBox.TabIndex = 35;
+            this.wolGroupBox.TabStop = false;
+            // 
+            // wolTargetHostLabel
+            // 
+            this.wolTargetHostLabel.AutoSize = true;
+            this.wolTargetHostLabel.Location = new System.Drawing.Point(26, 21);
+            this.wolTargetHostLabel.Name = "wolTargetHostLabel";
+            this.wolTargetHostLabel.Size = new System.Drawing.Size(96, 12);
+            this.wolTargetHostLabel.TabIndex = 25;
+            this.wolTargetHostLabel.Text = "ホスト名/IPアドレス";
+            // 
+            // wolTargetHostTextBox
+            // 
+            this.wolTargetHostTextBox.Location = new System.Drawing.Point(127, 18);
+            this.wolTargetHostTextBox.Name = "wolTargetHostTextBox";
+            this.wolTargetHostTextBox.Size = new System.Drawing.Size(166, 19);
+            this.wolTargetHostTextBox.TabIndex = 23;
+            // 
+            // wolTargetHostNoteLabel
+            // 
+            this.wolTargetHostNoteLabel.AutoSize = true;
+            this.wolTargetHostNoteLabel.Location = new System.Drawing.Point(304, 21);
+            this.wolTargetHostNoteLabel.Name = "wolTargetHostNoteLabel";
+            this.wolTargetHostNoteLabel.Size = new System.Drawing.Size(226, 12);
+            this.wolTargetHostNoteLabel.TabIndex = 27;
+            this.wolTargetHostNoteLabel.Text = "※空欄の場合はEDCB通信と同じ宛先を使用";
+            // 
+            // wolSubnetMaskLabel
+            // 
+            this.wolSubnetMaskLabel.AutoSize = true;
+            this.wolSubnetMaskLabel.Location = new System.Drawing.Point(26, 46);
+            this.wolSubnetMaskLabel.Name = "wolSubnetMaskLabel";
+            this.wolSubnetMaskLabel.Size = new System.Drawing.Size(75, 12);
+            this.wolSubnetMaskLabel.TabIndex = 30;
+            this.wolSubnetMaskLabel.Text = "サブネットマスク";
+            // 
+            // wolSubnetMaskComboBox
+            // 
+            this.wolSubnetMaskComboBox.FormattingEnabled = true;
+            this.wolSubnetMaskComboBox.Items.AddRange(new object[] {
+            "255.255.255.0",
+            "255.255.254.0",
+            "255.255.0.0",
+            "255.0.0.0",
+            "255.255.255.255"});
+            this.wolSubnetMaskComboBox.Location = new System.Drawing.Point(127, 43);
+            this.wolSubnetMaskComboBox.Name = "wolSubnetMaskComboBox";
+            this.wolSubnetMaskComboBox.Size = new System.Drawing.Size(107, 20);
+            this.wolSubnetMaskComboBox.TabIndex = 32;
+            this.wolSubnetMaskComboBox.Text = "255.255.255.0";
+            // 
+            // wolPortNumberLabel
+            // 
+            this.wolPortNumberLabel.AutoSize = true;
+            this.wolPortNumberLabel.Location = new System.Drawing.Point(254, 46);
+            this.wolPortNumberLabel.Name = "wolPortNumberLabel";
+            this.wolPortNumberLabel.Size = new System.Drawing.Size(113, 12);
+            this.wolPortNumberLabel.TabIndex = 26;
+            this.wolPortNumberLabel.Text = "ポート番号(1～65535)";
+            // 
+            // wolPortNumberNumericUpDown
+            // 
+            this.wolPortNumberNumericUpDown.Location = new System.Drawing.Point(374, 44);
+            this.wolPortNumberNumericUpDown.Maximum = new decimal(new int[] {
+            65535,
+            0,
+            0,
+            0});
+            this.wolPortNumberNumericUpDown.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.wolPortNumberNumericUpDown.Name = "wolPortNumberNumericUpDown";
+            this.wolPortNumberNumericUpDown.Size = new System.Drawing.Size(70, 19);
+            this.wolPortNumberNumericUpDown.TabIndex = 24;
+            this.wolPortNumberNumericUpDown.Value = new decimal(new int[] {
+            9,
+            0,
+            0,
+            0});
+            // 
+            // wolPortNumberNoteLabel
+            // 
+            this.wolPortNumberNoteLabel.AutoSize = true;
+            this.wolPortNumberNoteLabel.Location = new System.Drawing.Point(450, 46);
+            this.wolPortNumberNoteLabel.Name = "wolPortNumberNoteLabel";
+            this.wolPortNumberNoteLabel.Size = new System.Drawing.Size(57, 12);
+            this.wolPortNumberNoteLabel.TabIndex = 33;
+            this.wolPortNumberNoteLabel.Text = "※通常は9";
+            // 
+            // wolMacAddressLabel
+            // 
+            this.wolMacAddressLabel.AutoSize = true;
+            this.wolMacAddressLabel.Location = new System.Drawing.Point(26, 72);
+            this.wolMacAddressLabel.Name = "wolMacAddressLabel";
+            this.wolMacAddressLabel.Size = new System.Drawing.Size(66, 12);
+            this.wolMacAddressLabel.TabIndex = 28;
+            this.wolMacAddressLabel.Text = "MACアドレス";
+            // 
+            // wolMacAddressTextBox
+            // 
+            this.wolMacAddressTextBox.Location = new System.Drawing.Point(127, 69);
+            this.wolMacAddressTextBox.Name = "wolMacAddressTextBox";
+            this.wolMacAddressTextBox.Size = new System.Drawing.Size(135, 19);
+            this.wolMacAddressTextBox.TabIndex = 31;
+            this.wolMacAddressTextBox.Text = "AA-BB-CC-DD-EE-FF";
+            // 
+            // wolMacAddressNoteLabel
+            // 
+            this.wolMacAddressNoteLabel.AutoSize = true;
+            this.wolMacAddressNoteLabel.Location = new System.Drawing.Point(268, 72);
+            this.wolMacAddressNoteLabel.Name = "wolMacAddressNoteLabel";
+            this.wolMacAddressNoteLabel.Size = new System.Drawing.Size(152, 12);
+            this.wolMacAddressNoteLabel.TabIndex = 35;
+            this.wolMacAddressNoteLabel.Text = "※区切り文字は : or - or 無し";
+            // 
+            // wolTestButton
+            // 
+            this.wolTestButton.Location = new System.Drawing.Point(441, 69);
+            this.wolTestButton.Name = "wolTestButton";
+            this.wolTestButton.Size = new System.Drawing.Size(94, 23);
+            this.wolTestButton.TabIndex = 34;
+            this.wolTestButton.Text = "WOLテスト送信";
+            this.wolTestButton.UseVisualStyleBackColor = true;
+            this.wolTestButton.Click += new System.EventHandler(this.wolTestButton_Click);
             // 
             // useWebLinkCheckBox
             // 
             this.useWebLinkCheckBox.AutoSize = true;
-            this.useWebLinkCheckBox.Location = new System.Drawing.Point(22, 153);
+            this.useWebLinkCheckBox.Location = new System.Drawing.Point(22, 198);
             this.useWebLinkCheckBox.Name = "useWebLinkCheckBox";
             this.useWebLinkCheckBox.Size = new System.Drawing.Size(197, 16);
             this.useWebLinkCheckBox.TabIndex = 3;
@@ -658,53 +849,62 @@ namespace RockbarForEDCB
             this.useWebLinkCheckBox.UseVisualStyleBackColor = true;
             this.useWebLinkCheckBox.CheckedChanged += new System.EventHandler(this.useWebLinkCheckBox_CheckedChanged);
             // 
-            // hostNameLabel
+            // webEpgUrlLabel
             // 
-            this.hostNameLabel.AutoSize = true;
-            this.hostNameLabel.Location = new System.Drawing.Point(59, 47);
-            this.hostNameLabel.Name = "hostNameLabel";
-            this.hostNameLabel.Size = new System.Drawing.Size(96, 12);
-            this.hostNameLabel.TabIndex = 8;
-            this.hostNameLabel.Text = "ホスト名/IPアドレス";
+            this.webEpgUrlLabel.AutoSize = true;
+            this.webEpgUrlLabel.Location = new System.Drawing.Point(35, 223);
+            this.webEpgUrlLabel.Name = "webEpgUrlLabel";
+            this.webEpgUrlLabel.Size = new System.Drawing.Size(63, 12);
+            this.webEpgUrlLabel.TabIndex = 18;
+            this.webEpgUrlLabel.Text = "番組表URL";
+            // 
+            // webEpgUrlTextBox
+            // 
+            this.webEpgUrlTextBox.Location = new System.Drawing.Point(122, 220);
+            this.webEpgUrlTextBox.Name = "webEpgUrlTextBox";
+            this.webEpgUrlTextBox.Size = new System.Drawing.Size(478, 19);
+            this.webEpgUrlTextBox.TabIndex = 17;
             // 
             // webLinkUrlLabel
             // 
             this.webLinkUrlLabel.AutoSize = true;
-            this.webLinkUrlLabel.Location = new System.Drawing.Point(35, 212);
+            this.webLinkUrlLabel.Location = new System.Drawing.Point(35, 257);
             this.webLinkUrlLabel.Name = "webLinkUrlLabel";
             this.webLinkUrlLabel.Size = new System.Drawing.Size(75, 12);
             this.webLinkUrlLabel.TabIndex = 8;
             this.webLinkUrlLabel.Text = "番組詳細URL";
             // 
+            // webLinkUrlTextBox
+            // 
+            this.webLinkUrlTextBox.Location = new System.Drawing.Point(122, 254);
+            this.webLinkUrlTextBox.Name = "webLinkUrlTextBox";
+            this.webLinkUrlTextBox.Size = new System.Drawing.Size(478, 19);
+            this.webLinkUrlTextBox.TabIndex = 4;
+            // 
             // recInfoWebLinkUrlLabel
             // 
             this.recInfoWebLinkUrlLabel.AutoSize = true;
-            this.recInfoWebLinkUrlLabel.Location = new System.Drawing.Point(35, 247);
+            this.recInfoWebLinkUrlLabel.Location = new System.Drawing.Point(35, 292);
             this.recInfoWebLinkUrlLabel.Name = "recInfoWebLinkUrlLabel";
             this.recInfoWebLinkUrlLabel.Size = new System.Drawing.Size(75, 12);
             this.recInfoWebLinkUrlLabel.TabIndex = 9;
             this.recInfoWebLinkUrlLabel.Text = "録画詳細URL";
             // 
-            // hostNameTextBox
-            // 
-            this.hostNameTextBox.Location = new System.Drawing.Point(179, 44);
-            this.hostNameTextBox.Name = "hostNameTextBox";
-            this.hostNameTextBox.Size = new System.Drawing.Size(166, 19);
-            this.hostNameTextBox.TabIndex = 1;
-            // 
-            // webLinkUrlTextBox
-            // 
-            this.webLinkUrlTextBox.Location = new System.Drawing.Point(122, 209);
-            this.webLinkUrlTextBox.Name = "webLinkUrlTextBox";
-            this.webLinkUrlTextBox.Size = new System.Drawing.Size(478, 19);
-            this.webLinkUrlTextBox.TabIndex = 4;
-            // 
             // recInfoWebLinkUrlTextBox
             // 
-            this.recInfoWebLinkUrlTextBox.Location = new System.Drawing.Point(122, 244);
+            this.recInfoWebLinkUrlTextBox.Location = new System.Drawing.Point(122, 289);
             this.recInfoWebLinkUrlTextBox.Name = "recInfoWebLinkUrlTextBox";
             this.recInfoWebLinkUrlTextBox.Size = new System.Drawing.Size(478, 19);
             this.recInfoWebLinkUrlTextBox.TabIndex = 5;
+            // 
+            // webLinkUrlExampleLabel
+            // 
+            this.webLinkUrlExampleLabel.AutoSize = true;
+            this.webLinkUrlExampleLabel.Location = new System.Drawing.Point(120, 316);
+            this.webLinkUrlExampleLabel.Name = "webLinkUrlExampleLabel";
+            this.webLinkUrlExampleLabel.Size = new System.Drawing.Size(484, 60);
+            this.webLinkUrlExampleLabel.TabIndex = 11;
+            this.webLinkUrlExampleLabel.Text = resources.GetString("webLinkUrlExampleLabel.Text");
             // 
             // reserveTabPage
             // 
@@ -3004,32 +3204,6 @@ namespace RockbarForEDCB
             this.versionLabel.TabIndex = 19;
             this.versionLabel.Text = "Version : YYYYMMDD";
             // 
-            // tcpWatchIntervalSecLabel
-            // 
-            this.tcpWatchIntervalSecLabel.AutoSize = true;
-            this.tcpWatchIntervalSecLabel.Location = new System.Drawing.Point(283, 86);
-            this.tcpWatchIntervalSecLabel.Name = "tcpWatchIntervalSecLabel";
-            this.tcpWatchIntervalSecLabel.Size = new System.Drawing.Size(147, 12);
-            this.tcpWatchIntervalSecLabel.TabIndex = 20;
-            this.tcpWatchIntervalSecLabel.Text = "死活監視間隔(秒)(0-99999)";
-            // 
-            // tcpWatchIntervalSecNumericUpDown
-            // 
-            this.tcpWatchIntervalSecNumericUpDown.Location = new System.Drawing.Point(437, 83);
-            this.tcpWatchIntervalSecNumericUpDown.Maximum = new decimal(new int[] {
-            99999,
-            0,
-            0,
-            0});
-            this.tcpWatchIntervalSecNumericUpDown.Name = "tcpWatchIntervalSecNumericUpDown";
-            this.tcpWatchIntervalSecNumericUpDown.Size = new System.Drawing.Size(70, 19);
-            this.tcpWatchIntervalSecNumericUpDown.TabIndex = 21;
-            this.tcpWatchIntervalSecNumericUpDown.Value = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
-            // 
             // SettingForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -3046,6 +3220,10 @@ namespace RockbarForEDCB
             this.settingTabControl.ResumeLayout(false);
             this.edcbLinkageTabPage.ResumeLayout(false);
             this.edcbLinkageTabPage.PerformLayout();
+            this.wolGroupBox.ResumeLayout(false);
+            this.wolGroupBox.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.wolPortNumberNumericUpDown)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tcpWatchIntervalSecNumericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.portNumberNumericUpDown)).EndInit();
             this.reserveTabPage.ResumeLayout(false);
             this.reserveTabPage.PerformLayout();
@@ -3082,7 +3260,6 @@ namespace RockbarForEDCB
             ((System.ComponentModel.ISupportInitialize)(this.recListMaxCountNumericUpDown)).EndInit();
             this.taskTrayIconClickGroupBox.ResumeLayout(false);
             this.taskTrayIconClickGroupBox.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.tcpWatchIntervalSecNumericUpDown)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -3093,6 +3270,36 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Button cancelButton;
         private System.Windows.Forms.Button applyCloseButton;
         private System.Windows.Forms.Button applyButton;
+        private System.Windows.Forms.CheckBox useTcpIpCheckBox;
+        private System.Windows.Forms.Label hostNameLabel;
+        private System.Windows.Forms.TextBox hostNameTextBox;
+        private System.Windows.Forms.Label hostNameNoteLabel;
+        private System.Windows.Forms.Label portNumberLabel;
+        private System.Windows.Forms.NumericUpDown portNumberNumericUpDown;
+        private System.Windows.Forms.Label tcpWatchIntervalSecLabel;
+        private System.Windows.Forms.NumericUpDown tcpWatchIntervalSecNumericUpDown;
+        private System.Windows.Forms.CheckBox useWolCheckBox;
+        private System.Windows.Forms.GroupBox wolGroupBox;
+        private System.Windows.Forms.Label wolTargetHostLabel;
+        private System.Windows.Forms.TextBox wolTargetHostTextBox;
+        private System.Windows.Forms.Label wolTargetHostNoteLabel;
+        private System.Windows.Forms.Label wolSubnetMaskLabel;
+        private System.Windows.Forms.ComboBox wolSubnetMaskComboBox;
+        private System.Windows.Forms.Label wolPortNumberLabel;
+        private System.Windows.Forms.NumericUpDown wolPortNumberNumericUpDown;
+        private System.Windows.Forms.Label wolPortNumberNoteLabel;
+        private System.Windows.Forms.Label wolMacAddressLabel;
+        private System.Windows.Forms.TextBox wolMacAddressTextBox;
+        private System.Windows.Forms.Label wolMacAddressNoteLabel;
+        private System.Windows.Forms.Button wolTestButton;
+        private System.Windows.Forms.CheckBox useWebLinkCheckBox;
+        private System.Windows.Forms.Label webEpgUrlLabel;
+        private System.Windows.Forms.TextBox webEpgUrlTextBox;
+        private System.Windows.Forms.Label webLinkUrlLabel;
+        private System.Windows.Forms.TextBox webLinkUrlTextBox;
+        private System.Windows.Forms.Label recInfoWebLinkUrlLabel;
+        private System.Windows.Forms.TextBox recInfoWebLinkUrlTextBox;
+        private System.Windows.Forms.Label webLinkUrlExampleLabel;
         private System.Windows.Forms.ListView allServiceListView;
         private System.Windows.Forms.Button addSelectedServiceButton;
         private System.Windows.Forms.Button addNewServiceButton;
@@ -3117,14 +3324,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.TabPage selectServiceTabPage;
         private System.Windows.Forms.TabPage edcbLinkageTabPage;
         private System.Windows.Forms.OpenFileDialog tvtestOpenFileDialog;
-        private System.Windows.Forms.Label webLinkUrlExampleLabel;
-        private System.Windows.Forms.CheckBox useWebLinkCheckBox;
-        private System.Windows.Forms.Label webEPGLabel;
-        private System.Windows.Forms.TextBox webEpgUrlTextBox;
-        private System.Windows.Forms.Label webLinkUrlLabel;
-        private System.Windows.Forms.TextBox webLinkUrlTextBox;
-        private System.Windows.Forms.Label recInfoWebLinkUrlLabel;
-        private System.Windows.Forms.TextBox recInfoWebLinkUrlTextBox;
         private System.Windows.Forms.TabPage favoriteServiceTabPage;
         private System.Windows.Forms.ListView selectedServiceListView2;
         private System.Windows.Forms.ColumnHeader selectedService2MarkColumnHeader;
@@ -3145,10 +3344,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.ColumnHeader favoriteServiceTvtestOptionColumnHeader;
         private System.Windows.Forms.Button addFavoriteServiceButton;
         private System.Windows.Forms.TabPage tvtestLinkageTabPage;
-        private System.Windows.Forms.Label portNumberLabel;
-        private System.Windows.Forms.CheckBox useTcpIpCheckBox;
-        private System.Windows.Forms.Label hostNameLabel;
-        private System.Windows.Forms.TextBox hostNameTextBox;
         private System.Windows.Forms.Label tvTestNoteLabel;
         private System.Windows.Forms.CheckBox useDoubleClickTvtestCheckBox;
         private System.Windows.Forms.Label tvtestDttvOptionLabel;
@@ -3160,7 +3355,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.Label tvtestPathLabel;
         private System.Windows.Forms.Button tvtestOpenButton;
         private System.Windows.Forms.TextBox tvtestPathTextBox;
-        private System.Windows.Forms.NumericUpDown portNumberNumericUpDown;
         private System.Windows.Forms.Label selectedServiceListLabel;
         private System.Windows.Forms.Label allServiceListLabel;
         private System.Windows.Forms.Label favoriteServiceListLabel;
@@ -3174,7 +3368,6 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox isAutoOpenDttvCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenCsCheckBox;
         private System.Windows.Forms.CheckBox isAutoOpenBsCheckBox;
-        private System.Windows.Forms.Label hostNameNoteLabel;
         private System.Windows.Forms.TabPage otherTabPage;
         private System.Windows.Forms.CheckBox showTaskTrayIconCheckBox;
         private System.Windows.Forms.CheckBox fixNoRecToServiceOnlyCheckBox;
@@ -3351,7 +3544,5 @@ namespace RockbarForEDCB
         private System.Windows.Forms.CheckBox useIndividualMainFormFontsCheckBox;
         private System.Windows.Forms.GroupBox individualMainFormFontsGroupBox;
         private System.Windows.Forms.Label versionLabel;
-        private System.Windows.Forms.Label tcpWatchIntervalSecLabel;
-        private System.Windows.Forms.NumericUpDown tcpWatchIntervalSecNumericUpDown;
     }
 }

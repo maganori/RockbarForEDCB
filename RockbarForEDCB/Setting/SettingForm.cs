@@ -160,6 +160,23 @@ namespace RockbarForEDCB
                 tcpWatchIntervalSecNumericUpDown.Value = _configManager.RockbarSetting.TcpWatchIntervalSec;
             }
 
+            useWolCheckBox.Checked = _configManager.RockbarSetting.UseWol;
+            wolTargetHostTextBox.Text = _configManager.RockbarSetting.WolTargetHost;
+            wolSubnetMaskComboBox.Text = _configManager.RockbarSetting.WolSubnetMask;
+
+            // WOLport番号が異常の場合、9にする
+            if (_configManager.RockbarSetting.WolPortNumber > wolPortNumberNumericUpDown.Maximum
+                || _configManager.RockbarSetting.WolPortNumber < wolPortNumberNumericUpDown.Minimum)
+            {
+                wolPortNumberNumericUpDown.Value = 9;
+            }
+            else
+            {
+                wolPortNumberNumericUpDown.Value = _configManager.RockbarSetting.WolPortNumber;
+            }
+
+            wolMacAddressTextBox.Text = _configManager.RockbarSetting.WolMacAddress;
+
             useWebLinkCheckBox.Checked = _configManager.RockbarSetting.UseWebLink;
             webEpgUrlTextBox.Text = _configManager.RockbarSetting.WebEpgUrl;
             webLinkUrlTextBox.Text = _configManager.RockbarSetting.WebLinkUrl;
@@ -167,6 +184,7 @@ namespace RockbarForEDCB
 
             // EDCB連携画面の初期表示時の有効/無効状態を反映
             ApplyUseTcpIpCheckBoxState();
+            ApplyUseWolCheckBoxState();
             ApplyUseWebLinkCheckBoxState();
         }
 
@@ -541,6 +559,13 @@ namespace RockbarForEDCB
             _configManager.RockbarSetting.HostName = hostNameTextBox.Text;
             _configManager.RockbarSetting.PortNumber = (uint)portNumberNumericUpDown.Value;
             _configManager.RockbarSetting.TcpWatchIntervalSec = (int)tcpWatchIntervalSecNumericUpDown.Value;
+
+            _configManager.RockbarSetting.UseWol = useWolCheckBox.Checked;
+            _configManager.RockbarSetting.WolTargetHost = wolTargetHostTextBox.Text;
+            _configManager.RockbarSetting.WolSubnetMask = wolSubnetMaskComboBox.Text;
+            _configManager.RockbarSetting.WolPortNumber = (uint)wolPortNumberNumericUpDown.Value;
+            _configManager.RockbarSetting.WolMacAddress = wolMacAddressTextBox.Text;
+
             _configManager.RockbarSetting.UseWebLink = useWebLinkCheckBox.Checked;
             _configManager.RockbarSetting.WebEpgUrl = webEpgUrlTextBox.Text;
             _configManager.RockbarSetting.WebLinkUrl = webLinkUrlTextBox.Text;
@@ -737,6 +762,21 @@ namespace RockbarForEDCB
             hostNameTextBox.Enabled = useTcpIpCheckBox.Checked;
             portNumberNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
             tcpWatchIntervalSecNumericUpDown.Enabled = useTcpIpCheckBox.Checked;
+
+            useWolCheckBox.Enabled = useTcpIpCheckBox.Checked;
+            ApplyUseWolCheckBoxState();
+        }
+
+        // 「WOLを使用する」チェックボックスの変更検知
+        private void useWolCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            ApplyUseWolCheckBoxState();
+        }
+
+        //// 「WOLを使用する」チェックボックスがOFFの場合は、オプション全体が入力不可
+        private void ApplyUseWolCheckBoxState()
+        {
+            wolGroupBox.Enabled = useTcpIpCheckBox.Checked && useWolCheckBox.Checked;
         }
 
         // 「Web番組表機能(WebUI)を使用する」チェックボックスの変更検知
@@ -859,6 +899,104 @@ namespace RockbarForEDCB
         {
             // チェックが入っていない場合は GroupBox 全体を編集不可
             individualMainFormFontsGroupBox.Enabled = useIndividualMainFormFontsCheckBox.Checked;
+        }
+
+        /// <summary>
+        /// WOLテスト送信ボタン押下処理
+        /// 画面の現在の入力値で送信する（設定は保存しない）
+        /// </summary>
+        private async void wolTestButton_Click(object sender, EventArgs e)
+        {
+            // 送信前に入力値を検証する（不正なら送らずに終える）
+            if (!ValidateWolInput()) return;
+
+            // テストに必要な条件を確認する
+            if (!useTcpIpCheckBox.Checked || !useWolCheckBox.Checked)
+            {
+                MessageBox.Show(
+                    "「EDCBとの通信にTCP/IPを使用する」と「WakeOnLan(WOL)を使用する」の両方をONにしてください。",
+                    "WOLテスト",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
+            // 送信中は連続で押せないようにする
+            wolTestButton.Enabled = false;
+
+            try
+            {
+                WolResult result = await WakeOnLan.SendForSettingAsync(BuildWolTestSetting());
+
+                switch (result)
+                {
+                    case WolResult.Sent:
+                        MessageBox.Show("送信しました。", "WOLテスト",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        break;
+
+                    case WolResult.Failed:
+                        MessageBox.Show(
+                            "送信に失敗しました。MACアドレス、サブネットマスク、接続先、ポート番号を確認してください。",
+                            "WOLテスト", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        break;
+
+                    default:
+                        MessageBox.Show("送信条件を満たしていないため、送信しませんでした。", "WOLテスト",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        break;
+                }
+            }
+            finally
+            {
+                wolTestButton.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// WOL関連の入力値を検証する
+        /// 不正なら説明を出して false を返す
+        /// </summary>
+        private bool ValidateWolInput()
+        {
+            // WOLを使わないなら検証しない
+            if (!useWolCheckBox.Checked) return true;
+
+            byte[] mac;
+            if (!string.IsNullOrWhiteSpace(wolMacAddressTextBox.Text) &&
+                !WakeOnLan.TryParseMacAddress(wolMacAddressTextBox.Text, out mac))
+            {
+                MessageBox.Show("WOLのMACアドレスの形式が正しくありません。", "入力エラー",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (!WakeOnLan.IsValidSubnetMask(wolSubnetMaskComboBox.Text))
+            {
+                MessageBox.Show("WOLのサブネットマスクが正しくありません（例: 255.255.255.0）。", "入力エラー",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 画面の入力値から、WOLテスト用の一時的な設定を作る
+        /// ConfigManager の設定は変更しないため、保存前でもテストできる
+        /// </summary>
+        private RockbarSetting BuildWolTestSetting()
+        {
+            return new RockbarSetting
+            {
+                UseTcpIp = useTcpIpCheckBox.Checked,
+                HostName = hostNameTextBox.Text,
+                UseWol = useWolCheckBox.Checked,
+                WolMacAddress = wolMacAddressTextBox.Text,
+                WolTargetHost = wolTargetHostTextBox.Text,
+                WolSubnetMask = wolSubnetMaskComboBox.Text,
+                WolPortNumber = (uint)wolPortNumberNumericUpDown.Value
+            };
         }
 
         /// <summary>

@@ -229,6 +229,7 @@
     <Compile Include="Common\ConfigManager.cs" />
     <Compile Include="Common\EdcbClient.cs" />
     <Compile Include="Common\RockbarUtility.cs" />
+    <Compile Include="Common\WakeOnLan.cs" />
     <Compile Include="EdcbNotifyReceiver.cs" />
     <Compile Include="EpgDataManager.cs" />
     <Compile Include="EpgTimer\Common\CtrlCmd.cs" />

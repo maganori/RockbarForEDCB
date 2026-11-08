@@ -88,6 +88,18 @@ namespace RockbarForEDCB
         private readonly System.Threading.Timer _watchTimer;
 
         /// <summary>
+        /// 通信可能状態（IsAvailable）が変わったときに発生する
+        /// 発生元は別スレッドのことがあるため、受け取る側でUIスレッドに戻すこと
+        /// </summary>
+        public event EventHandler AvailabilityChanged;
+
+        /// <summary>AvailabilityChanged を発生させる</summary>
+        private void RaiseAvailabilityChanged()
+        {
+            AvailabilityChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
         /// 死活監視の結果を通知するイベント
         /// </summary>
         public event EventHandler<ServerStatusEventArgs> StatusChecked;
@@ -192,6 +204,7 @@ namespace RockbarForEDCB
             // 世代番号の採番、接続設定の保存、通信可能フラグを下げる処理は、まとめてロックの中で行う
             // （採番と保存の間に別の呼び出しが割り込むと、古い設定が最新として残ってしまうため）
             ConnectionSettings settings;
+            bool wasAvailable;
             lock (_stateLock)
             {
                 // 設定世代をインクリメントし、今回の世代番号として使う
@@ -202,8 +215,12 @@ namespace RockbarForEDCB
                 _settings = settings;
 
                 // 接続確認を開始するため、いったん通信可能フラグを下げる
+                wasAvailable = _isAvailable;
                 _isAvailable = false;
             }
+
+            // 状態が変わったときだけ、ロックの外でイベントを発生させる
+            if (wasAvailable) RaiseAvailabilityChanged();
 
             // 自分の世代番号を保持
             int myVersion = settings.Version;
@@ -238,14 +255,20 @@ namespace RockbarForEDCB
         /// <returns>更新できたらtrue（設定が変わっていて結果が古い場合は、何もせずfalse）</returns>
         private bool TrySetAvailable(int version, bool isAvailable)
         {
+            bool changed;
             lock (_stateLock)
             {
                 // 設定が変わった後の古い結果では、状態を変えない
                 if (version != _settings.Version) return false;
 
+                // 実際に値が変わったかを覚えておく
+                changed = _isAvailable != isAvailable;
                 _isAvailable = isAvailable;
-                return true;
             }
+
+            // 変わったときだけ、ロックの外で通知する
+            if (changed) RaiseAvailabilityChanged();
+            return true;
         }
 
         /// <summary>

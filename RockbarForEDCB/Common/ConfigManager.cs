@@ -355,6 +355,16 @@ namespace RockbarForEDCB
         public uint PortNumber { get; set; } = 4510;
         // TCP/IPの死活監視の間隔（秒）0は死活監視なし
         public int TcpWatchIntervalSec { get; set; } = 5;
+        // WOL使用
+        public bool UseWol { get; set; }
+        // WOLの送信先（FQDNまたはIP）。空欄なら HostName を使う
+        public string WolTargetHost { get; set; } = "";
+        // LAN内ブロードキャストの計算に使うサブネットマスク（例: 255.255.255.0）
+        public string WolSubnetMask { get; set; } = "255.255.255.0";
+        // WOLのUDPポート番号（一般に 9。外から使うときはルーターで転送するポート）
+        public uint WolPortNumber { get; set; } = 9;
+        // WOLの対象PCのMACアドレス（空欄ならWOLを送信しない）
+        public string WolMacAddress { get; set; } = "";
         // Web Link使用
         public bool UseWebLink { get; set; } = true;
         // WebEPG URL
@@ -567,6 +577,13 @@ namespace RockbarForEDCB
             if (this.TcpWatchIntervalSec < 0)
             {
                 this.TcpWatchIntervalSec = 0;
+                isFixed = true;
+            }
+
+            // WOLポート番号（範囲外なら標準の9に戻す）
+            if (this.WolPortNumber < 1 || this.WolPortNumber > 65535)
+            {
+                this.WolPortNumber = 9;
                 isFixed = true;
             }
 

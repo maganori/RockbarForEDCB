@@ -73,6 +73,7 @@
             this.versionDisplayToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer = new System.Windows.Forms.SplitContainer();
+            this.statusButton = new System.Windows.Forms.Button();
             this.listContextMenuStrip.SuspendLayout();
             this.mainFormTabControl.SuspendLayout();
             this.taskTrayContextMenuStrip.SuspendLayout();
@@ -402,6 +403,17 @@
             this.splitContainer.TabIndex = 11;
             this.splitContainer.SplitterMoved += new System.Windows.Forms.SplitterEventHandler(this.splitContainer_SplitterMoved);
             // 
+            // statusButton
+            // 
+            this.statusButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.statusButton.Location = new System.Drawing.Point(659, 7);
+            this.statusButton.Name = "statusButton";
+            this.statusButton.Size = new System.Drawing.Size(24, 23);
+            this.statusButton.TabIndex = 12;
+            this.statusButton.Text = "★";
+            this.statusButton.UseVisualStyleBackColor = true;
+            this.statusButton.Click += new System.EventHandler(this.statusButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -409,6 +421,7 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(163)))), ((int)(((byte)(216)))), ((int)(((byte)(232)))));
             this.ClientSize = new System.Drawing.Size(746, 233);
             this.ControlBox = false;
+            this.Controls.Add(this.statusButton);
             this.Controls.Add(this.splitContainer);
             this.Controls.Add(this.settingButton);
             this.Controls.Add(this.closeButton);
@@ -475,6 +488,7 @@
         private System.Windows.Forms.ToolStripMenuItem readMeGitHubToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem checkReleaseGitHubToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem versionDisplayToolStripMenuItem;
+        private System.Windows.Forms.Button statusButton;
     }
 }
 
