@@ -71,12 +71,20 @@ namespace RockbarForEDCB
         public bool UpdateServiceData()
         {
             // 番組一覧取得
-            _serviceEvents.Clear();
-            AllEventMap.Clear();
-            _edcbClient.ExecuteCmd(c => c.SendEnumPgAll(ref _serviceEvents));
+            // 取得結果は、いったん新しいリストに受ける
+            var newServiceEvents = new List<EpgServiceEventInfo>();
+            ErrCode errCode = _edcbClient.ExecuteCmd(c => c.SendEnumPgAll(ref newServiceEvents));
+
+            // 失敗したときは、前回の一覧を残して何もしない
+            if (errCode != ErrCode.CMD_SUCCESS) return false;
+
+            // 成功したときだけ、一覧とマップを差し替える
+            _serviceEvents = newServiceEvents;
 
             // 番組一覧関連のハッシュを作成
             ServiceMap.Clear();
+            AllEventMap.Clear();
+
             foreach (EpgServiceEventInfo serviceEv in _serviceEvents)
             {
                 // TSID + SID → サービス一覧(serviceが番組情報を保持している)
@@ -107,8 +115,14 @@ namespace RockbarForEDCB
         public bool UpdateReserveData()
         {
             // 予約一覧取得
-            _reserveDatas.Clear();
-            _edcbClient.ExecuteCmd(c => c.SendEnumReserve(ref _reserveDatas));
+            // 取得結果は、いったん新しいリストに受ける
+            var newReserveDatas = new List<ReserveData>();
+            ErrCode errCode = _edcbClient.ExecuteCmd(c => c.SendEnumReserve(ref newReserveDatas));
+
+            // 失敗したときは、前回の一覧を残して何もしない
+            if (errCode != ErrCode.CMD_SUCCESS) return false;
+
+            _reserveDatas = newReserveDatas;
 
             // 予約一覧関連のハッシュを作成
             ReserveMap.Clear();
@@ -136,17 +150,25 @@ namespace RockbarForEDCB
         /// <returns>録画済み情報が変更された場合はtrue、それ以外はfalse</returns>
         public bool UpdateRecData()
         {
-            _recFileInfos.Clear();
-            RecMap.Clear();
-            _edcbClient.ExecuteCmd(c => c.SendEnumRecInfoBasic(ref _recFileInfos));
+            // 録画一覧取得
+            // 取得結果は、いったん新しいリストに受ける
+            var newRecFileInfos = new List<RecFileInfo>();
+            ErrCode errCode = _edcbClient.ExecuteCmd(c => c.SendEnumRecInfoBasic(ref newRecFileInfos));
 
-            // _recFileInfos を対象に条件判定および切り出しを行う
-            if (RecListMaxCount > 0 && _recFileInfos.Count > RecListMaxCount)
+            // 失敗したときは、前回の一覧を残して何もしない
+            if (errCode != ErrCode.CMD_SUCCESS) return false;
+
+            // 件数の上限を超えたときは、新しいほうを残す
+            if (RecListMaxCount > 0 && newRecFileInfos.Count > RecListMaxCount)
             {
-                _recFileInfos = _recFileInfos.GetRange(_recFileInfos.Count - RecListMaxCount, RecListMaxCount);
+                newRecFileInfos = newRecFileInfos.GetRange(newRecFileInfos.Count - RecListMaxCount, RecListMaxCount);
             }
-            _recFileInfos.Reverse();
 
+            // 新しいものが上に来るように並べ替える
+            newRecFileInfos.Reverse();
+
+            // 成功したときだけ、一覧とマップを差し替える
+            _recFileInfos = newRecFileInfos;
             RecMap = _recFileInfos.ToDictionary(r => r.ID);
 
             // 更新時間として現在時刻を取得
@@ -170,8 +192,15 @@ namespace RockbarForEDCB
         public bool UpdateTunerData()
         {
             // チューナーごとの予約一覧取得
-            _tunerReserveInfos.Clear();
-            _edcbClient.ExecuteCmd(c => c.SendEnumTunerReserve(ref _tunerReserveInfos));
+            // 取得結果は、いったん新しいリストに受ける
+            var newTunerReserveInfos = new List<TunerReserveInfo>();
+            ErrCode errCode = _edcbClient.ExecuteCmd(c => c.SendEnumTunerReserve(ref newTunerReserveInfos));
+
+            // 失敗したときは、前回の一覧を残して何もしない
+            if (errCode != ErrCode.CMD_SUCCESS) return false;
+
+            // 成功したときだけ、一覧を差し替える
+            _tunerReserveInfos = newTunerReserveInfos;
 
             // チューナーごとの予約一覧の差分有無チェック
             // チェック対象：チューナー台数、各チューナーの識別ID、各チューナーに割り当てられている予約の件数
