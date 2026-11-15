@@ -19,22 +19,19 @@ namespace RockbarForEDCB
         private readonly TVTestManager _tvtestManager;
         private readonly EdcbClient _edcbClient;
         private readonly ContextMenuStrip _contextMenu;
-        private readonly Action<bool, bool, bool> _refreshList;
 
         public ListViewEventHandler(
             ConfigManager configManager,
             EpgDataManager epgDataManager,
             TVTestManager tvtestManager,
             EdcbClient edcbClient,
-            ContextMenuStrip contextMenu,
-            Action<bool, bool, bool> refreshList)
+            ContextMenuStrip contextMenu)
         {
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _epgDataManager = epgDataManager ?? throw new ArgumentNullException(nameof(epgDataManager));
             _tvtestManager = tvtestManager ?? throw new ArgumentNullException(nameof(tvtestManager));
             _edcbClient = edcbClient ?? throw new ArgumentNullException(nameof(edcbClient));
             _contextMenu = contextMenu ?? throw new ArgumentNullException(nameof(contextMenu));
-            _refreshList = refreshList ?? throw new ArgumentNullException(nameof(refreshList));
         }
 
         /// <summary>
@@ -763,6 +760,9 @@ namespace RockbarForEDCB
         /// </summary>
         private void ToggleRecMode(ReserveData reserve)
         {
+            // 失敗したときに戻せるように、変更前の録画モードを覚えておく
+            byte originalRecMode = reserve.RecSetting.RecMode;
+
             if (reserve.RecSetting.IsNoRec())
             {
                 reserve.RecSetting.RecMode = _configManager.RockbarSetting.FixNoRecToServiceOnly ? (byte)1 : reserve.RecSetting.GetRecMode();
@@ -770,16 +770,16 @@ namespace RockbarForEDCB
             else
             {
                 // 録画予約モード情報を維持して無効化
-                var recMode = reserve.RecSetting.RecMode;
-                reserve.RecSetting.RecMode = (byte)(_configManager.RockbarSetting.FixNoRecToServiceOnly ? 5 : 5 + (recMode + 4) % 5);
+                reserve.RecSetting.RecMode = (byte)(_configManager.RockbarSetting.FixNoRecToServiceOnly ? 5 : 5 + (originalRecMode + 4) % 5);
             }
 
             var err = _edcbClient.ExecuteCmd(c => c.SendChgReserve(new List<ReserveData>() { reserve }));
             if (err != ErrCode.CMD_SUCCESS)
             {
+                // 送信に失敗したら、キャッシュの値を元に戻す（画面と実際の予約状態を一致させるため）
+                reserve.RecSetting.RecMode = originalRecMode;
                 MessageBox.Show("録画予約変更でエラーが発生しました。", "録画予約変更エラー");
             }
-            _refreshList?.Invoke(true, false, false);
         }
 
         /// <summary>
@@ -927,7 +927,6 @@ namespace RockbarForEDCB
             {
                 MessageBox.Show("録画予約登録でエラーが発生しました。", "録画予約登録エラー");
             }
-            _refreshList?.Invoke(true, false, false);
         }
 
         /// <summary>
@@ -963,7 +962,6 @@ namespace RockbarForEDCB
             {
                 MessageBox.Show($"録画予約削除でエラーが発生しました。", "録画予約削除エラー");
             }
-            _refreshList?.Invoke(true, false, false);
         }
 
         /// <summary>
@@ -1002,7 +1000,6 @@ namespace RockbarForEDCB
             {
                 MessageBox.Show("録画済み情報削除でエラーが発生しました。", "録画済み情報削除エラー");
             }
-            _refreshList?.Invoke(true, true, false);
         }
 
         /// <summary>

@@ -28,6 +28,9 @@ namespace RockbarForEDCB
         private readonly System.Windows.Forms.Timer _edcbNotifyDebounceTimer =
             new System.Windows.Forms.Timer { Interval = 300 };
 
+        // 通知で溜めた取り直し対象
+        private EpgDataManager.RefreshTargets _pendingRefreshTargets = EpgDataManager.RefreshTargets.None;
+
         // EPGデータ管理
         private EpgDataManager _epgDataManager;
 
@@ -54,9 +57,6 @@ namespace RockbarForEDCB
         // 次回の画面更新が必要になる最早時刻
         private DateTime _nextMainListViewRefreshTime = DateTime.MinValue;
         private DateTime _nextSubListViewRefreshTime = DateTime.MinValue;
-
-        // 録画タブの更新インターバル(前回表示から1分以上経っていると再取得)
-        private readonly TimeSpan _recDataUpdateInterval = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// コンストラクタ
@@ -103,8 +103,7 @@ namespace RockbarForEDCB
                 _epgDataManager,
                 _tvtestManager,
                 _edcbClient,
-                listContextMenuStrip,
-                RefreshList
+                listContextMenuStrip
             );
 
             // MainFormのボタンの設定(デザイナーで出来ないもの)
@@ -127,7 +126,7 @@ namespace RockbarForEDCB
             subListView.Items.Clear();
 
             // タイマーを有効化
-            timer.Enabled = true;
+            scheduleTimer.Enabled = true;
 
             // フォーム表示完了イベント
             // リストビューの列幅を再調整して水平スクロールバー表示を防ぐ。
@@ -338,7 +337,7 @@ namespace RockbarForEDCB
 
             try
             {
-                BeginInvoke(new Action(UpdateStatusButton));
+                BeginInvoke(new Action(OnAvailabilityChanged));
             }
             catch (InvalidOperationException)
             {
@@ -489,51 +488,24 @@ namespace RockbarForEDCB
         /// 描画更新処理
         /// 必要があればEpgTimerSrv通信を行い、MainListView・SubListViewの表示を更新する。
         /// </summary>
-        /// <param name="needsCommunication">EpgTimerSrvと通信要否</param>
+        /// <param name="targets">EpgTimerSrvから取り直す対象</param>
         /// <param name="forceMainListRefresh">MainListView(Main Pane)の強制リフレッシュ要否</param>
         /// <param name="forceSubListRefresh">SubListtView(Sub Pane)の強制リフレッシュ要否</param>
-        private void RefreshList(bool needsCommunication, bool forceMainListRefresh, bool forceSubListRefresh)
+        private void RefreshList(EpgDataManager.RefreshTargets targets, bool forceMainListRefresh, bool forceSubListRefresh)
         {
             DateTime now = DateTime.Now;
 
             DateTime mainListRefreshTime = _nextMainListViewRefreshTime;
             DateTime subListRefreshTime = _nextSubListViewRefreshTime;
 
-            bool isReserveChanged = false;
-            bool isServiceChanged = false;
-            bool isTunerChanged = false;
-            bool isRecChanged = false;
+            // 対象だけをEpgTimerSrvから取得
+            EpgDataManager.RefreshResult changed = _epgDataManager.UpdateData(targets);
 
-            // 録画情報更新必要有無判定
-            bool isRecDataUpdateRequired = 
-                mainFormTabControl.SelectedTab == recTabPage && //録画タブを開いて かつ
-                ((needsCommunication && forceMainListRefresh) || //通信要で強制リフレッシュ要　または
-                now - _epgDataManager.LastRecDataUpdateTime >= _recDataUpdateInterval); //前回更新時間から時間経過しているか
-
-            // EpgDataを更新する
-            if (_edcbClient.IsAvailable)
-            {
-                // 定期更新など、通信が必要な場合
-                if (needsCommunication)
-                {
-                    isServiceChanged = _epgDataManager.UpdateServiceData();
-                    isReserveChanged = _epgDataManager.UpdateReserveData();
-                    isTunerChanged = _epgDataManager.UpdateTunerData();
-                }
-
-                // 録画情報の更新が必要な場合
-                if (isRecDataUpdateRequired)
-                {
-                    isRecChanged = _epgDataManager.UpdateRecData();
-                }
-            }
-
-            // 現在アクティブなタブに応じて描画処理を分岐
             // -----mainListView-----
             // 予約タブ
             if (mainFormTabControl.SelectedTab == reserveTabPage)
             {
-                if (forceMainListRefresh || isReserveChanged || (now >= mainListRefreshTime))
+                if (forceMainListRefresh || changed.ReserveChanged || (now >= mainListRefreshTime))
                 {
                     DateTime nextTime = _listViewBuilder.BuildReserveList(mainListView);
                     _nextMainListViewRefreshTime = nextTime;
@@ -542,7 +514,7 @@ namespace RockbarForEDCB
             // 録画タブ
             else if (mainFormTabControl.SelectedTab == recTabPage)
             {
-                if (forceMainListRefresh || isRecChanged)
+                if (forceMainListRefresh || changed.RecChanged)
                 {
                     _listViewBuilder.BuildRecList(mainListView);
                     _nextMainListViewRefreshTime = DateTime.MaxValue;
@@ -551,7 +523,7 @@ namespace RockbarForEDCB
             // 新番組タブ
             else if (mainFormTabControl.SelectedTab == newProgramTabPage)
             {
-                if (forceMainListRefresh || isServiceChanged || isReserveChanged || (now >= mainListRefreshTime))
+                if (forceMainListRefresh || changed.ServiceChanged || changed.ReserveChanged || (now >= mainListRefreshTime))
                 {
                     DateTime nextTime = _listViewBuilder.BuildNewProgramList(mainListView);
                     _nextMainListViewRefreshTime = nextTime;
@@ -560,7 +532,7 @@ namespace RockbarForEDCB
             // チャンネルタブ
             else
             {
-                if (forceMainListRefresh || isServiceChanged || isReserveChanged || (now >= mainListRefreshTime))
+                if (forceMainListRefresh || changed.ServiceChanged || changed.ReserveChanged || (now >= mainListRefreshTime))
                 {
                     DateTime nextTime = _listViewBuilder.BuildServiceList(mainListView, GetCurrentMainFormTabType());
                     _nextMainListViewRefreshTime = nextTime;
@@ -569,7 +541,7 @@ namespace RockbarForEDCB
 
             // -----subListView-----
             // チューナー一覧
-            if (forceSubListRefresh || isTunerChanged || (now >= subListRefreshTime))
+            if (forceSubListRefresh || changed.TunerChanged || (now >= subListRefreshTime))
             {
                 DateTime nextTime = _listViewBuilder.BuildTunerList(subListView);
                 _nextSubListViewRefreshTime = nextTime;
@@ -774,7 +746,7 @@ namespace RockbarForEDCB
                 }
 
                 // 接続できたときだけ一覧を取り直す（できなければ前の一覧を残すため、表示だけ更新する）
-                RefreshList(connected, true, true);
+                RefreshList(connected ? EpgDataManager.RefreshTargets.All : EpgDataManager.RefreshTargets.None, true, true);
 
                 // 接続できなくても要望は残す（サーバーが起動したら死活監視の結果で接続される）
                 _edcbNotifyReceiver.Start();
@@ -786,43 +758,58 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// 一覧に関係する通知（EPG・予約・録画）を受けたときの処理（受信スレッドから呼ばれる）
+        /// 通信可能状態が変わったとき
+        /// </summary>
+        private void OnAvailabilityChanged()
+        {
+            UpdateStatusButton();
+
+            // 通信が戻ったときはすべて取り直す（止まっている間の通知を取りこぼしているかもしれないため）
+            if (_edcbClient.IsAvailable)
+            {
+                PostRefreshRequest(EpgDataManager.RefreshTargets.All);
+            }
+        }
+
+        /// <summary>
+        /// 通知を受けたときの処理（受信スレッドから呼ばれる）
+        /// 通知の種類から取り直す対象を決めて溜める
         /// </summary>
         private void EdcbNotifyReceiver_NotificationReceived(object sender, UpdateNotifyItem item)
         {
-            // 一覧に関係する通知だけを対象にする
-            if (item != UpdateNotifyItem.EpgData &&
-                item != UpdateNotifyItem.ReserveInfo &&
-                item != UpdateNotifyItem.RecInfo)
-            {
-                return;
-            }
+            EpgDataManager.RefreshTargets targets = EpgDataManager.FromNotify(item);
+            if (targets == EpgDataManager.RefreshTargets.None) return;
 
-            PostRefreshRequest();
+            PostRefreshRequest(targets);
         }
 
         /// <summary>
         /// 通知の受け取りを接続したときの処理（接続処理のスレッドから呼ばれる）
-        /// 止まっている間の更新を取りこぼしている可能性があるため、一覧を取り直す
         /// </summary>
         private void EdcbNotifyReceiver_Reconnected(object sender, EventArgs e)
         {
-            PostRefreshRequest();
+            // 止まっている間の変更を取りこぼしている可能性があるため、すべて取り直す
+            PostRefreshRequest(EpgDataManager.RefreshTargets.All);
         }
 
         /// <summary>
         /// 受信スレッドから一覧の更新を要求する
         /// UIスレッドに渡してデバウンスタイマーを仕切り直す（BeginInvokeは待たずに戻るため、受信スレッドを止めない）
         /// </summary>
-        private void PostRefreshRequest()
+        private void PostRefreshRequest(EpgDataManager.RefreshTargets targets)
         {
             // フォームが閉じている最中は何もしない
             if (IsDisposed || !IsHandleCreated) return;
 
             try
             {
-                // UIスレッドでRestartDebounceTimerを呼ぶ（待たずに戻るため、受信スレッドを止めない）
-                BeginInvoke(new Action(RestartDebounceTimer));
+                // UIスレッドで、取り直す対象を溜めてからデバウンスを仕切り直す
+                // （BeginInvokeは待たずに戻るため、受信スレッドを止めない）
+                BeginInvoke(new Action(() =>
+                {
+                    _pendingRefreshTargets |= targets;
+                    RestartDebounceTimer();
+                }));
             }
             catch (InvalidOperationException)
             {
@@ -842,12 +829,17 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// デバウンス後の更新処理
-        /// 通信して予約・EPG・録画を取り直し、一覧を再描画する
+        /// 溜めた対象だけを取り直し、一覧を再描画する
         /// </summary>
         private void EdcbNotifyDebounceTimer_Tick(object sender, EventArgs e)
         {
             _edcbNotifyDebounceTimer.Stop();
-            RefreshList(true, true, false);
+
+            // 溜めた対象を取り出して、空にする
+            EpgDataManager.RefreshTargets targets = _pendingRefreshTargets;
+            _pendingRefreshTargets = EpgDataManager.RefreshTargets.None;
+
+            RefreshList(targets, true, false);
         }
 
         /// <summary>
@@ -883,18 +875,14 @@ namespace RockbarForEDCB
 
         /// <summary>
         /// タイマー処理
-        /// 毎分0秒のEpgTimerSrv通信と、TVTestの起動・終了を行う
+        /// 毎秒の表示番組更新と、TVTestの起動・終了を起動
         /// </summary>
         /// <param name="sender">イベントソース</param>
         /// <param name="e">イベントパラメータ</param>
-        private void timer_Tick(object sender, EventArgs e)
+        private void scheduleTimer_Tick(object sender, EventArgs e)
         {
-            DateTime now = DateTime.Now;
-
-            if (now.Second == 0)
-            {
-                RefreshList(true, false, false);
-            }
+            // 放送中・次番組などの表示を、時刻に合わせて描き直す
+            RefreshList(EpgDataManager.RefreshTargets.None, false, false);
 
             // TVTest自動起動、自動終了
             _tvtestManager.AutoStartAndCloseTVTest(_epgDataManager.ReserveDatas, _configManager.FavoriteServiceList);
@@ -908,7 +896,7 @@ namespace RockbarForEDCB
         /// <param name="e">イベントパラメータ</param>
         private void mainFormTabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
-            RefreshList(false, true, false);
+            RefreshList(EpgDataManager.RefreshTargets.None, true, false);
         }
 
         /// <summary>
@@ -959,7 +947,7 @@ namespace RockbarForEDCB
             // ListViewBuilder 側に現在の検索文字列を渡す
             _listViewBuilder.FilterText = filterTextBox.Text;
 
-            RefreshList(false, true, false);
+            RefreshList(EpgDataManager.RefreshTargets.None, true, false);
         }
 
         /// <summary>
@@ -997,7 +985,7 @@ namespace RockbarForEDCB
         private void ResetFilter()
         {
             filterTextBox.Clear();
-            RefreshList(false, true, false);
+            RefreshList(EpgDataManager.RefreshTargets.None, true, false);
         }
 
         /// <summary>

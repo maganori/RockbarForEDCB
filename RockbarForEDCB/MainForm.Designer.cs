@@ -44,7 +44,7 @@
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.listContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.aaaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.timer = new System.Windows.Forms.Timer(this.components);
+            this.scheduleTimer = new System.Windows.Forms.Timer(this.components);
             this.mainFormTabControl = new System.Windows.Forms.TabControl();
             this.allTabPage = new System.Windows.Forms.TabPage();
             this.dttvTabPage = new System.Windows.Forms.TabPage();
@@ -143,10 +143,10 @@
             this.aaaToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
             this.aaaToolStripMenuItem.Text = "aaa";
             // 
-            // timer
+            // scheduleTimer
             // 
-            this.timer.Interval = 1000;
-            this.timer.Tick += new System.EventHandler(this.timer_Tick);
+            this.scheduleTimer.Interval = 1000;
+            this.scheduleTimer.Tick += new System.EventHandler(this.scheduleTimer_Tick);
             // 
             // mainFormTabControl
             // 
@@ -459,7 +459,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.ContextMenuStrip listContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem aaaToolStripMenuItem;
-        private System.Windows.Forms.Timer timer;
+        private System.Windows.Forms.Timer scheduleTimer;
         private System.Windows.Forms.TabControl mainFormTabControl;
         private System.Windows.Forms.TabPage dttvTabPage;
         private System.Windows.Forms.TabPage bsTabPage;

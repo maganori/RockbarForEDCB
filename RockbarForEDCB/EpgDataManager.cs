@@ -10,6 +10,27 @@ namespace RockbarForEDCB
     /// </summary>
     public class EpgDataManager
     {
+        /// <summary>取り直す対象（通知の種類に応じて、必要なものだけ取得する）</summary>
+        [Flags]
+        public enum RefreshTargets
+        {
+            None = 0,
+            Service = 1,   // 番組（EPG）
+            Reserve = 2,   // 予約
+            Tuner = 4,     // チューナー
+            Rec = 8,       // 録画済み
+            All = Service | Reserve | Tuner | Rec,
+        }
+
+        /// <summary>取得の結果</summary>
+        public struct RefreshResult
+        {
+            public bool ServiceChanged;
+            public bool ReserveChanged;
+            public bool TunerChanged;
+            public bool RecChanged;
+        }
+
         private readonly ConfigManager _configManager;
         private readonly EdcbClient _edcbClient;
 
@@ -45,7 +66,6 @@ namespace RockbarForEDCB
         public List<TunerReserveInfo> TunerReserveInfos => _tunerReserveInfos;
         public List<ReserveData> ReserveDatas => _reserveDatas;
         public List<RecFileInfo> RecFileInfos => _recFileInfos;
-        public DateTime LastRecDataUpdateTime { get; private set; } = DateTime.MinValue;
 
         /// <summary>
         /// 録画済み一覧の最大保持件数（0以下の場合は制限なし）
@@ -61,14 +81,52 @@ namespace RockbarForEDCB
             _configManager = configManager ?? throw new ArgumentNullException(nameof(configManager));
             _edcbClient = edcbClient ?? throw new ArgumentNullException(nameof(edcbClient));
 
+            // 設定ファイルのチャンネル名を、検索しやすい辞書にしておく
             RebuildServiceNameCache();
+        }
+
+        /// <summary>
+        /// 通知の種類から、取り直す対象を決める
+        /// </summary>
+        public static RefreshTargets FromNotify(UpdateNotifyItem item)
+        {
+            switch (item)
+            {
+                case UpdateNotifyItem.EpgData:
+                    return RefreshTargets.Service;
+                case UpdateNotifyItem.ReserveInfo:
+                    return RefreshTargets.Reserve | RefreshTargets.Tuner;
+                case UpdateNotifyItem.RecInfo:
+                    return RefreshTargets.Rec;
+                default:
+                    return RefreshTargets.None;
+            }
+        }
+
+        /// <summary>
+        /// 指定した対象だけをEpgTimerSrvから取得する
+        /// </summary>
+        /// <param name="targets">取り直す対象</param>
+        /// <returns>対象ごとに、内容が変わったかどうか</returns>
+        public RefreshResult UpdateData(RefreshTargets targets)
+        {
+            var result = new RefreshResult();
+
+            if (!_edcbClient.IsAvailable) return result;
+
+            if ((targets & RefreshTargets.Service) != 0) result.ServiceChanged = UpdateServiceData();
+            if ((targets & RefreshTargets.Reserve) != 0) result.ReserveChanged = UpdateReserveData();
+            if ((targets & RefreshTargets.Tuner) != 0) result.TunerChanged = UpdateTunerData();
+            if ((targets & RefreshTargets.Rec) != 0) result.RecChanged = UpdateRecData();
+
+            return result;
         }
 
         /// <summary>
         /// EpgTimerSrvから番組一覧を取得し、serviceMap / allEventMapを構築します。
         /// </summary>
         /// <returns>番組情報が変更された場合はtrue、それ以外はfalse</returns>
-        public bool UpdateServiceData()
+        private bool UpdateServiceData()
         {
             // 番組一覧取得
             // 取得結果は、いったん新しいリストに受ける
@@ -112,7 +170,7 @@ namespace RockbarForEDCB
         /// EpgTimerSrvから予約一覧を取得し、reserveMapを構築します。
         /// </summary>
         /// <returns>予約情報が変更された場合はtrue、それ以外はfalse</returns>
-        public bool UpdateReserveData()
+        private bool UpdateReserveData()
         {
             // 予約一覧取得
             // 取得結果は、いったん新しいリストに受ける
@@ -148,7 +206,7 @@ namespace RockbarForEDCB
         /// EpgTimerSrvから録画済み情報を取得し、録画一覧を更新します。
         /// </summary>
         /// <returns>録画済み情報が変更された場合はtrue、それ以外はfalse</returns>
-        public bool UpdateRecData()
+        private bool UpdateRecData()
         {
             // 録画一覧取得
             // 取得結果は、いったん新しいリストに受ける
@@ -171,9 +229,6 @@ namespace RockbarForEDCB
             _recFileInfos = newRecFileInfos;
             RecMap = _recFileInfos.ToDictionary(r => r.ID);
 
-            // 更新時間として現在時刻を取得
-            LastRecDataUpdateTime = DateTime.Now;
-
             // 録画済み情報の一覧の差分有無チェック
             // チェック対象：録画済みファイルの件数、各録画済みファイルの固有ID
             string currentRecHash = $"{_recFileInfos.Count}_" +
@@ -189,7 +244,7 @@ namespace RockbarForEDCB
         /// EpgTimerSrvからチューナーごとの予約一覧を取得します。
         /// </summary>
         /// <returns>チューナー情報が変更された場合はtrue、それ以外はfalse</returns>
-        public bool UpdateTunerData()
+        private bool UpdateTunerData()
         {
             // チューナーごとの予約一覧取得
             // 取得結果は、いったん新しいリストに受ける
