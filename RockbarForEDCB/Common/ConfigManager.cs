@@ -300,6 +300,13 @@ namespace RockbarForEDCB
     /// </summary>
     public class RockbarSetting
     {
+        // 画面の初期位置・サイズ・スプリッター位置
+        public const int DEFAULT_WINDOW_X = 50;
+        public const int DEFAULT_WINDOW_Y = 50;
+        public const int DEFAULT_WINDOW_WIDTH = 650;
+        public const int DEFAULT_WINDOW_HEIGHT = 300;
+        public const int DEFAULT_SPLITTER_DISTANCE = 200;
+
         // 録画一覧の最大表示数のデフォルト値
         public const int DEFAULT_REC_LIST_MAX_COUNT = 1500;
 
@@ -338,15 +345,15 @@ namespace RockbarForEDCB
         // stringは""、オブジェクトは空オブジェクトで初期化。
 
         // 起動時x座標
-        public int X { get; set; } = 50;
+        public int X { get; set; } = DEFAULT_WINDOW_X;
         // 起動時y座標
-        public int Y { get; set; } = 50;
+        public int Y { get; set; } = DEFAULT_WINDOW_Y;
         // 起動時画面幅
-        public int Width { get; set; } = 650;
+        public int Width { get; set; } = DEFAULT_WINDOW_WIDTH;
         // 起動時画面高
-        public int Height { get; set; } = 300;
+        public int Height { get; set; } = DEFAULT_WINDOW_HEIGHT;
         // 起動時スプリッター位置
-        public int SplitterDistance { get; set; } = 200;
+        public int SplitterDistance { get; set; } = DEFAULT_SPLITTER_DISTANCE;
         // TCP/IP使用
         public bool UseTcpIp { get; set; }
         // ホスト名 or IPアドレス
@@ -558,11 +565,11 @@ namespace RockbarForEDCB
             // 起動時座標、幅、高さ、スプリッター位置
             if (this.X <= -this.Width + 30 || this.Y < 0 || this.Width <= 0 || this.Height <= 0 || this.SplitterDistance <= 0)
             {
-                this.X = 50;
-                this.Y = 50;
-                this.Width = 650;
-                this.Height = 300;
-                this.SplitterDistance = 200;
+                this.X = DEFAULT_WINDOW_X;
+                this.Y = DEFAULT_WINDOW_Y;
+                this.Width = DEFAULT_WINDOW_WIDTH;
+                this.Height = DEFAULT_WINDOW_HEIGHT;
+                this.SplitterDistance = DEFAULT_SPLITTER_DISTANCE;
                 //isFixed = true;　//自然に発生する可能性があるためコメントアウト
             }
 

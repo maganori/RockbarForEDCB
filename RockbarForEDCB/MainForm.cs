@@ -1085,7 +1085,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// タスクトレイ終了コンテキストメニュークリック処理
+        /// タスクトレイメニュー「終了」クリック処理
         /// フォームを閉じる。
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -1096,7 +1096,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// タスクトレイ設定コンテキストメニュークリック処理
+        /// タスクトレイメニュー「設定」クリック処理
         /// 設定フォームを開く。
         /// </summary>
         private void openSettingToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1105,7 +1105,23 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// タスクトレイ ReadMe(GitHub) コンテキストメニュークリック処理
+        /// タスクトレイメニュー「表示位置をリセット」クリック処理
+        /// メイン画面を初期の位置・サイズに戻し、表示する
+        /// </summary>
+        private void resetPositionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // 初期の位置・サイズ・スプリッタ位置に戻す
+            this.Location = new Point(RockbarSetting.DEFAULT_WINDOW_X, RockbarSetting.DEFAULT_WINDOW_Y);
+            this.Size = new Size(RockbarSetting.DEFAULT_WINDOW_WIDTH, RockbarSetting.DEFAULT_WINDOW_HEIGHT);
+            splitContainer.SplitterDistance = RockbarSetting.DEFAULT_SPLITTER_DISTANCE;
+
+            // タスクトレイに格納中でも見えるように表示する
+            this.Visible = true;
+            this.Activate();
+        }
+
+        /// <summary>
+        /// タスクトレイメニュー「ReadMe(GitHub)」クリック処理
         /// ReadMe(GitHub)を開く。
         /// </summary>
         private void readMeGitHubToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1114,7 +1130,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// タスクトレイ 更新の確認(GitHub) コンテキストメニュークリック処理
+        /// タスクトレイメニュー「更新の確認(GitHub)」クリック処理
         /// 更新の確認(GitHub)を開く。
         /// </summary>
         private void checkReleaseGitHubToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1123,7 +1139,7 @@ namespace RockbarForEDCB
         }
 
         /// <summary>
-        /// タスクトレイテレビ番組表コンテキストメニュークリック処理
+        /// タスクトレイメニュー「テレビ番組表」クリック処理
         /// テレビ番組表を開く
         /// </summary>
         /// <param name="sender">イベントソース</param>
@@ -1217,6 +1233,9 @@ namespace RockbarForEDCB
             }
         }
 
+        /// <summary>
+        /// タスクトレイアイコンクリック時の割り当て動作の実行
+        /// </summary>
         private void ExecuteTaskTrayIconClickAction(string settingValue)
         {
             switch (settingValue)
